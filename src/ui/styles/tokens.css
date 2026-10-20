@@ -245,6 +245,10 @@
   --tt-running: light-dark(var(--color-green-60), var(--color-green-50));
   --tt-over-estimate: var(--color-text-critical);
   --tt-starred: var(--color-amber-50);
+  /* Field and small-button height, after search-bar.css: 1.2em + 2 × --search-padding. */
+  --tt-field-height: calc(round(up, 1.2em, 1px) + 2 * var(--space-base) + 2px);
+  --tt-badge-radius: 1000px;
+  --tt-panel-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
 /* Density (variables.css, spacings.css, tree-listbox.css, about3Pane.css, about3Pane.js) */
