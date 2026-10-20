@@ -1,0 +1,83 @@
+/* Page base for every extension page. Load after tokens.css.
+ * Density and accent come from data-density / data-accent on <html> (see tokens.css). */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+:root {
+  /* The Gecko system UI font, like Thunderbird's own chrome documents. */
+  font: message-box;
+  color-scheme: light dark;
+  accent-color: var(--selected-item-color);
+}
+
+body {
+  margin: 0;
+  background-color: var(--layout-background-0);
+  color: var(--layout-color-1);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+a {
+  color: var(--link-color);
+}
+
+/* Durations, times and counts: digits line up in columns. */
+.num,
+time {
+  font-variant-numeric: tabular-nums;
+}
+
+:focus-visible {
+  outline: var(--focus-outline);
+  outline-offset: var(--focus-outline-offset);
+}
+
+/* Native (GTK) scrollbars follow color-scheme; panes only contain their own scrolling. */
+.scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.visually-hidden {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* Icons from render.js icon(): inline SVG, stroke = currentColor, tint = 20% by default. */
+.icon {
+  inline-size: 16px;
+  block-size: 16px;
+  flex: none;
+  fill: currentColor;
+  vertical-align: middle;
+}
+
+.icon.small {
+  inline-size: 12px;
+  block-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-duration: 0ms;
+  }
+}

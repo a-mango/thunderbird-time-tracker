@@ -1,0 +1,288 @@
+/* Controls after Thunderbird's widgets.css, search-bar.css, quickFilterBar.css and about3Pane.css.
+ * Markup: <button class="button [primary|destructive|flat|small]">, <button class="icon-button">,
+ * <input class="field">, .search-field, .count-badge, .chip, .meter. */
+
+/* ---- Buttons (widgets.css .button) ---- */
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-base);
+  min-block-size: var(--button-min-height);
+  margin: 0;
+  padding: 0 calc(var(--button-padding) * 2);
+  border: var(--button-border-size) solid var(--button-border-color);
+  border-radius: var(--button-border-radius);
+  background-color: var(--button-background-color);
+  color: var(--button-text-color);
+  font-size: inherit;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: default;
+  appearance: none;
+
+  @media (prefers-reduced-motion: no-preference) {
+    transition:
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  &:enabled:hover {
+    background-color: var(--button-hover-background-color);
+  }
+  &:enabled:hover:active {
+    background-color: var(--button-active-background-color);
+  }
+  &:focus-visible {
+    outline: var(--focus-outline);
+    outline-offset: var(--focus-outline-offset);
+  }
+  &:disabled {
+    opacity: 0.4;
+  }
+
+  /* Small: field height, as in the quick filter bar and detail action row. */
+  &.small {
+    min-block-size: var(--tt-field-height);
+    padding-inline: calc(var(--button-padding) + var(--space-step));
+  }
+
+  &.primary {
+    font-weight: 600;
+    background-color: var(--button-primary-background-color);
+    color: var(--button-primary-text-color);
+    border-color: var(--button-primary-border-color);
+    box-shadow: var(--button-primary-shadow);
+
+    &:enabled:hover {
+      background-color: var(--button-primary-hover-background-color);
+      box-shadow: var(--button-primary-hover-shadow);
+    }
+    &:enabled:hover:active {
+      background-color: var(--button-primary-active-background-color);
+      box-shadow: none;
+    }
+  }
+
+  &.destructive {
+    background-color: var(--button-destructive-background-color);
+    color: var(--button-destructive-text-color);
+    border-color: var(--button-destructive-border-color);
+
+    &:enabled:hover {
+      background-color: var(--button-destructive-hover-background-color);
+    }
+    &:enabled:hover:active {
+      background-color: var(--button-destructive-active-background-color);
+    }
+  }
+
+  &.flat {
+    background-color: transparent;
+    color: currentColor;
+    border-color: transparent;
+
+    &:enabled:hover {
+      background-color: color-mix(in srgb, currentColor 10%, transparent);
+    }
+    &:enabled:hover:active {
+      background-color: color-mix(in srgb, currentColor 30%, transparent);
+    }
+  }
+
+  /* Quick filter toggle (reference A): pressed = accent fill, like a pressed QFB tag pill. */
+  &.toggle[aria-pressed='true'] {
+    background-color: var(--button-primary-background-color);
+    color: var(--button-primary-text-color);
+    border-color: var(--button-primary-border-color);
+
+    &:enabled:hover {
+      background-color: var(--button-primary-hover-background-color);
+    }
+  }
+
+  /* Plain pressed state (e.g. the Quick Filter button). */
+  &[aria-pressed='true']:not(.toggle) {
+    box-shadow: var(--button-pressed-shadow);
+    background-color: var(--button-active-background-color);
+  }
+}
+
+/* ---- Icon buttons (widgets.css .button.icon-only + .toolbar-button) ---- */
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  inline-size: calc(var(--button-padding) * 2 + 16px + 2px);
+  block-size: calc(var(--button-padding) * 2 + 16px + 2px);
+  margin: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--button-border-radius);
+  background: transparent;
+  color: var(--layout-color-2);
+  cursor: default;
+  appearance: none;
+
+  &:enabled:hover,
+  &[aria-expanded='true'] {
+    background-color: var(--toolbar-button-hover-background-color);
+    border-color: var(--toolbar-button-hover-border-color);
+  }
+  &:enabled:hover:active {
+    background-color: var(--toolbar-button-active-background-color);
+    border-color: var(--toolbar-button-active-border-color);
+  }
+  &[aria-pressed='true'] {
+    box-shadow: var(--button-pressed-shadow);
+    background-color: var(--toolbar-button-hover-checked-color);
+  }
+  &:disabled {
+    opacity: 0.4;
+  }
+}
+
+/* ---- Fields (search-bar.css, input-fields.css) ---- */
+.field {
+  block-size: var(--tt-field-height);
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0 var(--button-padding);
+  border: 1px solid var(--search-bar-border-color);
+  border-radius: var(--button-border-radius);
+  background-color: var(--search-bar-background);
+  color: var(--layout-color-1);
+  font-size: 1rem;
+
+  &::placeholder {
+    color: var(--search-field-placeholder);
+    opacity: 1;
+  }
+  &:focus-visible,
+  &:focus {
+    outline: 2px solid var(--focus-outline-color);
+    outline-offset: var(--search-outline-offset);
+    background-color: var(--search-bar-focus-background);
+  }
+}
+
+/* Search field: magnifier at the start, optional shortcut hint (<kbd>) at the end. */
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-inline-size: 0;
+
+  & > .icon {
+    position: absolute;
+    inset-inline-start: calc(var(--button-padding) + var(--space-step));
+    color: var(--search-field-placeholder);
+    pointer-events: none;
+  }
+  & > .field {
+    flex: 1;
+    padding-inline-start: calc(var(--button-padding) * 2 + 16px + var(--space-step));
+  }
+  & > .field::-moz-search-clear-button {
+    display: none;
+  }
+  & > kbd {
+    position: absolute;
+    inset-inline-end: calc(var(--button-padding) + var(--space-step));
+    color: var(--search-field-placeholder);
+    font: inherit;
+    font-size: 0.8em;
+    pointer-events: none;
+  }
+  & > .field:not(:placeholder-shown) ~ kbd {
+    display: none;
+  }
+}
+
+/* ---- Count badges (about3Pane.css .folder-count-badge) ---- */
+.count-badge {
+  flex: none;
+  min-inline-size: 16px;
+  margin-inline-end: 6px;
+  padding: 1px 4px;
+  border-radius: var(--tt-badge-radius);
+  background-color: var(--folderpane-total-count-background);
+  color: var(--folderpane-total-count-text);
+  font-size: 0.85em;
+  font-weight: normal;
+  font-variant-numeric: tabular-nums;
+  line-height: initial;
+  text-align: center;
+  white-space: nowrap;
+
+  /* "New mail" style: the running project. */
+  &.new {
+    background-color: var(--selected-item-color);
+    color: var(--selected-item-text-color);
+    font-weight: bold;
+  }
+  /* Collapsed parent of a running project. */
+  &.outlined {
+    padding-block: 0;
+    border: 1px solid var(--selected-item-color);
+    background-color: transparent;
+    color: var(--selected-item-color);
+    font-weight: bold;
+  }
+}
+
+/* ---- Chips (tags on a task) ---- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border: 1px solid var(--layout-border-0);
+  border-radius: var(--tt-badge-radius);
+  color: var(--layout-color-2);
+  font-size: 0.85em;
+  white-space: nowrap;
+
+  &[data-color]::before {
+    content: '';
+    inline-size: 8px;
+    block-size: 8px;
+    border-radius: 50%;
+    background-color: var(--chip-color, currentColor);
+  }
+}
+
+/* ---- Meter (estimate bar): 4px track + fill, over-estimate in critical colour ---- */
+.meter {
+  flex: 1;
+  min-inline-size: calc(var(--space-step) * 8);
+  block-size: 4px;
+  border-radius: var(--tt-badge-radius);
+  background-color: var(--layout-background-3);
+  overflow: hidden;
+
+  & > span {
+    display: block;
+    block-size: 100%;
+    inline-size: var(--value, 0%);
+    background-color: var(--selected-item-color);
+  }
+  &.over > span {
+    background-color: var(--tt-over-estimate);
+  }
+}
+
+/* ---- Link button (widgets.css .link-button) ---- */
+.link-button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--link-color);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
