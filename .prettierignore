@@ -1,0 +1,14 @@
+.ref/
+.tb-profile/
+artifacts/
+coverage/
+dist/
+playwright-report/
+test-results/
+package-lock.json
+design/
+src/ui/styles/tokens.css
+docs/
+.github/
+.claude/
+CLAUDE.md
