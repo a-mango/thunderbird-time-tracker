@@ -28,7 +28,7 @@ Read: `docs/PLAN.md` (M7), `.ref/webext-docs/guides/{sourceCodeSubmission,vendor
 7. ATN checklist in `docs/RELEASE.md`: description, screenshots (from `npm run shots`, fictional data only), permissions justification, no source submission needed (copy-only build).
 
 ## Verify
-- Install the built XPI in two fresh profiles (ESR and Release). Run the M3, M5, and M6 manual checklists there and record the results in the PR.
+- Install the built XPI in two fresh profiles (157 and the current Release). Run the M3, M5, and M6 manual checklists there and record the results in the PR.
 - `spec-reviewer` subagent: the MVP scope in `docs/SPEC.md` is fully met.
 
 ## Done when

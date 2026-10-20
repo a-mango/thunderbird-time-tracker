@@ -11,6 +11,11 @@
 | Tests | Vitest + fake-indexeddb (logic); Playwright Firefox + axe (UI, against a mock `messenger`) | Claude Code can verify on its own without Thunderbird |
 | In-TB testing | Isolated dev profile in `.tb-profile/` (gitignored) | Never touches the real mail profile |
 | Design | `docs/DESIGN.md`, `design/tokens.css`, `design/reference/*` | Values taken from Thunderbird's source |
+| Target | Thunderbird 157 Release, `strict_min_version` 157.0; docs `release-mv3`, source tag `THUNDERBIRD_157_0_RELEASE` | Decided in M0 (was ESR 153 / min 128): code against the docs we actually read, test on the installed version |
+| `messenger` typings | Local `src/types/messenger.d.ts`, hand-written from `.ref/webext-docs` | `@types/thunderbird-webext-browser` last released 127.0.0 (Jul 2024, TB 127.0a1): no MV3/157 coverage. Not shipped (excluded from the XPI) |
+| TypeScript | 7.0.2 (native port) | Verified in M0 that `checkJs` catches JSDoc `@typedef`/`@type`/`import()` errors; fall back to 6.0.3 if that regresses |
+| Run in Thunderbird | `npm run tb` = `web-ext run --firefox <real TB binary> --firefox-profile .tb-profile --keep-profile-changes` | M0 spike option (a) works on TB 157 RPM: temporary add-on, auto-reload, `-no-remote` so a running real instance is never reused. `--manual` prints the about:debugging steps (option c) |
+| Dev data in M0 | Pages ask the background via `runtime.sendMessage({type:'tt:summary'})`; the mock answers from `dev/fixtures.js` | No permission or dev import in shipped code; M2 swaps the background handler for `db/` |
 
 ## How each milestone runs (Claude Code on your machine)
 
@@ -35,7 +40,7 @@
 
 **M0 Bootstrap + spikes**
 - Repo layout, package scripts (see `CLAUDE.md`), tsconfig, eslint/prettier, vitest, playwright (firefox), web-ext.
-- `.ref/` clones: comm-central (sparse: themes, icons, extension schemas), webext-docs `esr-mv3`, sample-extensions.
+- `.ref/` clones: comm-central (sparse: themes, icons, extension schemas), webext-docs `release-mv3`, sample-extensions.
 - Minimal MV3 manifest: a space that opens a placeholder `ui/tracker.html`; an action with a placeholder popup; `_locales/en`.
 - Dev harness: `scripts/serve.mjs` serves `src/` and injects `dev/mock-messenger.js` and fixtures (fictional data).
 - Spike: the most automated reliable way to run the add-on in `.tb-profile/` (`npm run tb`).
@@ -46,7 +51,7 @@
 - ✅ Issues and labels exist.
 
 **M1 Design system + primitives**
-- Diff `design/tokens.css` against `.ref` for the targeted ESR, then copy it into `src/ui/styles/`. Add `base.css` and icon import.
+- Diff `design/tokens.css` against `.ref` for the targeted release (157), then copy it into `src/ui/styles/`. Add `base.css` and icon import.
 - Primitives: buttons, icon buttons, fields, badges, pills, `tt-splitter`, `tt-tree` (ARIA tree), `tt-table` (ARIA grid: sort, column picker), dialog helper, notification bar.
 - `dev/gallery.html` shows every primitive, light/dark × 3 densities.
 - Spikes inside Thunderbird: `font: message-box` size, `AccentColor`, and `menus.overrideContext` in our page.
@@ -99,7 +104,7 @@
 - Performance with 50k entries: badges recompute in under 50 ms (incremental aggregates).
 - FR locale; DB error and upgrade handling; clean `web-ext lint`.
 - README, PRIVACY.md, CHANGELOG, extension icon, release workflow, ATN checklist.
-- ✅ The RC XPI passes the manual checklist on a clean ESR profile and a clean Release profile.
+- ✅ The RC XPI passes the manual checklist on a clean 157 profile and a clean current-Release profile.
 
 ## Stretch (after M7)
 
@@ -112,3 +117,8 @@ S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timel
 - Native context menus in an extension tab (`menus.overrideContext`).
 - Badge refresh cadence: alarms fire at most once a minute, so the label shows `h:mm`, not seconds.
 - Playwright Firefox on Fedora (no `install-deps`; install missing libraries with dnf if the browser fails to launch).
+
+### M0 spike outcomes
+- **`npm run tb`**: option (a) `web-ext run` works with the RPM binary `/usr/lib64/thunderbird/thunderbird` (157.0); the space button appears and opens the tab. Flatpak is detected (`flatpak:org.mozilla.Thunderbird`) but untested here. Option (b) (proxy file) was not needed.
+- **Typings**: no maintained package for MV3/157, see Decisions. `data_collection_permissions: {required: ["none"]}` is declared so `web-ext lint` is clean.
+- **TODO (owner)**: replace the gecko id `time-tracker@example.invalid` in `src/manifest.json` with your own before the first signed or ATN build.

@@ -15,7 +15,7 @@ Read only the sections the current task needs.
 
 ## Rules
 - `src/` ships as-is: ES modules + JSDoc types, no bundler, no transpiling, **no runtime dependencies**.
-- Thunderbird APIs: use `messenger.*`. Check signatures in `.ref/webext-docs/*.rst` (esr-mv3) before using an API; never from memory.
+- Thunderbird APIs: use `messenger.*`. Check signatures in `.ref/webext-docs/*.rst` (release-mv3, TB 157) before using an API; never from memory.
 - Background is a non-persistent event page: no in-memory state, persist to IndexedDB, re-arm alarms on startup.
 - All data access goes through `src/db/`. Invariants (one running entry, start<end) live there and have tests.
 - UI: tokens from `src/ui/styles/tokens.css` only, no raw colours. Thunderbird SVG icons only (`npm run icons`). No `innerHTML`/`outerHTML`/`insertAdjacentHTML`.
@@ -34,3 +34,7 @@ Read only the sections the current task needs.
 ## Gotchas
 <!-- Add one line per non-obvious lesson learned; prune when obsolete. -->
 - `.ref/` holds upstream clones for reading only (gitignored). Refresh with `npm run ref`.
+- `.ref/comm-central` is really `thunderbird/thunderbird-desktop` at tag `THUNDERBIRD_157_0_RELEASE` (sparse); the name is kept for stable paths.
+- `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
+- Dev harness URLs: `?fixtures=empty` (no data), `?fixtures=none` (no background), `?seed=N`.
+- Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).
