@@ -26,7 +26,7 @@ test('tracker tab renders fixture data through the mock messenger', async ({ pag
   const projects = page.getByRole('list').getByRole('listitem');
   await expect(projects.first()).toHaveText('Client work');
   await expect(projects).toHaveCount(10);
-  await expect(page.getByText(/10 projects · 15 tasks · \d+ time entries/)).toBeVisible();
+  await expect(page.getByText(/Projects: 10 · Tasks: 15 · Time entries: \d+/)).toBeVisible();
   await expectNoAxeViolations(page);
   expect(errors).toEqual([]);
 });
@@ -42,6 +42,11 @@ test('tracker tab passes axe in dark mode', async ({ page }) => {
   await page.goto('/ui/tracker.html');
   await expect(page.getByRole('listitem').first()).toBeVisible();
   await expectNoAxeViolations(page);
+});
+
+test('tracker tab shows an error when the background does not answer', async ({ page }) => {
+  await page.goto('/ui/tracker.html?fixtures=none');
+  await expect(page.getByText('Could not load your data. Try reopening this tab.')).toBeVisible();
 });
 
 test('popup renders its placeholder', async ({ page }) => {

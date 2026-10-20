@@ -32,12 +32,21 @@
     "description": "Heading of the project list in the tracker tab."
   },
   "trackerSummary": {
-    "message": "$PROJECTS$ projects · $TASKS$ tasks · $ENTRIES$ time entries",
+    "message": "Projects: $PROJECTS$ · Tasks: $TASKS$ · Time entries: $ENTRIES$",
     "description": "Data summary in the tracker tab.",
     "placeholders": {
-      "projects": { "content": "$1", "example": "6" },
-      "tasks": { "content": "$2", "example": "14" },
-      "entries": { "content": "$3", "example": "120" }
+      "projects": {
+        "content": "$1",
+        "example": "6"
+      },
+      "tasks": {
+        "content": "$2",
+        "example": "14"
+      },
+      "entries": {
+        "content": "$3",
+        "example": "120"
+      }
     }
   },
   "trackerEmpty": {
@@ -51,5 +60,9 @@
   "popupPlaceholder": {
     "message": "No timer running.",
     "description": "Placeholder text in the toolbar popup."
+  },
+  "trackerLoadError": {
+    "message": "Could not load your data. Try reopening this tab.",
+    "description": "Shown in the tracker tab when the background does not answer."
   }
 }

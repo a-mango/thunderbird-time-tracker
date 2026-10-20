@@ -27,6 +27,12 @@ function renderSummary(summary) {
 }
 
 localize();
-/** @type {Summary} */
-const summary = await messenger.runtime.sendMessage({ type: 'tt:summary' });
-renderSummary(summary);
+try {
+  /** @type {Summary} */
+  const summary = await messenger.runtime.sendMessage({ type: 'tt:summary' });
+  renderSummary(summary);
+} catch (error) {
+  console.error('time tracker: summary failed', error);
+  const counts = /** @type {HTMLElement} */ (document.querySelector('[data-summary-counts]'));
+  counts.textContent = messenger.i18n.getMessage('trackerLoadError');
+}

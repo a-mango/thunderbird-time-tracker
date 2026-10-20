@@ -23,6 +23,16 @@ export function createEvent() {
   };
 }
 
+/** Predefined messages for an English, left-to-right UI. */
+/** @type {Record<string, string>} */
+const PREDEFINED_MESSAGES = {
+  '@@ui_locale': 'en',
+  '@@bidi_dir': 'ltr',
+  '@@bidi_reversed_dir': 'rtl',
+  '@@bidi_start_edge': 'left',
+  '@@bidi_end_edge': 'right',
+};
+
 /**
  * Chrome-style message formatting: named placeholders, then $1..$9, then $$.
  * @param {Record<string, {message: string, placeholders?: Record<string, {content: string}>}>} messages
@@ -30,6 +40,8 @@ export function createEvent() {
  * @param {string | string[]} [substitutions]
  */
 export function formatMessage(messages, name, substitutions) {
+  const predefined = PREDEFINED_MESSAGES[name];
+  if (predefined !== undefined) return predefined;
   const entry = messages[name];
   if (!entry) return '';
   const subs = substitutions === undefined ? [] : [substitutions].flat();
@@ -438,10 +450,11 @@ if (typeof document !== 'undefined' && !('messenger' in globalThis)) {
     messages: data ? JSON.parse(data.textContent ?? '{}') : {},
     baseUrl: `${location.origin}/`,
   });
-  if (params.get('fixtures') !== 'empty') {
+  // ?fixtures=empty: no data. ?fixtures=none: no background at all (sendMessage rejects).
+  const mode = params.get('fixtures');
+  if (mode === 'empty') serveFixtures(api, { projects: [], tasks: [], entries: [] });
+  else if (mode !== 'none') {
     serveFixtures(api, generateFixtures({ seed: Number(params.get('seed') ?? 42) }));
-  } else {
-    serveFixtures(api, { projects: [], tasks: [], entries: [] });
   }
   Object.assign(globalThis, { messenger: api, browser: api });
 }
