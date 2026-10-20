@@ -26,11 +26,30 @@ describe('ensureSpace', () => {
     expect(await api.spaces.query({ isSelfOwned: true })).toHaveLength(1);
   });
 
-  it('repairs the tab URL of an existing space', async () => {
+  it('leaves an existing space alone by default', async () => {
     const api = mock();
     const stale = await api.spaces.create(SPACE_NAME, 'moz-extension://test/old.html');
     await ensureSpace(api);
-    expect(api.spaces._props(stale.id).url).toBe(`moz-extension://test/${TRACKER_PATH}`);
+    expect(api.spaces._props(stale.id).url).toBe('moz-extension://test/old.html');
+  });
+
+  it('repairs the tab URL and title of an existing space on request', async () => {
+    const api = mock();
+    const stale = await api.spaces.create(SPACE_NAME, 'moz-extension://test/old.html');
+    await ensureSpace(api, { repair: true });
+    expect(api.spaces._props(stale.id)).toEqual({
+      url: `moz-extension://test/${TRACKER_PATH}`,
+      button: { title: 'Time Tracker' },
+    });
+  });
+
+  it('re-creates the space after Thunderbird removed it (add-on disabled, then enabled)', async () => {
+    const api = mock();
+    const first = await ensureSpace(api);
+    await api.spaces.remove(first.id);
+    const second = await ensureSpace(api);
+    expect(second.id).not.toBe(first.id);
+    expect(await api.spaces.query({ isSelfOwned: true, name: SPACE_NAME })).toHaveLength(1);
   });
 
   it('ignores built-in spaces with other names', async () => {

@@ -53,8 +53,8 @@ export function createDevServer() {
       res.end();
       return;
     }
-    const path = resolvePath(decodeURIComponent(pathname));
     try {
+      const path = resolvePath(decodeURIComponent(pathname));
       if (!path || !(await stat(path)).isFile()) throw new Error('not found');
       const type =
         TYPES[/** @type {keyof typeof TYPES} */ (extname(path))] ?? 'application/octet-stream';

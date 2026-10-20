@@ -5,7 +5,7 @@
   "description": "Thunderbird extension: projects, tasks and time entries in their own space tab.",
   "type": "module",
   "engines": {
-    "node": ">=20"
+    "node": ">=22.13"
   },
   "scripts": {
     "dev": "node scripts/serve.mjs",
