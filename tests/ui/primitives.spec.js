@@ -5,7 +5,7 @@ test('the gallery renders without errors', async ({ page }) => {
   const errors = collectErrors(page);
   await openGallery(page);
   await expect(page.getByRole('tree', { name: 'Views' }).getByRole('treeitem')).toHaveCount(3);
-  await expect(page.getByRole('grid', { name: 'Tasks' }).locator('tbody tr')).toHaveCount(7);
+  await expect(page.getByRole('treegrid', { name: 'Tasks' }).locator('tbody tr')).toHaveCount(7);
   // Icons resolve: every <use> points at an imported file.
   const missing = await page.evaluate(async () => {
     const hrefs = new Set(

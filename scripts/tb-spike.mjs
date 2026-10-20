@@ -12,7 +12,7 @@ import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detect, webExt, webExtArgs } from './tb.mjs';
+import { detect, profile, webExt, webExtArgs } from './tb.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const stage = join(root, '.tb-stage');
@@ -213,13 +213,42 @@ async function main() {
     detached: true,
     env: { ...process.env, MOZ_ENABLE_WAYLAND: process.env.MOZ_ENABLE_WAYLAND ?? '1' },
   });
+  const stopChild = () => {
+    if (!child.pid) return;
+    try {
+      process.kill(-child.pid, 'SIGTERM');
+    } catch {
+      // Already gone.
+    }
+  };
+  for (const signal of /** @type {const} */ (['SIGINT', 'SIGTERM'])) {
+    process.once(signal, () => {
+      stopChild();
+      process.exit(130);
+    });
+  }
+  /** Rejects if web-ext exits before we are done, so the script fails fast. */
+  const childExited = new Promise((_, reject) =>
+    child.once('exit', (code) => reject(new Error(`web-ext exited early (code ${code})`))),
+  );
+  childExited.catch(() => {});
   /** @type {Marionette | null} */
   let m = null;
   try {
-    m = await Marionette.connect(PORT, 90_000);
-    const client = m;
+    m = await Promise.race([Marionette.connect(PORT, 90_000), childExited]);
+    const client = /** @type {Marionette} */ (m);
     await client.send('WebDriver:NewSession', { capabilities: {} });
     await client.send('Marionette:SetContext', { value: 'chrome' });
+    // Safety: only ever drive the instance running on .tb-profile/. Anything else on the port
+    // (e.g. a Thunderbird started by hand with --marionette) is left untouched.
+    const profileDir = await client.run(`return Services.dirsvc.get('ProfD', Ci.nsIFile).path;`);
+    if (resolve(String(profileDir)) !== resolve(profile)) {
+      m = null;
+      client.close();
+      throw new Error(
+        `Marionette on port ${PORT} belongs to profile ${profileDir}, not .tb-profile/`,
+      );
+    }
 
     const galleryUrl = /** @type {string} */ (
       await waitFor(
@@ -340,11 +369,7 @@ async function main() {
       ]);
       m?.close();
       await sleep(2000);
-      try {
-        process.kill(-(child.pid ?? 0), 'SIGTERM');
-      } catch {
-        // Already gone.
-      }
+      stopChild();
     } else m?.close();
   }
 }

@@ -52,6 +52,7 @@ export function rewriteSvg(svg, sourcePath) {
     .replace(/<!--[\s\S]*?-->\s*/g, '');
   if (/context-/.test(body)) throw new Error(`${sourcePath}: unhandled context paint`);
   if (!/<svg\b/.test(body)) throw new Error(`${sourcePath}: no <svg> element`);
+  if (/<svg\b[^>]*\sid=/.test(body)) throw new Error(`${sourcePath}: root <svg> already has an id`);
   body = body.replace(/<svg\b/, '<svg id="i"');
   const provenance =
     `<!-- Thunderbird icon mail/themes/shared/mail/icons/new/${sourcePath} (${TAG}).\n` +

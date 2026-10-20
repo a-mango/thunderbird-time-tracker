@@ -66,6 +66,8 @@ describe('formatRelative', () => {
     [new Date(2026, 9, 14, 9, 0), 'Wed 09:00'],
     [new Date(2026, 9, 13, 23, 59), '13 Oct'],
     [new Date(2025, 9, 16, 12, 0), '16/10/2025'],
+    // Future timestamps (clock skew) are dates, never "Today".
+    [new Date(2026, 9, 21, 9, 0), '21 Oct'],
   ])('%s -> %s', (date, text) => {
     expect(formatRelative(date.getTime(), options)).toBe(text);
   });
