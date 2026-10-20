@@ -29,8 +29,9 @@ const RESIZE_STEP = 10;
  */
 
 /**
- * ARIA grid after Thunderbird's thread pane table view (tree-listbox.css, threadPane.css).
- * Renders a native `<table role="grid">` with sortable header buttons, a column picker
+ * ARIA treegrid after Thunderbird's thread pane table view (tree-listbox.css, threadPane.css;
+ * Thunderbird's table body is a treegrid too, because rows, not cells, take focus).
+ * Renders a native `<table role="treegrid">` with sortable header buttons, a column picker
  * (`column-menu` icon, popover menu of checkboxes) and resizable fixed-width columns.
  * Single selection with a roving tabindex on rows; selection follows focus.
  *
@@ -54,7 +55,7 @@ export class TtTable extends HTMLElement {
   #layout = { widths: {}, hidden: [], sort: null };
   /** @type {unknown} */
   #selectedKey = null;
-  #table = el('table', { attrs: { role: 'grid' } });
+  #table = el('table', { attrs: { role: 'treegrid' } });
   #colgroup = el('colgroup');
   #headRow = el('tr');
   #body = el('tbody');
@@ -98,6 +99,8 @@ export class TtTable extends HTMLElement {
       this.#pickerButton.append(icon('column-menu', { class: 'small' }));
       this.#menu.id = `tt-menu-${crypto.randomUUID()}`;
       this.#pickerButton.setAttribute('aria-controls', this.#menu.id);
+      this.#pickerButton.id = `${this.#menu.id}-button`;
+      this.#menu.setAttribute('aria-labelledby', this.#pickerButton.id);
       this.append(el('div', { class: 'scroll' }, this.#table), this.#pickerButton, this.#menu);
     }
     this.#table.setAttribute('aria-label', this.getAttribute('label') ?? '');
@@ -132,11 +135,21 @@ export class TtTable extends HTMLElement {
     );
     const ids = new Set(columns.map((c) => c.id));
     this.#layout = {
-      widths: { ...stored?.widths },
-      hidden:
-        stored?.hidden?.filter((id) => ids.has(id)) ??
-        columns.filter((c) => c.hidden).map((c) => c.id),
-      sort: stored?.sort && ids.has(stored.sort.column) ? stored.sort : this.#layout.sort,
+      // Persisted values are untrusted: keep only well-formed entries.
+      widths: Object.fromEntries(
+        Object.entries(stored?.widths ?? {}).filter(
+          ([id, w]) => ids.has(id) && typeof w === 'number' && Number.isFinite(w),
+        ),
+      ),
+      hidden: Array.isArray(stored?.hidden)
+        ? stored.hidden.filter((id) => typeof id === 'string' && ids.has(id))
+        : columns.filter((c) => c.hidden).map((c) => c.id),
+      sort:
+        stored?.sort &&
+        ids.has(stored.sort.column) &&
+        (stored.sort.direction === 'ascending' || stored.sort.direction === 'descending')
+          ? { column: stored.sort.column, direction: stored.sort.direction }
+          : this.#layout.sort,
     };
     this.#renderHead();
     this.#renderBody();
@@ -171,7 +184,8 @@ export class TtTable extends HTMLElement {
   }
 
   set selectedKey(key) {
-    this.#selectedKey = key;
+    // An unknown key would leave no row tabbable.
+    this.#selectedKey = this.#rows.some((r) => this.rowKey(r) === key) ? key : null;
     this.#renderBody();
   }
 
@@ -435,6 +449,8 @@ export class TtTable extends HTMLElement {
   /** @param {KeyboardEvent} event */
   #onBodyKeyDown = (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // Keys on controls inside a cell (star, start/stop buttons) are theirs.
+    if (/** @type {Element} */ (event.target).localName !== 'tr') return;
     const keys = this.#sortedRows().map(this.rowKey);
     const current = this.#keyFromEvent(event);
     if (current === undefined || keys.length === 0) return;

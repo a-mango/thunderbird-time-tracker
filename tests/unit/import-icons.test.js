@@ -52,6 +52,11 @@ describe('rewriteSvg', () => {
     expect(out).not.toContain('note');
   });
 
+  it('rejects a root <svg> that already has an id', () => {
+    const withId = svg('<path fill="context-stroke"/>').replace('<svg ', '<svg id="x" ');
+    expect(() => rewriteSvg(withId, 'a.svg')).toThrow(/already has an id/);
+  });
+
   it('rejects files without the MPL header or with unknown context paint', () => {
     expect(() => rewriteSvg('<svg/>', 'a.svg')).toThrow(/MPL/);
     expect(() => rewriteSvg(svg('<path stroke="context-stroke"/>'), 'a.svg')).toThrow(/unhandled/);

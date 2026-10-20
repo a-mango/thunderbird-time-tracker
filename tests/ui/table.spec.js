@@ -1,8 +1,8 @@
 import { expect, test } from '@playwright/test';
-import { openGallery, recordEvents } from './helpers.js';
+import { expectNoAxeViolations, openGallery, recordEvents } from './helpers.js';
 
 /** @param {import('@playwright/test').Page} page */
-const grid = (page) => page.getByRole('grid', { name: 'Tasks' });
+const grid = (page) => page.getByRole('treegrid', { name: 'Tasks' });
 /** @param {import('@playwright/test').Page} page */
 const bodyRows = (page) => grid(page).locator('tbody tr');
 /** @param {import('@playwright/test').Page} page */
@@ -80,6 +80,8 @@ test('column picker hides and shows columns from the keyboard and persists', asy
   const menu = page.getByRole('menu');
   await expect(menu).toBeVisible();
   await expect(picker).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('menu', { name: 'Select columns to display' })).toBeVisible();
+  await expectNoAxeViolations(page);
   const week = menu.getByRole('menuitemcheckbox', { name: 'Week' });
   await expect(menu.getByRole('menuitemcheckbox', { name: 'Starred' })).toBeFocused();
   for (let i = 0; i < 3; i++) await page.keyboard.press('ArrowDown');

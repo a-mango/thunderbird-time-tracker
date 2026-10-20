@@ -47,11 +47,16 @@ export function formatEstimate(minutes) {
 export function formatRelative(ms, { now, locale, todayLabel, hourCycle }) {
   const today = new Date(now);
   today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
   const sixDaysAgo = new Date(today);
   sixDaysAgo.setDate(today.getDate() - 6);
   const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit', hourCycle });
-  if (ms >= today.getTime()) return `${todayLabel} ${time.format(ms)}`;
-  if (ms >= sixDaysAgo.getTime()) {
+  // Future timestamps (clock skew, edited entries) fall through to plain dates.
+  if (ms >= today.getTime() && ms < tomorrow.getTime()) {
+    return `${todayLabel} ${time.format(ms)}`;
+  }
+  if (ms >= sixDaysAgo.getTime() && ms < today.getTime()) {
     const weekday = new Intl.DateTimeFormat(locale, { weekday: 'short' }).format(ms);
     return `${weekday} ${time.format(ms)}`;
   }

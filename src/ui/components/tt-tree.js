@@ -91,6 +91,8 @@ export class TtTree extends HTMLElement {
       );
     }
     if (this.#selectedId && !this.#byId.has(this.#selectedId)) this.#selectedId = null;
+    // Keep the selection (the Tab stop) visible, e.g. after it moved under a collapsed parent.
+    if (this.#selectedId) this.#revealAncestors(this.#selectedId);
     this.#render();
   }
 
@@ -282,6 +284,8 @@ export class TtTree extends HTMLElement {
   /** @param {KeyboardEvent} event */
   #onKeyDown = (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
+    // Keys typed into controls inside a row (e.g. an inline rename field) are theirs.
+    if (/** @type {Element} */ (event.target).getAttribute('role') !== 'treeitem') return;
     const current = this.#itemFromEvent(event)?.dataset.id ?? this.#selectedId;
     if (!current) return;
     const visible = this.#visibleIds();
