@@ -21,7 +21,8 @@ clone_or_update() {
   fi
 }
 
-# Thunderbird desktop source at the targeted release (sparse: themes + extension schemas).
+# Thunderbird desktop source at the targeted release (sparse: themes, extension schemas,
+# mail/base/content + mail/modules for values set in JS such as row heights and UI font size).
 # Kept at .ref/comm-central so paths in docs and skills stay stable.
 tb="$REF/comm-central"
 if [ -d "$tb/.git" ]; then
@@ -36,6 +37,8 @@ fi
 git -C "$tb" sparse-checkout set \
   mail/themes/shared/mail \
   mail/components/extensions/schemas \
+  mail/base/content \
+  mail/modules \
   mail/config
 
 clone_or_update webext-docs https://github.com/thunderbird/webext-docs.git "$DOCS_BRANCH"

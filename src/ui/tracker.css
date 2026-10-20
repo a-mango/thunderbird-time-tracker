@@ -38,5 +38,5 @@ p {
 
 .project-list li {
   padding-block: var(--space-step);
-  padding-inline-start: calc(var(--folder-indent-step) * var(--depth, 0));
+  padding-inline-start: calc(var(--tt-indent-step) * var(--depth, 0));
 }

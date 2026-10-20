@@ -7,7 +7,7 @@
  *   mail/themes/shared/mail/{colors,layout,variables,spacings,tree-listbox,
  *   list-container,about3Pane,folderColors,pane-splitter}.css
  * Names are kept identical to Thunderbird's so code can be cross-checked.
- * M1 re-verifies these against the ESR you target before building on them.
+ * Historical copy: the shipped, 157-verified tokens are src/ui/styles/tokens.css.
  *
  * Density: set data-density="compact" | "relaxed" on <html> (default = Thunderbird "Default").
  * Accent:  set data-accent="thunderbird" | "purple" | "orange" | "pink" | "ink" | "teal";
