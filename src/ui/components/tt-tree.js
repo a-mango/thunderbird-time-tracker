@@ -157,7 +157,6 @@ export class TtTree extends HTMLElement {
     return false;
   }
 
-  /** @param {string} id */
   /** Expands every ancestor of `id`; returns whether anything changed. @param {string} id */
   #revealAncestors(id) {
     let changed = false;

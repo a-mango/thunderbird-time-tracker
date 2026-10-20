@@ -17,6 +17,7 @@
     "lint:ext": "web-ext lint --source-dir src --ignore-files 'types/**'",
     "shots": "node scripts/shots.mjs",
     "tb": "node scripts/tb.mjs",
+    "tb:spike": "node scripts/tb-spike.mjs",
     "build": "web-ext build --source-dir src --artifacts-dir dist --ignore-files 'types/**' --filename time-tracker-{version}.xpi --overwrite-dest",
     "icons": "node scripts/import-icons.mjs",
     "ref": "sh scripts/ref.sh"

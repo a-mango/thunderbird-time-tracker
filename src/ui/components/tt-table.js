@@ -2,6 +2,7 @@ import { getLayout, setLayout } from '../layout-store.js';
 import { el, icon, renderList, setAttrs } from '../render.js';
 
 const MIN_WIDTH = 40;
+const MAX_WIDTH = 1000;
 const RESIZE_STEP = 10;
 
 /**
@@ -14,6 +15,7 @@ const RESIZE_STEP = 10;
  *   `var(--table-header-cell-icon-width)` (fixed); columns without a width share the rest
  * @property {number} [minWidth] px (default 40)
  * @property {'start' | 'end' | 'center'} [align] cell alignment (time columns: `end`)
+ * @property {boolean} [numeric] cells use tabular-nums (implied by `align: 'end'`)
  * @property {(a: T, b: T) => number} [compare] makes the column sortable
  * @property {boolean} [hidden] initial state when nothing is persisted
  * @property {boolean} [required] cannot be hidden from the column picker
@@ -293,11 +295,15 @@ export class TtTable extends HTMLElement {
         'aria-orientation': 'vertical',
         'aria-label': messenger.i18n.getMessage('tableResizeColumn', column.label),
         'aria-valuemin': column.minWidth ?? MIN_WIDTH,
+        'aria-valuemax': MAX_WIDTH,
       },
     });
     /** @param {number} width */
     const resize = (width) => {
-      this.#layout.widths[column.id] = Math.max(column.minWidth ?? MIN_WIDTH, Math.round(width));
+      this.#layout.widths[column.id] = Math.min(
+        MAX_WIDTH,
+        Math.max(column.minWidth ?? MIN_WIDTH, Math.round(width)),
+      );
       this.#renderHead();
     };
     const rtl = () => getComputedStyle(this).direction === 'rtl';
@@ -367,8 +373,9 @@ export class TtTable extends HTMLElement {
       tr.setAttribute('aria-selected', String(key === this.#selectedKey));
       tr.replaceChildren(
         ...columns.map((column) => {
-          const cell = el('td', { attrs: { role: 'gridcell' } });
+          const cell = el('td', { attrs: { role: 'gridcell' }, dataset: { column: column.id } });
           if (column.align) cell.dataset.align = column.align;
+          if (column.numeric || column.align === 'end') cell.classList.add('num');
           if (column.icon) cell.classList.add('icon-column');
           this.renderCell(row, column, cell);
           return cell;

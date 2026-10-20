@@ -4,7 +4,13 @@
 import '../ui/components/index.js';
 import { TtDialog } from '../ui/components/tt-dialog.js';
 import { el, icon } from '../ui/render.js';
-import { formatDuration, formatElapsed, NO_VALUE } from '../lib/format.js';
+import {
+  formatDuration,
+  formatElapsed,
+  formatEstimate,
+  formatRelative,
+  NO_VALUE,
+} from '../lib/format.js';
 import { generateFixtures } from './fixtures.js';
 
 /** @typedef {import('./fixtures.js').Project} Project */
@@ -18,7 +24,6 @@ const t = (/** @type {string} */ name, /** @type {string[]} */ ...subs) =>
   messenger.i18n.getMessage(name, subs);
 
 const MINUTE = 60_000;
-const DAY = 24 * 60 * MINUTE;
 // Fixed clock so shots are stable: Tue 20 Oct 2026, 14:45 local, like reference A.
 const NOW = new Date(2026, 9, 20, 14, 45).getTime();
 
@@ -148,12 +153,17 @@ const projectNodes = (parentId) =>
   (childrenOf.get(parentId) ?? [])
     .sort((a, b) => a.order - b.order)
     .map((p) => ({ id: p.id, label: p.name, expanded: true, children: projectNodes(p.id) }));
-const ARCHIVE = { id: 'archive', label: t('projectArchive') };
+const ARCHIVE = {
+  id: 'archive',
+  label: t('projectArchive'),
+  expanded: false,
+  children: [{ id: 'archive-1', label: 'Harbor Coffee — launch' }],
+};
 projectsTree.renderRow = (node, content) => {
   const li = /** @type {HTMLElement} */ (content.closest('li'));
   const project = projectById.get(node.id);
-  li.classList.toggle('root', !project?.parentId);
-  li.classList.toggle('muted', node.id === ARCHIVE.id);
+  li.classList.toggle('root', Boolean(project) && !project?.parentId);
+  li.classList.toggle('muted', node.id === ARCHIVE.id || node.id.startsWith('archive-'));
   li.classList.toggle('running', node.id === runningTask?.projectId);
   const folder = icon('folder');
   if (project) folder.style.setProperty('--icon-color', project.color);
@@ -205,26 +215,10 @@ for (const [label, iconName, pressed] of /** @type {const} */ ([
 }
 qfb.append(searchField());
 
-/** Estimate label: whole hours as `20h`, otherwise like durations. @param {number} minutes */
-const formatEstimate = (minutes) =>
-  minutes % 60 === 0 ? `${minutes / 60}h` : formatDuration(minutes * MINUTE);
-
 const locale = messenger.i18n.getUILanguage();
-const timeFormat = new Intl.DateTimeFormat(locale, {
-  hour: '2-digit',
-  minute: '2-digit',
-  hourCycle: 'h23',
-});
-const weekdayFormat = new Intl.DateTimeFormat(locale, { weekday: 'short' });
-const dayFormat = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short' });
-/** Message-list style dates: `Today 10:25`, `Mon 17:30`, `16 Oct`. @param {number} ms */
-function formatLast(ms) {
-  if (ms >= today.getTime()) return `${t('viewToday')} ${timeFormat.format(ms)}`;
-  if (ms >= today.getTime() - 6 * DAY) {
-    return `${weekdayFormat.format(ms)} ${timeFormat.format(ms)}`;
-  }
-  return dayFormat.format(ms);
-}
+/** @param {number} ms */
+const formatLast = (ms) =>
+  formatRelative(ms, { now: NOW, locale, todayLabel: t('viewToday'), hourCycle: 'h23' });
 
 const ICON_WIDTH = 'var(--table-header-cell-icon-width)';
 const byNumber =
@@ -262,7 +256,13 @@ table.columns = [
     width: 110,
     compare: byNumber((r) => r.estimateMin ?? -1),
   },
-  { id: 'last', label: t('columnLastTracked'), width: 110, compare: byNumber((r) => r.last ?? 0) },
+  {
+    id: 'last',
+    label: t('columnLastTracked'),
+    width: 130,
+    numeric: true,
+    compare: byNumber((r) => r.last ?? 0),
+  },
 ];
 table.renderRow = (row, tr) => tr.classList.toggle('running', row.running);
 table.renderCell = (row, column, cell) => {
@@ -314,7 +314,10 @@ table.renderCell = (row, column, cell) => {
         ? t('lastTrackedRunning')
         : row.last
           ? formatLast(row.last)
-          : t('lastTrackedNever');
+          : '';
+      if (!row.running && !row.last) {
+        cell.append(el('span', { class: 'muted', text: t('lastTrackedNever') }));
+      }
       break;
   }
 };
@@ -472,8 +475,8 @@ slot('cards').append(
   card(
     'Chips and meters',
     ...[
-      ['Implementation', '#ae55f7'],
-      ['Frontend', '#25a6a0'],
+      ['Implementation', 'var(--color-accent-purple)'],
+      ['Frontend', 'var(--color-accent-teal)'],
       ['Billable', null],
     ].map(([label, color]) => {
       const chip = el('span', { class: 'chip', text: label ?? '' });
