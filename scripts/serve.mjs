@@ -86,5 +86,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const port = portArg > 0 ? Number(process.argv[portArg + 1]) : Number(process.env.PORT ?? 5173);
   await listen(port);
   console.log(`Dev harness: http://localhost:${port}/ (tracker) · /ui/popup.html`);
-  console.log('Query options: ?seed=<n> for other fixtures, ?fixtures=empty for an empty state.');
+  console.log(
+    'Query options: ?seed=<n> for other fixtures, ?fixtures=empty for an empty state, ?fixtures=none for no background.',
+  );
 }

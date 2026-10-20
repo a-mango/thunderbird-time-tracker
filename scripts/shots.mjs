@@ -26,7 +26,9 @@ try {
     await page.goto(`http://localhost:${port}${path}`);
     await page.waitForLoadState('networkidle');
     const file = `${outDir}${name}.png`;
-    await page.screenshot({ path: file });
+    // Popups size to their content in Thunderbird: clip to <body> instead of the viewport.
+    if (path.includes('popup')) await page.locator('body').screenshot({ path: file });
+    else await page.screenshot({ path: file });
     console.log(file);
     await page.close();
   }

@@ -7,4 +7,6 @@ export function localize(root = document) {
     el.textContent = messenger.i18n.getMessage(/** @type {HTMLElement} */ (el).dataset.i18n ?? '');
   }
   document.title = messenger.i18n.getMessage('extensionName');
+  document.documentElement.lang = messenger.i18n.getUILanguage();
+  document.documentElement.dir = messenger.i18n.getMessage('@@bidi_dir') || 'ltr';
 }
