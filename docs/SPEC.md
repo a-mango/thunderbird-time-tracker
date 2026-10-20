@@ -24,11 +24,11 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 
 ## Platform
 
-- Thunderbird WebExtension, **Manifest V3**. `strict_min_version: "128.0"` (first MV3 ESR). Develop on the current ESR (153) and test on Release too.
+- Thunderbird WebExtension, **Manifest V3**. `strict_min_version: "157.0"`. Develop and test on Thunderbird 157 Release (decided in M0; the next ESR line will be the first ESR that can install it).
 - Background is an **event page** (`background.scripts` + `"type": "module"`), not a service worker. It can be suspended, so it keeps no state in memory.
 - Copy-only build: `src/` ships as-is, so ATN review needs no source submission (`.ref/webext-docs/guides/sourceCodeSubmission.rst`, `vendoring.rst`). JavaScript ES modules with JSDoc types, checked by `tsc --noEmit`.
 - **Zero runtime dependencies.** Any future library is vendored at an exact version and declared in `VENDOR.md`.
-- Use the `messenger.*` namespace. Check every API against `.ref/webext-docs` (branch `esr-mv3`); don't rely on memory.
+- Use the `messenger.*` namespace. Check every API against `.ref/webext-docs` (branch `release-mv3`); don't rely on memory.
 
 ## Permissions
 

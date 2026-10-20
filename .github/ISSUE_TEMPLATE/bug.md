@@ -4,7 +4,7 @@ about: Something misbehaves while using the extension in Thunderbird
 labels: bug
 ---
 
-**Thunderbird version / channel:** (e.g. 153.3 ESR, RPM)
+**Thunderbird version / channel:** (e.g. 157.0 Release, RPM)
 **Extension version or commit:**
 
 **Steps**
