@@ -1,22 +1,5 @@
-import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
-
-/** @param {import('@playwright/test').Page} page */
-async function expectNoAxeViolations(page) {
-  const { violations } = await new AxeBuilder({ page }).analyze();
-  expect(violations.map((v) => `${v.id}: ${v.help} (${v.nodes.length})`)).toEqual([]);
-}
-
-/** @param {import('@playwright/test').Page} page */
-function collectErrors(page) {
-  /** @type {string[]} */
-  const errors = [];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error') errors.push(message.text());
-  });
-  return errors;
-}
+import { collectErrors, expectNoAxeViolations } from './helpers.js';
 
 test('tracker tab renders fixture data through the mock messenger', async ({ page }) => {
   const errors = collectErrors(page);

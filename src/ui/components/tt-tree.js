@@ -1,5 +1,5 @@
 import { getLayout, setLayout } from '../layout-store.js';
-import { el, icon, renderList } from '../render.js';
+import { el, icon, renderList, setAttrs } from '../render.js';
 
 const TYPE_AHEAD_MS = 500;
 
@@ -13,7 +13,7 @@ const TYPE_AHEAD_MS = 500;
 
 /**
  * ARIA tree after Thunderbird's folder pane (tree-listbox + list-container row states).
- * Light DOM: `<tt-tree role="tree">` > `ul[role=none]` > `li[role=treeitem]` > `div.container`
+ * Light DOM: `<tt-tree role="tree">` > `ul[role=none]` > `li[role=none]` > `div.container[role=treeitem]`
  * + `ul[role=group]`. Selection follows focus, with a roving tabindex.
  *
  * Attributes: `aria-label` (required, localized by the page); `persist` = layout-store key for
@@ -39,6 +39,7 @@ export class TtTree extends HTMLElement {
   #typed = '';
   #typedAt = 0;
   #root = el('ul', { attrs: { role: 'none' } });
+  #uid = `tt-tree-${crypto.randomUUID()}`;
 
   /**
    * Fills a row's content (after the twisty). Override to add icons and badges.
@@ -128,9 +129,8 @@ export class TtTree extends HTMLElement {
   /** Moves focus to an item (selecting it). @param {string} id */
   focusItem(id) {
     if (!this.#byId.has(id)) return;
-    this.#revealAncestors(id);
-    if (this.#selectedId === id) this.#render();
-    else this.#select(id);
+    if (this.#revealAncestors(id)) this.#render();
+    this.#select(id);
     this.#itemElement(id)?.focus();
   }
 
@@ -158,14 +158,20 @@ export class TtTree extends HTMLElement {
   }
 
   /** @param {string} id */
+  /** Expands every ancestor of `id`; returns whether anything changed. @param {string} id */
   #revealAncestors(id) {
-    for (let p = this.#parentOf.get(id); p; p = this.#parentOf.get(p)) this.#expanded.add(p);
+    let changed = false;
+    for (let p = this.#parentOf.get(id); p; p = this.#parentOf.get(p)) {
+      if (!this.#expanded.has(p)) changed = true;
+      this.#expanded.add(p);
+    }
+    return changed;
   }
 
   /** @param {string} id */
   #itemElement(id) {
     return /** @type {HTMLElement | null} */ (
-      this.querySelector(`li[data-id="${CSS.escape(id)}"]`)
+      this.querySelector(`li[data-id="${CSS.escape(id)}"] > [role="treeitem"]`)
     );
   }
 
@@ -173,7 +179,13 @@ export class TtTree extends HTMLElement {
   #select(id) {
     if (this.#selectedId === id) return;
     this.#selectedId = id;
-    this.#render();
+    // Only the selection changed: update item states without re-rendering rows, so a
+    // double-click still lands on the same nodes.
+    for (const item of this.querySelectorAll('[role="treeitem"]')) {
+      const selected = /** @type {HTMLElement} */ (item.parentElement).dataset.id === id;
+      item.setAttribute('aria-selected', String(selected));
+      item.setAttribute('tabindex', selected ? '0' : '-1');
+    }
     this.dispatchEvent(new CustomEvent('tt-select', { bubbles: true, detail: { id } }));
   }
 
@@ -195,9 +207,16 @@ export class TtTree extends HTMLElement {
   #createItem() {
     const twisty = el('span', { class: 'twisty' }, icon('nav-down-sm', { class: 'small' }));
     const content = el('span', { class: 'content' });
-    const container = el('div', { class: 'container' }, twisty, content);
+    // The treeitem is the row only, so its name is the row text (name and badge); the group is
+    // a sibling it owns through aria-owns, not a descendant whose text would join the name.
+    const container = el(
+      'div',
+      { class: 'container', attrs: { role: 'treeitem' } },
+      twisty,
+      content,
+    );
     const group = el('ul', { attrs: { role: 'group' } });
-    return el('li', { attrs: { role: 'treeitem' } }, container, group);
+    return el('li', { attrs: { role: 'none' } }, container, group);
   }
 
   /**
@@ -210,19 +229,21 @@ export class TtTree extends HTMLElement {
     const hasChildren = Boolean(node.children?.length);
     const expanded = hasChildren && this.#expanded.has(node.id);
     li.dataset.id = node.id;
-    li.tabIndex = node.id === tabbable ? 0 : -1;
-    li.setAttribute('aria-level', String(level));
-    li.setAttribute('aria-selected', String(node.id === this.#selectedId));
-    li.setAttribute('aria-label', node.label);
-    if (hasChildren) li.setAttribute('aria-expanded', String(expanded));
-    else li.removeAttribute('aria-expanded');
     li.classList.toggle('children', hasChildren);
-    const container = /** @type {HTMLElement} */ (li.firstElementChild);
-    container.style.setProperty('--depth', String(level - 1));
-    const content = /** @type {HTMLElement} */ (container.lastElementChild);
+    const item = /** @type {HTMLElement} */ (li.firstElementChild);
+    const group = /** @type {HTMLElement} */ (li.lastElementChild);
+    group.id = `${this.#uid}-${node.id}`;
+    setAttrs(item, {
+      tabindex: node.id === tabbable ? 0 : -1,
+      'aria-level': level,
+      'aria-selected': String(node.id === this.#selectedId),
+      'aria-expanded': hasChildren ? String(expanded) : null,
+      'aria-owns': expanded ? group.id : null,
+    });
+    item.style.setProperty('--depth', String(level - 1));
+    const content = /** @type {HTMLElement} */ (item.lastElementChild);
     content.replaceChildren();
     this.renderRow(node, content);
-    const group = /** @type {HTMLElement} */ (li.lastElementChild);
     group.hidden = !expanded;
     const renderChildren = expanded ? (node.children ?? []) : [];
     renderList(
@@ -236,9 +257,8 @@ export class TtTree extends HTMLElement {
 
   /** @param {Event} event */
   #itemFromEvent(event) {
-    const li = /** @type {HTMLElement | null} */ (
-      /** @type {Element} */ (event.target).closest('li[role="treeitem"]')
-    );
+    const item = /** @type {Element} */ (event.target).closest('[role="treeitem"]');
+    const li = /** @type {HTMLElement | null | undefined} */ (item?.parentElement);
     return li && this.contains(li) ? li : null;
   }
 

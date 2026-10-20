@@ -93,7 +93,7 @@ body {
   }
   & .list-count {
     padding-inline-start: 9px;
-    color: var(--layout-color-3);
+    color: var(--tt-text-muted);
   }
   & .spacer {
     flex: 1;
@@ -118,7 +118,7 @@ body {
   flex: 1;
 
   & .star {
-    color: var(--layout-color-3);
+    color: var(--tt-text-muted);
     visibility: hidden;
   }
   & .star.starred {
@@ -130,7 +130,7 @@ body {
     visibility: visible;
   }
   & .timer {
-    color: var(--layout-color-3);
+    color: var(--tt-text-muted);
   }
   & .timer.running {
     color: var(--tt-running);
@@ -157,7 +157,7 @@ body {
 .list-footer {
   margin: 0;
   padding: 9px 12px;
-  color: var(--layout-color-3);
+  color: var(--tt-text-muted);
   background-color: var(--tree-view-bg);
 }
 
@@ -227,7 +227,7 @@ body {
 }
 
 .muted {
-  color: var(--layout-color-3);
+  color: var(--tt-text-muted);
 }
 
 .splitter-demo {

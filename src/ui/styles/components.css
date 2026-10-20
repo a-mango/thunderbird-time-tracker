@@ -69,7 +69,7 @@ tt-tree {
     list-style: none;
   }
   /* Focus shows as the row state below, not as an outline (beats base.css :focus-visible). */
-  & li:focus-visible {
+  & .container:focus-visible {
     outline: none;
   }
   & .container {
@@ -101,7 +101,7 @@ tt-tree {
   & li:not(.children) > .container > .twisty > .icon {
     visibility: hidden;
   }
-  & li[aria-expanded='false'] > .container > .twisty > .icon {
+  & .container[aria-expanded='false'] > .twisty > .icon {
     transform: rotate(-90deg);
 
     &:dir(rtl) {
@@ -128,31 +128,35 @@ tt-tree {
   }
 
   /* Root rows (top-level groups) are bold, like account rows. */
-  & li[aria-level='1'].root > .container .name {
+  & li.root > .container .name {
     font-weight: bold;
   }
   /* Running project: bold name in the accent colour ("new messages"). */
+  /* Running project: bold name in --new-folder-color, like folders with new mail. */
   & li.running > .container .name {
     font-weight: bold;
-    color: var(--selected-item-color);
+    color: var(--new-folder-color);
+  }
+  & li.running > .container[aria-selected='true'] .name {
+    color: currentColor;
   }
   & li.muted > .container {
-    color: var(--layout-color-3);
+    color: var(--tt-text-muted);
   }
 
   /* Row states. Selection follows focus, so selected = current. */
-  & li:not([aria-selected='true']) > .container:hover {
+  & .container:not([aria-selected='true']):hover {
     border-color: var(--list-container-border-hover);
     background-color: var(--list-container-background-hover);
   }
-  & li:not([aria-selected='true']) > .container:active {
+  & .container:not([aria-selected='true']):active {
     background-color: var(--list-container-background-selected-current-focused);
   }
-  & li[aria-selected='true'] > .container {
+  & .container[aria-selected='true'] {
     border-color: var(--list-container-border-selected-current);
     background-color: var(--list-container-background-selected-current);
   }
-  &:focus-within li[aria-selected='true'] > .container {
+  &:focus-within .container[aria-selected='true'] {
     border-color: var(--list-container-border-selected-current-focused);
     background-color: var(--list-container-background-selected-current-focused);
   }
@@ -437,7 +441,7 @@ tt-notification-bar {
   }
   &[type='success'] {
     background-color: var(--infobar-background-success);
-    color: var(--infobar-text-on-strong);
+    color: var(--infobar-text-success);
   }
   &:is([type='warning'], [type='error'], [type='success']) .type-icon {
     color: currentColor;
