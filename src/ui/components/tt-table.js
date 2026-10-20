@@ -81,6 +81,12 @@ export class TtTable extends HTMLElement {
    */
   renderRow = () => {};
 
+  static observedAttributes = ['label'];
+
+  attributeChangedCallback() {
+    this.#table.setAttribute('aria-label', this.getAttribute('label') ?? '');
+  }
+
   connectedCallback() {
     if (!this.#table.isConnected) {
       this.#table.append(this.#colgroup, el('thead', {}, this.#headRow), this.#body);

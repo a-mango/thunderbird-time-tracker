@@ -192,7 +192,7 @@
   & > kbd {
     position: absolute;
     inset-inline-end: calc(var(--button-padding) + var(--space-step));
-    color: var(--search-field-placeholder);
+    color: var(--tt-text-muted);
     font: inherit;
     font-size: 0.8em;
     pointer-events: none;
@@ -220,16 +220,16 @@
 
   /* "New mail" style: the running project. */
   &.new {
-    background-color: var(--selected-item-color);
-    color: var(--selected-item-text-color);
+    background-color: var(--folderpane-unread-new-count-background);
+    color: var(--folderpane-unread-count-text);
     font-weight: bold;
   }
-  /* Collapsed parent of a running project. */
+  /* Collapsed parent of a running project (collapsed parent of new mail). */
   &.outlined {
     padding-block: 0;
-    border: 1px solid var(--selected-item-color);
+    border: 1px solid var(--new-folder-color);
     background-color: transparent;
-    color: var(--selected-item-color);
+    color: var(--new-folder-color);
     font-weight: bold;
   }
 }

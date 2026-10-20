@@ -56,7 +56,11 @@
                 <h3 class="mode-name" id="mode-projects" data-i18n="modeProjects"></h3>
                 <button class="icon-button" type="button" data-slot="projects-more"></button>
               </div>
-              <tt-tree id="projects-tree" aria-labelledby="mode-projects"></tt-tree>
+              <tt-tree
+                id="projects-tree"
+                aria-labelledby="mode-projects"
+                persist="gallery.projects"
+              ></tt-tree>
             </div>
           </aside>
           <tt-splitter

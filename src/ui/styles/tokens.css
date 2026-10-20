@@ -95,8 +95,9 @@
   /* ---- Accent / selection (variables.css) ---- */
   --selected-item-color: AccentColor;
   --selected-item-text-color: AccentColorText;
-  --new-folder-color: light-dark(var(--color-blue-60), var(--color-blue-40));
-  --link-color: light-dark(var(--color-blue-60), var(--color-blue-40));
+  /* Upstream light value is blue-60, 4.49:1 on --layout-background-1; blue-70 passes WCAG AA. */
+  --new-folder-color: light-dark(var(--color-blue-70), var(--color-blue-40));
+  --link-color: light-dark(var(--color-blue-70), var(--color-blue-40));
 
   /* ---- Sidebar = folder pane (variables.css, about3Pane.css) ---- */
   --sidebar-background: var(--layout-background-1);
@@ -165,7 +166,9 @@
   --infobar-icon-info: light-dark(#0090ed, #45a1ff);
   --infobar-background-warning: light-dark(#fff160, #ffe900);
   --infobar-text-warning: var(--color-black);
-  --infobar-background-success: var(--color-green-60);
+  /* Upstream success is white on green-60 (3.3:1); darkened to pass WCAG AA. */
+  --infobar-background-success: light-dark(#1d783b, var(--color-green-50));
+  --infobar-text-success: light-dark(var(--color-white), var(--color-black));
   --infobar-background-error: var(--color-red-60);
   --infobar-text-on-strong: var(--color-white);
   --infobar-button-hover: color-mix(in srgb, currentColor 15%, transparent);
@@ -217,7 +220,8 @@
   --folderpane-unread-count-text: var(--color-white);
   --folderpane-total-count-background: light-dark(var(--color-gray-20), var(--color-gray-60));
   --folderpane-total-count-text: light-dark(var(--color-gray-90), var(--color-white));
-  --folderpane-unread-new-count-background: light-dark(var(--color-blue-60), var(--color-blue-50));
+  /* Upstream dark value is blue-50 (white text 3.3:1); blue-60 passes WCAG AA. */
+  --folderpane-unread-new-count-background: var(--color-blue-60);
 
   /* Folder icon colours (folderColors.css) -> default project colours */
   --folder-color-folder: light-dark(#eabd08, #fee78a);
@@ -243,7 +247,9 @@
   /* Thunderbird hard-codes the folder tree indent: --indent: calc(16px * var(--depth)). */
   --tt-indent-step: 16px;
   --tt-running: light-dark(var(--color-green-60), var(--color-green-50));
-  --tt-over-estimate: var(--color-text-critical);
+  --tt-over-estimate: light-dark(var(--color-red-70), var(--color-red-40));
+  /* Muted text that passes AA on layout backgrounds 0-1 in both schemes (reference A's --muted). */
+  --tt-text-muted: light-dark(var(--color-gray-50), var(--color-gray-40));
   --tt-starred: var(--color-amber-50);
   /* Field and small-button height, after search-bar.css: 1.2em + 2 × --search-padding. */
   --tt-field-height: calc(round(up, 1.2em, 1px) + 2 * var(--space-base) + 2px);
