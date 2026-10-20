@@ -1,0 +1,42 @@
+body {
+  margin: 0;
+  background-color: var(--layout-background-0);
+  color: var(--layout-color-1);
+  font: message-box;
+}
+
+.placeholder {
+  padding: calc(var(--space-step) * 8);
+}
+
+h1 {
+  margin-block: 0 calc(var(--space-step) * 2);
+  font-size: 1.4em;
+  font-weight: 600;
+}
+
+h2 {
+  margin-block: calc(var(--space-step) * 6) calc(var(--space-step) * 2);
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  color: var(--layout-color-2);
+}
+
+.summary-counts {
+  font-variant-numeric: tabular-nums;
+}
+
+.project-list {
+  margin: calc(var(--space-step) * 2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.project-list li {
+  padding-block: var(--space-step);
+  padding-inline-start: calc(var(--folder-indent-step) * var(--depth, 0));
+}
