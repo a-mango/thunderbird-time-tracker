@@ -1,0 +1,22 @@
+body {
+  margin: 0;
+  min-width: 280px;
+  background-color: var(--panel-background-color);
+  color: var(--panel-text-color);
+  font: message-box;
+}
+
+main {
+  padding: calc(var(--space-step) * 4);
+}
+
+h1 {
+  margin-block: 0 var(--space-step);
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+p {
+  margin: 0;
+  color: var(--layout-color-2);
+}
