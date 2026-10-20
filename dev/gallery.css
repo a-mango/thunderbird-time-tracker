@@ -62,10 +62,10 @@ body {
 }
 
 .view-icon {
-  color: var(--folder-color-inbox);
+  --icon-color: var(--folder-color-inbox);
 
   &.starred {
-    color: var(--tt-starred);
+    --icon-color: var(--tt-starred);
   }
 }
 
@@ -74,6 +74,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-inline-size: 320px;
+  background-color: var(--tree-view-bg);
 }
 
 /* threadPane.css #threadPaneHeaderBar */
@@ -114,8 +115,9 @@ body {
   }
 }
 
+/* The list grows with its rows; the footer sits right after the last row. */
 #tasks-table {
-  flex: 1;
+  flex: 0 1 auto;
 
   & .star {
     color: var(--tt-text-muted);
@@ -126,7 +128,7 @@ body {
     --icon-fill-opacity: 1;
     visibility: visible;
   }
-  & tr:hover .star {
+  & tr:is(:hover, :focus-visible, [aria-selected='true']) .star {
     visibility: visible;
   }
   & .timer {
@@ -135,8 +137,7 @@ body {
   & .timer.running {
     color: var(--tt-running);
   }
-  & tr.running td:nth-child(3),
-  & tr.running td:last-child {
+  & tr.running td:is([data-column='name'], [data-column='last']) {
     font-weight: bold;
   }
   & tbody:focus-within tr[aria-selected='true'] :is(.timer, .star) {

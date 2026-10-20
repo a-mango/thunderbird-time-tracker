@@ -75,6 +75,8 @@ tt-tree {
   & .container {
     display: flex;
     align-items: center;
+    /* Content-box like upstream: 26px + the 1px borders = 28px rows (measured in Thunderbird). */
+    box-sizing: content-box;
     min-block-size: var(--list-item-min-height);
     margin-inline: 3px;
     padding-inline-start: calc(var(--tt-indent-step) * var(--depth, 0));
@@ -119,6 +121,9 @@ tt-tree {
     block-size: var(--folder-pane-icon-size);
     color: var(--icon-color, var(--folder-color-folder));
   }
+  & li.muted > .container .content > .icon {
+    --icon-color: currentColor;
+  }
   & .name {
     flex: 1;
     margin-inline: 7px;
@@ -137,8 +142,10 @@ tt-tree {
     font-weight: bold;
     color: var(--new-folder-color);
   }
-  & li.running > .container[aria-selected='true'] .name {
-    color: currentColor;
+  @media (prefers-contrast) {
+    & li.running > .container[aria-selected='true'] .name {
+      color: currentColor;
+    }
   }
   & li.muted > .container {
     color: var(--tt-text-muted);
