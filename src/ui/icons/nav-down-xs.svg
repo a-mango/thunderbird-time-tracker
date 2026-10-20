@@ -1,0 +1,9 @@
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!-- Thunderbird icon mail/themes/shared/mail/icons/new/nav-down-xs.svg (THUNDERBIRD_157_0_RELEASE).
+   - Modified by scripts/import-icons.mjs: context paint rewritten to currentColor. -->
+<svg id="i" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 8 8" height="8" width="8">
+  <path fill="currentColor" style="fill-opacity: var(--icon-fill-opacity, 0.2)" d="M.17 2.13a.5.5 0 0 0-.04.7l3.5 4c.2.22.54.22.74 0l3.5-4a.5.5 0 0 0-.74-.66L4 5.75.87 2.17a.5.5 0 0 0-.7-.04z"/>
+  <path fill="currentColor" d="M.17 2.13a.5.5 0 0 0-.04.7l3.5 4c.2.22.54.22.74 0l3.5-4a.5.5 0 0 0-.74-.66L4 5.75.87 2.17a.5.5 0 0 0-.7-.04z"/>
+</svg>
