@@ -35,7 +35,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 | Permission | Why | When |
 |---|---|---|
 | (none for IndexedDB) | data store | M2 |
-| `storage` | small settings and state mirror (`storage.local`) | M2 |
+| `storage` | small settings and state mirror (`storage.local`) | Deferred from M2: settings live in IndexedDB `meta`; add it with the first feature that needs a `storage.local` mirror |
 | `alarms` | 1-minute tick while running (badge and label refresh) | M5 |
 | `menus`, `menus.overrideContext` | native context menus in our page | M3 (if the spike succeeds) |
 | `idle`, `notifications` | idle prompt | S2 |
@@ -76,17 +76,21 @@ tests/ui           Playwright (Firefox engine) against the dev harness
  *             estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *             order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task */
 /** @typedef {{id:string, taskId:string, start:number, end:number|null, note:string,
- *             source:'timer'|'manual'|'split'|'idle', createdAt:number, updatedAt:number}} Entry */
+ *             source:'timer'|'manual'|'split'|'idle', createdAt:number, updatedAt:number,
+ *             deletedAt:number|null}} Entry */
 /** @typedef {{id:string, taskId:string, headerMessageId:string, subject:string,
  *             date:number}} MessageLink  (S1) */
 ```
-- Stores: `projects` (index `parentId`), `tasks` (index `projectId`), `entries` (indexes `taskId`, `start`, `end`), `links` (S1), `meta` (`schemaVersion`, `settings`).
+- Stores: `projects` (index `parentId`), `tasks` (index `projectId`), `entries` (indexes `taskId`, `start`, `end`, `deletedAt`), `links` (S1), `meta` (`schemaVersion`, `settings`, `running`).
+- IndexedDB can't index `null`, so the running entry never appears in the `end` index. `meta.running` points at it and is read and written in the same transaction as every write that starts, stops or removes the running entry.
+- Deleting an entry is a soft delete (`deletedAt` set; a running entry is stopped first). It stays restorable (undo) until the next Thunderbird start: `runtime.onStartup` purges soft-deleted entries.
 - Times are epoch ms (UTC). Day and week boundaries are computed in local time at read time. An entry that crosses midnight counts toward each day it overlaps.
 - **Invariants**, enforced in `db/` and tested:
   - At most one entry has `end === null`, and `start < end`.
   - Starting a task stops the running one at the same instant.
   - A done task can't be started; starting it asks to reopen.
-  - Deleting a project that has tasks requires an explicit cascade.
+  - Deleting a project that has tasks or subprojects, or a task that has entries, requires an explicit cascade.
+  - A project can't be moved under itself or one of its descendants.
 - Migrations live in `db/migrations.js`, are versioned, and each has a test.
 
 ## Settings

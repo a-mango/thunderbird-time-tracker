@@ -16,10 +16,15 @@
 | TypeScript | 7.0.2 (native port) | Verified in M0 that `checkJs` catches JSDoc `@typedef`/`@type`/`import()` errors; fall back to 6.0.3 if that regresses |
 | Run in Thunderbird | `npm run tb` = `web-ext run --firefox <real TB binary> --firefox-profile .tb-profile --keep-profile-changes` | M0 spike option (a) works on TB 157 RPM: temporary add-on, auto-reload, `-no-remote` so a running real instance is never reused. `--manual` prints the about:debugging steps (option c) |
 | Dev data in M0 | Pages ask the background via `runtime.sendMessage({type:'tt:summary'})`; the mock answers from `dev/fixtures.js` | No permission or dev import in shipped code; M2 swaps the background handler for `db/` |
+| Running timer (M2) | `meta.running` holds the running entry's id, read and written in the same readwrite transaction as every write that starts, stops or removes it | IndexedDB can't index `null`, so `end === null` is invisible to the `end` index. Spike: fake-indexeddb queues readwrite transactions across two connections like browsers do, so the two-context test is meaningful |
+| Entry delete (M2) | Soft delete (`deletedAt`), undo until the next Thunderbird start; `runtime.onStartup` purges | Maintainer's choice; not at event-page top level, which runs on every wake-up |
+| `storage` permission (M2) | Deferred: settings live in IndexedDB `meta.settings` | One source of truth, no new permission until a `storage.local` mirror is needed |
+| Field limits (M2) | `src/lib/limits.js` shared by `db/validate.js` and `lib/importer.js` | Anything the repositories store re-imports; `tests/unit/db-backup.test.js` guards it |
+| Notifications (M2) | Per-connection notifier (`openDB({notify})`), called after `oncomplete` only; failures are logged, never fail the write | Testable without globals; aborted writes never announce changes |
 | Tokens | `src/ui/styles/tokens.css` takes Thunderbird 157 values; `design/tokens.css` (160.0a1) stays as a historical copy | Target release; divergences (incl. WCAG AA fixes) listed in `docs/DESIGN.md` |
 | Icons | Imported SVGs drawn with `<svg><use href="icons/x.svg#i">` (`icon()` in `ui/render.js`) | `<img>` can't inherit `currentColor`; `<use>` keeps the two-tone fill and works in moz-extension pages (M1 spike) |
 | Components | Light-DOM custom elements (`tt-tree`, `tt-table`, `tt-splitter`, `tt-dialog`, `tt-notification-bar`) styled by `components.css` | Global tokens apply without shadow-DOM duplication, like Thunderbird's own `tree-listbox` |
-| Layout persistence | `ui/layout-store.js` over `localStorage`, swappable with `setLayoutStore()` | `storage` arrives in M2; pane and column sizes are per-window UI state |
+| Layout persistence | `ui/layout-store.js` over `localStorage`, swappable with `setLayoutStore()` | pane and column sizes are per-window UI state (`storage` was deferred in M2) |
 | DOM unit tests | `jsdom` 30.1.2 (dev only) via `// @vitest-environment jsdom` | Render helper and layout store need a DOM; Node env stays the default |
 | In-TB measurements | `npm run tb:spike`: stage copy + `web-ext run --marionette -remote-allow-system-access`, chrome-scope scripts | Reproducible spike evidence without hand steps; nothing changes in `src/` or the shipped manifest |
 
