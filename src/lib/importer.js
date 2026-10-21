@@ -47,7 +47,10 @@ const id = (v, path) =>
  * @returns {Check}
  */
 const string = (min, max) => (v, path) =>
-  typeof v === 'string' && v.length >= min && v.length <= max ? v : fail('type', path, 'bad text');
+  // Required text (min > 0) must have a non-blank character, as the repositories trim names.
+  typeof v === 'string' && v.trim().length >= min && v.length <= max
+    ? v
+    : fail('type', path, 'bad text');
 
 /** @type {Check} */
 const boolean = (v, path) => (typeof v === 'boolean' ? v : fail('type', path, 'not a boolean'));
@@ -68,8 +71,10 @@ const color = (v, path) =>
 
 /** @type {Check} */
 const estimate = (v, path) => {
-  const n = /** @type {number} */ (finite(v, path));
-  return n >= 0 && n <= MAX_ESTIMATE_MIN ? n : fail('type', path, 'bad estimate');
+  const n = /** @type {number} */ (v);
+  return Number.isSafeInteger(v) && n >= 0 && n <= MAX_ESTIMATE_MIN
+    ? n
+    : fail('type', path, 'bad estimate');
 };
 
 /**
@@ -287,7 +292,7 @@ function checkNoCycle(projects) {
  * @returns {Backup}
  * @throws {ImportError} code `too-large`, `json`, `shape`, `format`, `version`, `type`,
  *   `unknown-field`, `forbidden-key`, `duplicate-id`, `dangling-ref`, `cycle`,
- *   `multiple-running` or `time-order`
+ *   `multiple-running`, `running` (a deleted running entry, or one on a done task) or `time-order`
  */
 export function parseBackup(text, { maxBytes = MAX_IMPORT_BYTES } = {}) {
   if (typeof text !== 'string') fail('shape', '', 'not text');
@@ -328,9 +333,14 @@ export function parseBackup(text, { maxBytes = MAX_IMPORT_BYTES } = {}) {
     if (!taskIds.has(e.taskId)) fail('dangling-ref', `entries[${i}].taskId`);
   });
   checkNoCycle(projects);
+  const doneTasks = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id));
   let running = 0;
   entries.forEach((e, i) => {
     if (e.end !== null && e.start >= e.end) fail('time-order', `entries[${i}].end`);
+    // The repositories never store these; restoring one would bypass the running pointer.
+    if (e.end === null && (e.deletedAt !== null || doneTasks.has(e.taskId))) {
+      fail('running', `entries[${i}].end`);
+    }
     if (e.end === null && e.deletedAt === null && ++running > 1) {
       fail('multiple-running', `entries[${i}].end`);
     }
