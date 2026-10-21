@@ -64,5 +64,189 @@
   "trackerLoadError": {
     "message": "Could not load your data. Try reopening this tab.",
     "description": "Shown in the tracker tab when the background does not answer."
+  },
+  "tableColumnPicker": {
+    "message": "Select columns to display",
+    "description": "Tooltip and accessible name of the column picker button in table headers (same as Thunderbird)."
+  },
+  "tableResizeColumn": {
+    "message": "Resize column $COLUMN$",
+    "description": "Accessible name of a column resize handle.",
+    "placeholders": {
+      "column": {
+        "content": "$1",
+        "example": "Week"
+      }
+    }
+  },
+  "dialogOk": {
+    "message": "OK",
+    "description": "Default confirm button in dialogs."
+  },
+  "dialogCancel": {
+    "message": "Cancel",
+    "description": "Default cancel button in dialogs."
+  },
+  "notificationClose": {
+    "message": "Close",
+    "description": "Accessible name of the close button on a notification bar."
+  },
+  "sidebarNewTask": {
+    "message": "New Task",
+    "description": "Primary button at the top of the project pane."
+  },
+  "sidebarAddEntry": {
+    "message": "Add time entry",
+    "description": "Icon button next to New Task."
+  },
+  "sidebarMore": {
+    "message": "More options",
+    "description": "Kebab button in the project pane header."
+  },
+  "sidebarResize": {
+    "message": "Resize the project pane",
+    "description": "Accessible name of the splitter between the project pane and the task list."
+  },
+  "modeViews": {
+    "message": "Views",
+    "description": "Section heading in the project pane (like Thunderbird folder modes)."
+  },
+  "modeProjects": {
+    "message": "Projects",
+    "description": "Section heading in the project pane."
+  },
+  "modeOptions": {
+    "message": "$MODE$ options",
+    "description": "Accessible name of the kebab button of a project pane section.",
+    "placeholders": {
+      "mode": {
+        "content": "$1",
+        "example": "Projects"
+      }
+    }
+  },
+  "viewToday": {
+    "message": "Today",
+    "description": "Built-in view of tasks tracked today."
+  },
+  "viewThisWeek": {
+    "message": "This Week",
+    "description": "Built-in view of tasks tracked this week."
+  },
+  "viewStarred": {
+    "message": "Starred",
+    "description": "Built-in view of starred tasks."
+  },
+  "projectArchive": {
+    "message": "Archive",
+    "description": "Collapsed group of archived projects at the bottom of the project tree."
+  },
+  "listSummary": {
+    "message": "$COUNT$ open tasks · $TOTAL$",
+    "description": "Muted summary next to the project name above the task list.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      },
+      "total": {
+        "content": "$2",
+        "example": "30h 45m"
+      }
+    }
+  },
+  "listQuickFilter": {
+    "message": "Quick Filter",
+    "description": "Toggle button that shows the quick filter bar (same name as Thunderbird)."
+  },
+  "listDisplayOptions": {
+    "message": "Display options",
+    "description": "Icon button above the task list (same name as Thunderbird)."
+  },
+  "filterOpen": {
+    "message": "Open",
+    "description": "Quick filter toggle: only open tasks."
+  },
+  "filterStarred": {
+    "message": "Starred",
+    "description": "Quick filter toggle: only starred tasks."
+  },
+  "filterBillable": {
+    "message": "Billable",
+    "description": "Quick filter toggle: only billable tasks."
+  },
+  "filterTags": {
+    "message": "Tags",
+    "description": "Quick filter toggle: filter by tags."
+  },
+  "filterPlaceholder": {
+    "message": "Filter these tasks…",
+    "description": "Placeholder of the quick filter text field."
+  },
+  "filterLabel": {
+    "message": "Filter tasks",
+    "description": "Accessible name of the quick filter text field."
+  },
+  "filterShortcut": {
+    "message": "Ctrl+Shift+K",
+    "description": "Shortcut hint shown inside the quick filter field."
+  },
+  "tasksLabel": {
+    "message": "Tasks",
+    "description": "Accessible name of the task table."
+  },
+  "columnStarred": {
+    "message": "Starred",
+    "description": "Task table column (icon only)."
+  },
+  "columnTimer": {
+    "message": "Timer",
+    "description": "Task table column (icon only): start/stop."
+  },
+  "columnTask": {
+    "message": "Task",
+    "description": "Task table column."
+  },
+  "columnWeek": {
+    "message": "Week",
+    "description": "Task table column: time this week."
+  },
+  "columnTotal": {
+    "message": "Total",
+    "description": "Task table column: total time."
+  },
+  "columnEstimate": {
+    "message": "Estimate",
+    "description": "Task table column."
+  },
+  "columnLastTracked": {
+    "message": "Last tracked",
+    "description": "Task table column: when time was last tracked."
+  },
+  "lastTrackedRunning": {
+    "message": "Running",
+    "description": "Last tracked cell of the running task."
+  },
+  "lastTrackedNever": {
+    "message": "Never",
+    "description": "Last tracked cell of a task without time entries."
+  },
+  "doneHidden": {
+    "message": "$COUNT$ done tasks hidden",
+    "description": "Footer of the task list.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "doneShow": {
+    "message": "Show",
+    "description": "Link-style button in the task list footer that shows done tasks."
+  },
+  "taskRunning": {
+    "message": "Running",
+    "description": "Accessible label of the timer icon in the running task row."
   }
 }

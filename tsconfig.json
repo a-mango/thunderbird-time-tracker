@@ -10,7 +10,8 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "types": []
+    "types": [],
+    "rootDirs": [".", "src"]
   },
   "include": ["src/**/*", "dev/**/*"]
 }

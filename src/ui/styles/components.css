@@ -1,0 +1,456 @@
+/* Styles for the tt-* custom elements (light DOM) and the folder-pane pieces around them.
+ * Upstream: splitter.css, about3Pane.css, list-container.css, tree-listbox.css, threadPane.css,
+ * inContentDialog.css, infobar.css. */
+
+/* ---- tt-splitter (splitter.css): 1px line, 5px hit area ---- */
+tt-splitter {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  inline-size: var(--splitter-occupy-size);
+  background-color: var(--sidebar-border);
+  cursor: ew-resize;
+  touch-action: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline: calc((var(--splitter-content-size) - var(--splitter-occupy-size)) / -2);
+  }
+  &[resize='height'] {
+    inline-size: auto;
+    block-size: var(--splitter-occupy-size);
+    cursor: ns-resize;
+
+    &::after {
+      inset-inline: 0;
+      inset-block: calc((var(--splitter-content-size) - var(--splitter-occupy-size)) / -2);
+    }
+  }
+  &:focus-visible,
+  &.resizing {
+    outline: none;
+    background-color: var(--selected-item-color);
+    box-shadow: 0 0 0 1px var(--selected-item-color);
+  }
+}
+
+/* ---- Folder-pane sections (about3Pane.css .mode-container / .mode-name) ---- */
+.mode-header {
+  display: flex;
+  align-items: center;
+  padding-inline-end: var(--space-base);
+
+  & + * {
+    margin-block-end: var(--space-step);
+  }
+  &:not(:first-of-type) {
+    border-block-start: 1px solid var(--sidebar-border);
+  }
+}
+
+.mode-name {
+  flex: 1;
+  margin: 0;
+  padding-block: var(--folder-mode-name-padding);
+  padding-inline-start: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+/* ---- tt-tree (list-container.css, about3Pane.css folder rows) ---- */
+tt-tree {
+  display: block;
+
+  & ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  /* Focus shows as the row state below, not as an outline (beats base.css :focus-visible). */
+  & .container:focus-visible {
+    outline: none;
+  }
+  & .container {
+    display: flex;
+    align-items: center;
+    /* Content-box like upstream: 26px + the 1px borders = 28px rows (measured in Thunderbird). */
+    box-sizing: content-box;
+    min-block-size: var(--list-item-min-height);
+    margin-inline: 3px;
+    padding-inline-start: calc(var(--tt-indent-step) * var(--depth, 0));
+    border: 1px solid var(--list-container-border);
+    border-radius: var(--listbox-border-radius);
+    color: var(--sidebar-color);
+
+    @media (prefers-reduced-motion: no-preference) {
+      transition:
+        color var(--transition-duration) var(--transition-timing),
+        background-color var(--transition-duration) var(--transition-timing),
+        border-color var(--transition-duration) var(--transition-timing);
+    }
+  }
+  & .twisty {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    inline-size: var(--list-item-buttons-size);
+    block-size: var(--list-item-buttons-size);
+    color: var(--layout-color-3);
+  }
+  & li:not(.children) > .container > .twisty > .icon {
+    visibility: hidden;
+  }
+  & .container[aria-expanded='false'] > .twisty > .icon {
+    transform: rotate(-90deg);
+
+    &:dir(rtl) {
+      transform: rotate(90deg);
+    }
+  }
+  & .content {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    min-inline-size: 0;
+  }
+  & .content > .icon {
+    inline-size: var(--folder-pane-icon-size);
+    block-size: var(--folder-pane-icon-size);
+    color: var(--icon-color, var(--folder-color-folder));
+  }
+  & li.muted > .container .content > .icon {
+    --icon-color: currentColor;
+  }
+  & .name {
+    flex: 1;
+    margin-inline: 7px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Root rows (top-level groups) are bold, like account rows. */
+  & li.root > .container .name {
+    font-weight: bold;
+  }
+  /* Running project: bold name in the accent colour ("new messages"). */
+  /* Running project: bold name in --new-folder-color, like folders with new mail. */
+  & li.running > .container .name {
+    font-weight: bold;
+    color: var(--new-folder-color);
+  }
+  @media (prefers-contrast) {
+    & li.running > .container[aria-selected='true'] .name {
+      color: currentColor;
+    }
+  }
+  & li.muted > .container {
+    color: var(--tt-text-muted);
+  }
+
+  /* Row states. Selection follows focus, so selected = current. */
+  & .container:not([aria-selected='true']):hover {
+    border-color: var(--list-container-border-hover);
+    background-color: var(--list-container-background-hover);
+  }
+  & .container:not([aria-selected='true']):active {
+    background-color: var(--list-container-background-selected-current-focused);
+  }
+  & .container[aria-selected='true'] {
+    border-color: var(--list-container-border-selected-current);
+    background-color: var(--list-container-background-selected-current);
+  }
+  &:focus-within .container[aria-selected='true'] {
+    border-color: var(--list-container-border-selected-current-focused);
+    background-color: var(--list-container-background-selected-current-focused);
+  }
+}
+
+/* ---- tt-table (tree-listbox.css, threadPane.css table view) ---- */
+tt-table {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  background-color: var(--tree-view-bg);
+  color: var(--tree-view-color);
+
+  & > .scroll {
+    flex: 1;
+  }
+  & table {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  & thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    block-size: var(--tree-header-table-height);
+    padding: 0;
+    border-block-end: 1px solid var(--sidebar-border);
+    border-inline-end: 1px solid var(--layout-border-0);
+    background-color: var(--layout-background-1);
+    font-weight: normal;
+    text-align: start;
+
+    &.last-column {
+      border-inline-end: none;
+      padding-inline-end: var(--table-header-cell-icon-width);
+    }
+  }
+  & .header-button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-step);
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    padding: var(--tree-header-cell-padding);
+    padding-inline-start: calc(var(--tree-header-cell-padding) + var(--tree-header-cell-indent));
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+  }
+  & button.header-button {
+    &:hover {
+      background-color: var(--tree-view-header-hover-bg);
+    }
+    &:hover:active {
+      background-color: var(--tree-view-header-hover-active-bg);
+    }
+    &:focus-visible {
+      outline: 2px solid var(--selected-item-color);
+      outline-offset: -2px;
+    }
+  }
+  & .header-button > .label {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & th[data-align='end'] .label {
+    text-align: end;
+  }
+  & th.icon-column .header-button {
+    justify-content: center;
+    padding-inline: 0;
+  }
+  & .sort-icon {
+    display: none;
+  }
+  & th[aria-sort='ascending'] .sort-icon.ascending,
+  & th[aria-sort='descending'] .sort-icon.descending {
+    display: block;
+  }
+
+  /* Column resizer: 5px hit area at the column's end, accent on hover. */
+  & .resizer {
+    position: absolute;
+    inset-block: 3px;
+    inset-inline-end: calc(var(--splitter-content-size) / -2);
+    z-index: 2;
+    inline-size: var(--splitter-content-size);
+    cursor: ew-resize;
+    touch-action: none;
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      background-color: var(--selected-item-color);
+    }
+  }
+
+  & .column-picker {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-end: 0;
+    z-index: 3;
+    inline-size: var(--table-header-cell-icon-width);
+    block-size: var(--tree-header-table-height);
+    border-radius: 0;
+  }
+
+  & tbody tr {
+    block-size: var(--tree-row-height);
+
+    &:focus-visible {
+      outline: none;
+    }
+
+    &:hover {
+      background-color: var(--listbox-hover);
+    }
+    &[aria-selected='true'] {
+      background-color: var(--listbox-selected-bg);
+    }
+  }
+  & tbody:focus-within tr[aria-selected='true'] {
+    --tt-over-estimate: currentColor;
+    background-color: var(--listbox-focused-selected-bg);
+    color: var(--listbox-selected-color);
+
+    & .meter {
+      background-color: color-mix(in srgb, currentColor 30%, transparent);
+    }
+    & .meter > span {
+      background-color: currentColor;
+    }
+  }
+  & tbody:focus-within tr:focus-visible:not([aria-selected='true']) {
+    outline: 1px var(--listbox-border-type) var(--listbox-focused-selected-bg);
+    outline-offset: -1px;
+  }
+  & td {
+    padding: 0 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+
+    &[data-align='end'] {
+      text-align: end;
+      font-variant-numeric: tabular-nums;
+    }
+    &[data-align='center'] {
+      text-align: center;
+    }
+    &.icon-column {
+      padding: 0;
+      text-align: center;
+    }
+  }
+}
+
+/* ---- Popover menu (column picker, kebab menus): panel tokens ---- */
+.tt-menu {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: var(--space-step) 0;
+  min-inline-size: 12em;
+  border: 1px solid var(--panel-border-color);
+  border-radius: var(--panel-border-radius);
+  background-color: var(--panel-background-color);
+  color: var(--panel-text-color);
+  box-shadow: var(--tt-panel-shadow);
+
+  & .menu-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-base);
+    inline-size: 100%;
+    min-block-size: var(--list-item-min-height);
+    padding: var(--space-step) 12px;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: start;
+
+    &:hover,
+    &:focus-visible {
+      outline: none;
+      background-color: var(--toolbar-button-hover-background-color);
+    }
+    &[aria-disabled='true'] {
+      opacity: 0.4;
+    }
+    &[aria-checked='false'] > .check {
+      visibility: hidden;
+    }
+  }
+}
+
+/* ---- tt-dialog (inContentDialog.css) ---- */
+.tt-dialog {
+  min-inline-size: min(360px, 90vw);
+  max-inline-size: min(560px, 90vw);
+  padding: 15px;
+  border: 1px solid transparent;
+  border-radius: var(--button-border-radius);
+  background-color: var(--dialog-background-color);
+  color: var(--dialog-text-color);
+  box-shadow: var(--dialog-box-shadow);
+
+  &::backdrop {
+    background-color: var(--dialog-backdrop-color);
+  }
+  & .dialog-title {
+    margin: 0 0 15px;
+    font-size: 1.4em;
+    font-weight: 500;
+  }
+  & .dialog-body > p {
+    margin-block: 0 var(--space-base);
+    font-size: 1.1em;
+    line-height: 1.4em;
+  }
+  & .dialog-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-base);
+    margin-block-start: 15px;
+  }
+}
+
+/* ---- tt-notification-bar (infobar.css) ---- */
+tt-notification-bar {
+  display: block;
+  margin: 4px;
+  border-radius: var(--infobar-border-radius);
+  background-color: var(--infobar-background-info);
+  color: var(--infobar-text-color);
+  box-shadow: var(--infobar-box-shadow);
+
+  & > .container {
+    display: flex;
+    align-items: center;
+    gap: var(--space-base);
+    min-block-size: calc(var(--space-step) * 11);
+    padding-inline: 8px 4px;
+  }
+  & .type-icon {
+    color: var(--infobar-icon-info);
+  }
+  & .message {
+    flex: 1;
+    padding-block: var(--space-step);
+  }
+  & .button.flat:enabled:hover {
+    background-color: var(--infobar-button-hover);
+  }
+  & .button.flat:enabled:hover:active {
+    background-color: var(--infobar-button-active);
+  }
+  & .close {
+    color: inherit;
+  }
+
+  &[type='warning'] {
+    background-color: var(--infobar-background-warning);
+    color: var(--infobar-text-warning);
+  }
+  &[type='error'] {
+    background-color: var(--infobar-background-error);
+    color: var(--infobar-text-on-strong);
+  }
+  &[type='success'] {
+    background-color: var(--infobar-background-success);
+    color: var(--infobar-text-success);
+  }
+  &:is([type='warning'], [type='error'], [type='success']) .type-icon {
+    color: currentColor;
+  }
+}

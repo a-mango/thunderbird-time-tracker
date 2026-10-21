@@ -1,0 +1,36 @@
+# Thunderbird SVG icons imported by `npm run icons` (scripts/import-icons.mjs).
+# Paths are relative to .ref/comm-central/mail/themes/shared/mail/icons/new/.
+# Output: src/ui/icons/<basename>. Add a line here and re-run; never hand-draw icons.
+
+compact/folder.svg
+compact/clock.svg
+compact/calendar.svg
+compact/calendar-today.svg
+compact/star.svg
+compact/tag.svg
+compact/add.svg
+compact/more.svg
+compact/kebab.svg
+compact/search.svg
+compact/filter.svg
+compact/display-options.svg
+compact/check.svg
+compact/pencil.svg
+compact/trash.svg
+compact/mail.svg
+compact/export.svg
+compact/settings.svg
+compact/nav-left.svg
+compact/nav-right.svg
+
+# Infobar and dialog
+compact/close.svg
+compact/info.svg
+compact/warning.svg
+compact/error-circle.svg
+
+# 12px tree and table chrome
+nav-down-sm.svg
+nav-up-xs.svg
+nav-down-xs.svg
+column-menu.svg

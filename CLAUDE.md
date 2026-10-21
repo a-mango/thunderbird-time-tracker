@@ -11,6 +11,8 @@ Read only the sections the current task needs.
 - `npm run shots`: screenshots of the dev harness into `artifacts/shots/` (compare with `design/reference/`)
 - `npm run tb`: Thunderbird with the isolated dev profile `.tb-profile/`, extension loaded
 - `npm run build`: XPI into `dist/` (copy-only zip of `src/`)
+- `npm run tb:spike`: Thunderbird via Marionette on a stage copy (`.tb-stage/`): mail tab vs. gallery metrics, context menus → `artifacts/tb/`
+- Primitives gallery: `/dev/gallery.html` (`?density=compact|relaxed`, `?accent=…`); components in `src/ui/components/`, icons via `icon()` in `src/ui/render.js`
 <!-- M0: keep this list in sync with package.json -->
 
 ## Rules
@@ -36,5 +38,6 @@ Read only the sections the current task needs.
 - `.ref/` holds upstream clones for reading only (gitignored). Refresh with `npm run ref`.
 - `.ref/comm-central` is really `thunderbird/thunderbird-desktop` at tag `THUNDERBIRD_157_0_RELEASE` (sparse); the name is kept for stable paths.
 - `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
+- Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
 - Dev harness URLs: `?fixtures=empty` (no data), `?fixtures=none` (no background), `?seed=N`.
 - Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).

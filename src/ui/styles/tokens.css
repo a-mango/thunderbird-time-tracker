@@ -3,13 +3,15 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/.
  *
  * Design tokens for the time tracker, copied from Thunderbird's theme sources
- * (comm-central main, 160.0a1, 2026-10-20):
+ * (tag THUNDERBIRD_157_0_RELEASE, the release we target):
  *   mail/themes/shared/mail/{colors,layout,variables,spacings,tree-listbox,
- *   list-container,about3Pane,folderColors,pane-splitter}.css
+ *   list-container,about3Pane,folderColors,splitter,infobar}.css
+ *   mail/base/content/about3Pane.js (thread row heights, set in JS upstream)
  * Names are kept identical to Thunderbird's so code can be cross-checked.
- * M1 re-verifies these against the ESR you target before building on them.
+ * Divergences from design/tokens.css (copied from 160.0a1) are listed in docs/DESIGN.md.
  *
- * Density: set data-density="compact" | "relaxed" on <html> (default = Thunderbird "Default").
+ * Density: set data-density="compact" | "relaxed" on <html> (default = Thunderbird "Default";
+ *          relaxed = Thunderbird "Touch").
  * Accent:  set data-accent="thunderbird" | "purple" | "orange" | "pink" | "ink" | "teal";
  *          no attribute = system accent (AccentColor), which is Thunderbird's default.
  */
@@ -43,6 +45,7 @@
   --color-red-80: #991b1b;
   --color-green-50: #22c55e;
   --color-green-60: #16a34a;
+  --color-yellow-30: #fde047;
   --color-amber-50: #f59e0b;
   --color-orange-50: #f97316;
   --color-purple-50: #a855f7;
@@ -52,19 +55,19 @@
   --color-ink-50: #6e6f9b;
   --color-neutral-200: light-dark(#d9d9de, #4c4d58);
 
-  /* ---- Bolt semantic colours (colors.css) ---- */
-  --color-surface-base: light-dark(#fcfcfd, #18181b);
-  --color-surface-raised: light-dark(#ffffff, #2b2b2f);
-  --color-surface-subtle: light-dark(#efeff1, #232326);
-  --color-surface-lower: light-dark(#f7f7f8, #111113);
-  --color-surface-deep: light-dark(#e4e4e7, #3f3f46);
-  --color-surface-border: light-dark(#d9d9de, #52525b);
-  --color-surface-border-intense: light-dark(#a1a1aa, #71717a);
-  --color-text-base: light-dark(#18181b, #f7f7f8);
-  --color-text-secondary: light-dark(#52525b, #d4d4d8);
-  --color-text-muted: light-dark(#71717a, #a1a1aa);
-  --color-text-critical: light-dark(#b91c1c, #f87171);
-  --color-text-success: light-dark(#1c5f32, #55d37e);
+  /* ---- Bolt semantic colours (colors.css). 157 dark surfaces are slate, not zinc. ---- */
+  --color-surface-base: light-dark(#feffff, #1a202c);
+  --color-surface-raised: light-dark(#feffff, #262d3b);
+  --color-surface-subtle: light-dark(#f7f7f7, #262d3b);
+  --color-surface-lower: light-dark(#f7f7f7, #18181b);
+  --color-surface-deep: light-dark(#d9d9de, #3d4d67);
+  --color-surface-border: light-dark(#d9d9de, #3d4d67);
+  --color-surface-border-intense: light-dark(#91939f, #5e7799);
+  --color-text-base: light-dark(#1a202c, #eeeef0);
+  --color-text-secondary: light-dark(#4c4d58, #e4e4e7);
+  --color-text-muted: light-dark(#737584, #7f94ac);
+  --color-text-critical: light-dark(#dc2626, #f05252);
+  --color-text-success: light-dark(#1d783b, #55d37e);
   --color-text-warning: light-dark(#713f12, #fee78a);
   --color-critical-soft: light-dark(#fef2f2, #7f1d1d);
   --color-warning-soft: light-dark(#fefae8, #423606);
@@ -92,16 +95,18 @@
   /* ---- Accent / selection (variables.css) ---- */
   --selected-item-color: AccentColor;
   --selected-item-text-color: AccentColorText;
-  accent-color: var(--selected-item-color);
+  /* Upstream light value is blue-60, 4.49:1 on --layout-background-1; blue-70 passes WCAG AA. */
+  --new-folder-color: light-dark(var(--color-blue-70), var(--color-blue-40));
+  --link-color: light-dark(var(--color-blue-70), var(--color-blue-40));
 
   /* ---- Sidebar = folder pane (variables.css, about3Pane.css) ---- */
   --sidebar-background: var(--layout-background-1);
   --sidebar-color: var(--layout-color-1);
   --sidebar-border: var(--layout-border-0);
-  --tree-view-bg: light-dark(var(--layout-background-1), var(--color-black));
-  --tree-view-color: var(--layout-color-1);
+  --sidebar-header-gap: 9px;
+  --sidebar-header-spacing: 9px;
 
-  /* ---- Buttons (variables.css) ---- */
+  /* ---- Buttons (variables.css, widgets.css) ---- */
   --button-border-radius: 3px;
   --button-border-size: 1px;
   --button-min-height: 32px;
@@ -118,21 +123,56 @@
   --button-primary-active-background-color: color-mix(in srgb, var(--selected-item-color) 70%, black);
   --button-primary-text-color: var(--selected-item-text-color);
   --button-primary-border-color: color-mix(in srgb, var(--selected-item-color) 85%, black);
+  --button-primary-shadow: light-dark(0 2px 4px -4px rgba(0, 0, 0, 0.12), none);
+  --button-primary-hover-shadow: light-dark(0 1px 4px rgba(0, 0, 0, 0.1), none);
   --button-destructive-background-color: var(--color-red-60);
+  --button-destructive-hover-background-color: color-mix(in srgb, var(--color-red-50) 50%, var(--color-red-60));
+  --button-destructive-active-background-color: var(--color-red-70);
   --button-destructive-text-color: var(--color-white);
+  --button-destructive-border-color: light-dark(var(--color-red-80), var(--color-red-50));
+  --button-pressed-shadow: inset 0 3px 5px -3px light-dark(color-mix(in srgb, var(--color-gray-90) 30%, transparent), var(--color-black));
+  --button-pressed-indicator-shadow: light-dark(0 1px 0 rgba(255, 255, 255, 0.5), 0 1px 0 rgba(0, 0, 0, 0.25));
+  --button-pressed-indicator-padding: 6px;
   --toolbar-button-hover-background-color: color-mix(in srgb, currentColor 10%, transparent);
+  --toolbar-button-hover-border-color: color-mix(in srgb, currentColor 30%, transparent);
+  --toolbar-button-hover-checked-color: color-mix(in srgb, currentColor 20%, transparent);
   --toolbar-button-active-background-color: color-mix(in srgb, currentColor 20%, transparent);
-  --focus-outline: 2px solid var(--selected-item-color);
+  --toolbar-button-active-border-color: color-mix(in srgb, currentColor 40%, transparent);
+  --focus-outline-color: var(--selected-item-color);
+  --focus-outline: 2px solid var(--focus-outline-color);
   --focus-outline-offset: 2px;
   --input-border-color: color-mix(in srgb, currentColor 41%, transparent);
   --search-bar-border-color: var(--color-gray-40);
   --search-bar-background: var(--layout-background-0);
+  --search-bar-focus-background: var(--layout-background-0);
+  --search-field-placeholder: color-mix(in srgb, currentColor 50%, transparent);
+  --search-outline-offset: -1px;
 
-  /* ---- Panels / menus (variables.css) ---- */
+  /* ---- Panels, menus and in-content dialogs (variables.css, inContentDialog.css) ---- */
   --panel-background-color: var(--color-surface-subtle);
   --panel-text-color: var(--color-text-base);
   --panel-border-color: var(--color-surface-border-intense);
   --panel-border-radius: 8px;
+  --dialog-background-color: var(--color-surface-base);
+  --dialog-text-color: var(--color-text-base);
+  --dialog-box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+  --dialog-backdrop-color: rgba(0, 0, 0, 0.5);
+
+  /* ---- Notification bar (infobar.css) ---- */
+  --infobar-border-radius: 4px;
+  --infobar-background-info: light-dark(var(--layout-background-0), var(--layout-background-2));
+  --infobar-text-color: var(--color-text-base);
+  --infobar-box-shadow: 0 1px 2px rgba(58, 57, 68, 0.3);
+  --infobar-icon-info: light-dark(#0090ed, #45a1ff);
+  --infobar-background-warning: light-dark(#fff160, #ffe900);
+  --infobar-text-warning: var(--color-black);
+  /* Upstream success is white on green-60 (3.3:1); darkened to pass WCAG AA. */
+  --infobar-background-success: light-dark(#1d783b, var(--color-green-50));
+  --infobar-text-success: light-dark(var(--color-white), var(--color-black));
+  --infobar-background-error: var(--color-red-60);
+  --infobar-text-on-strong: var(--color-white);
+  --infobar-button-hover: color-mix(in srgb, currentColor 15%, transparent);
+  --infobar-button-active: color-mix(in srgb, currentColor 25%, transparent);
 
   /* ---- Lists & trees (tree-listbox.css, list-container.css, about3Pane.css) ---- */
   --listbox-border-radius: 3px;
@@ -140,14 +180,34 @@
   --list-item-buttons-size: 22px;
   --tree-header-table-height: calc(round(up, 1.7em, 1px) + 7px);
   --tree-header-cell-padding: 6px;
+  --tree-header-cell-indent: 0px;
+  --table-header-cell-icon-width: 24px;
+  /* Thread row height: about3Pane.js densityChange() = ceil(1.4 × font size) + 7px (default). */
+  --tree-row-height: max(18px, calc(round(up, 1.4em, 1px) + 7px));
   --card-container-padding-block: 2px;
   --tree-card-content-inline: 6px;
-  --folder-indent-step: 16px;
+  --folder-pane-icon-size: 16px;
   --folder-mode-name-padding: 6px;
+  --thread-pane-header-padding: 3px;
+  --qfb-padding: 3px;
+  --tree-view-bg: light-dark(var(--layout-background-1), var(--color-black));
+  --tree-view-color: var(--layout-color-1);
+  --tree-view-header-hover-bg: light-dark(var(--color-gray-20), var(--color-gray-70));
+  --tree-view-header-hover-active-bg: light-dark(var(--color-gray-30), var(--color-gray-90));
+  --listbox-selected-bg: light-dark(var(--color-gray-30), var(--color-gray-70));
+  --listbox-focused-selected-bg: var(--selected-item-color);
+  --listbox-selected-color: var(--selected-item-text-color);
+  --listbox-focused-selected-color: var(--selected-item-text-color);
+  --listbox-hover: color-mix(in srgb, var(--selected-item-color) 10%, transparent);
+  --listbox-border-type: dashed;
+  --unread-color: var(--layout-color-0);
+  --list-container-border: transparent;
   --list-container-background-hover: color-mix(in srgb, var(--selected-item-color) 10%, transparent);
   --list-container-border-hover: color-mix(in srgb, var(--selected-item-color) 60%, transparent);
   --list-container-background-selected: color-mix(in srgb, var(--layout-background-3) 20%, transparent);
   --list-container-border-selected: light-dark(var(--color-gray-40), var(--color-gray-60));
+  --list-container-background-selected-current: color-mix(in srgb, var(--layout-background-3) 40%, transparent);
+  --list-container-border-selected-current: light-dark(color-mix(in srgb, var(--layout-border-1) 80%, transparent), var(--layout-border-1));
   --list-container-background-selected-focused: color-mix(in srgb, var(--selected-item-color) 7%, transparent);
   --list-container-border-selected-focused: color-mix(in srgb, var(--selected-item-color) 30%, transparent);
   --list-container-background-selected-current-focused: color-mix(in srgb, var(--selected-item-color) 15%, transparent);
@@ -160,7 +220,8 @@
   --folderpane-unread-count-text: var(--color-white);
   --folderpane-total-count-background: light-dark(var(--color-gray-20), var(--color-gray-60));
   --folderpane-total-count-text: light-dark(var(--color-gray-90), var(--color-white));
-  --folderpane-unread-new-count-background: light-dark(var(--color-blue-60), var(--color-blue-50));
+  /* Upstream dark value is blue-50 (white text 3.3:1); blue-60 passes WCAG AA. */
+  --folderpane-unread-new-count-background: var(--color-blue-60);
 
   /* Folder icon colours (folderColors.css) -> default project colours */
   --folder-color-folder: light-dark(#eabd08, #fee78a);
@@ -170,9 +231,9 @@
   --folder-color-archive: var(--color-text-warning);
   --folder-color-rss: var(--color-accent-orange);
   --folder-color-outbox: var(--color-accent-teal);
-  --folder-color-filter: var(--color-accent-pink);
+  --folder-color-folder-filter: var(--color-accent-pink);
 
-  /* ---- Splitter (pane-splitter.css) ---- */
+  /* ---- Splitter (splitter.css; scoped to hr[is=pane-splitter] upstream) ---- */
   --splitter-content-size: 5px;
   --splitter-occupy-size: 1px;
 
@@ -183,73 +244,151 @@
   --transition-timing: ease;
 
   /* ---- Extension-specific (not in Thunderbird) ---- */
+  /* Thunderbird hard-codes the folder tree indent: --indent: calc(16px * var(--depth)). */
+  --tt-indent-step: 16px;
   --tt-running: light-dark(var(--color-green-60), var(--color-green-50));
-  --tt-over-estimate: var(--color-text-critical);
+  --tt-over-estimate: light-dark(var(--color-red-70), var(--color-red-40));
+  /* Muted text that passes AA on layout backgrounds 0-1 in both schemes (reference A's --muted). */
+  --tt-text-muted: light-dark(var(--color-gray-50), var(--color-gray-40));
+  --tt-starred: var(--color-amber-50);
+  /* Field and small-button height, after search-bar.css: 1.2em + 2 × --search-padding. */
+  --tt-field-height: calc(round(up, 1.2em, 1px) + 2 * var(--space-base) + 2px);
+  --tt-badge-radius: 1000px;
+  --tt-panel-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Density (variables.css, spacings.css, tree-listbox.css, about3Pane.css) */
+/* Density (variables.css, spacings.css, tree-listbox.css, about3Pane.css, about3Pane.js) */
 :root[data-density="compact"] {
   --space-base: var(--space-step);
   --button-min-height: 30px;
   --button-margin: 3px;
   --button-padding: 3px;
   --button-padding-wide: 3px 9px;
+  --button-pressed-indicator-padding: 9px;
+  --sidebar-header-gap: 6px;
+  --sidebar-header-spacing: 6px;
   --list-item-min-height: 18px;
   --list-item-buttons-size: 18px;
   --tree-header-table-height: max(27px, round(up, 1.4em, 1px));
   --tree-header-cell-padding: 3px;
+  --tree-header-cell-indent: 3px;
+  --table-header-cell-icon-width: 18px;
+  --tree-row-height: max(18px, round(up, 1.4em, 1px));
   --card-container-padding-block: 1px;
   --tree-card-content-inline: 3px;
   --folder-mode-name-padding: 3px;
+  --qfb-padding: 0 3px;
 }
 
 :root[data-density="relaxed"] {
   --space-base: calc(var(--space-step) * 3);
+  --button-pressed-indicator-padding: 3px;
+  --sidebar-header-gap: 12px;
+  --sidebar-header-spacing: 12px;
   --list-item-min-height: 32px;
   --tree-header-table-height: calc(round(up, 2em, 1px) + 13px);
   --tree-header-cell-padding: 9px;
+  --tree-header-cell-indent: -3px;
+  --table-header-cell-icon-width: 33px;
+  --tree-row-height: max(18px, calc(round(up, 1.4em, 1px) + 13px));
   --tree-card-content-inline: 9px;
+  --folder-pane-icon-size: 20px;
   --folder-mode-name-padding: 9px;
+  --thread-pane-header-padding: 6px;
 }
 
-/* Accent overrides mirroring Settings > Appearance > Accent colour */
-:root[data-accent="thunderbird"] {
-  --selected-item-color: light-dark(var(--color-blue-60), #58c9ff);
-  --selected-item-text-color: light-dark(var(--color-white), #18181b);
-}
-:root[data-accent="purple"] {
-  --selected-item-color: light-dark(var(--color-purple-80), #ae55f7);
-  --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
-}
-:root[data-accent="orange"] {
-  --selected-item-color: light-dark(#ea7308, #fec18a);
-  --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
-}
-:root[data-accent="pink"] {
-  --selected-item-color: light-dark(#e247c4, #fbd3f6);
-  --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
-}
-:root[data-accent="ink"] {
-  --selected-item-color: light-dark(#6e6f9b, #c3cade);
-  --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
-}
-:root[data-accent="teal"] {
-  --selected-item-color: light-dark(#25a6a0, #a3ece3);
-  --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+/* Accent overrides mirroring Settings > Appearance > Accent colour (variables.css).
+ * Off in high contrast, like upstream, so SelectedItem wins. */
+@media not (prefers-contrast) {
+  :root[data-accent] {
+    accent-color: var(--selected-item-color);
+  }
+  :root[data-accent="thunderbird"] {
+    --selected-item-color: light-dark(var(--color-blue-60), #58c9ff);
+    --selected-item-text-color: light-dark(var(--color-white), #1a202c);
+  }
+  :root[data-accent="purple"] {
+    --selected-item-color: light-dark(var(--color-purple-80), #ae55f7);
+    --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+  }
+  :root[data-accent="orange"] {
+    --selected-item-color: light-dark(#ea7308, #fec18a);
+    --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+  }
+  :root[data-accent="pink"] {
+    --selected-item-color: light-dark(#e247c4, #fbd3f6);
+    --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+  }
+  :root[data-accent="ink"] {
+    --selected-item-color: light-dark(#6e6f9b, #c3cade);
+    --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+  }
+  :root[data-accent="teal"] {
+    --selected-item-color: light-dark(#25a6a0, #a3ece3);
+    --selected-item-text-color: light-dark(var(--color-white), var(--color-black));
+  }
 }
 
-/* High contrast (variables.css, layout.css) */
+/* High contrast (layout.css, variables.css). Upstream uses -moz-Dialog/-moz-DialogText for
+ * background-1/color-1; those are chrome-only, so web pages get Canvas/CanvasText. */
 @media (prefers-contrast) {
   :root {
     --layout-background-0: Window;
     --layout-background-1: Canvas;
+    --layout-background-2: transparent;
+    --layout-background-3: transparent;
+    --layout-background-4: transparent;
+    --layout-color-0: WindowText;
     --layout-color-1: CanvasText;
+    --layout-color-2: currentColor;
+    --layout-color-3: currentColor;
     --layout-border-0: ThreeDShadow;
     --layout-border-1: ThreeDShadow;
+    --layout-border-2: ThreeDShadow;
     --selected-item-color: SelectedItem;
     --selected-item-text-color: SelectedItemText;
-    --button-background-color: ButtonFace;
+    --link-color: LinkText;
     --button-text-color: ButtonText;
+    --button-background-color: ButtonFace;
     --button-border-color: ButtonText;
+    --button-hover-background-color: SelectedItem;
+    --button-active-background-color: SelectedItem;
+    --button-primary-background-color: SelectedItem;
+    --button-primary-hover-background-color: SelectedItem;
+    --button-primary-active-background-color: SelectedItem;
+    --button-primary-text-color: SelectedItemText;
+    --button-primary-border-color: SelectedItem;
+    --button-primary-shadow: none;
+    --button-primary-hover-shadow: none;
+    --button-pressed-shadow: none;
+    --toolbar-button-hover-background-color: SelectedItem;
+    --toolbar-button-hover-border-color: SelectedItem;
+    --toolbar-button-hover-checked-color: SelectedItem;
+    --toolbar-button-active-background-color: SelectedItem;
+    --toolbar-button-active-border-color: SelectedItemText;
+  }
+}
+
+/* Forced colours: lists and trees switch to system colours (list-container.css, tree-listbox.css) */
+@media (forced-colors) {
+  :root {
+    --list-container-border: Canvas;
+    --list-container-background-selected: color-mix(in srgb, Canvas 80%, CanvasText);
+    --list-container-border-selected: CanvasText;
+    --list-container-background-selected-current: color-mix(in srgb, Canvas 70%, CanvasText);
+    --list-container-border-selected-current: CanvasText;
+    --list-container-background-hover: SelectedItem;
+    --list-container-border-hover: SelectedItem;
+    --list-container-background-selected-focused: color-mix(in srgb, Canvas 70%, CanvasText);
+    --list-container-border-selected-focused: color-mix(in srgb, CanvasText 30%, SelectedItem);
+    --list-container-border-selected-current-focused: color-mix(in srgb, CanvasText 20%, SelectedItem);
+    --tree-view-bg: Canvas;
+    --tree-view-color: CanvasText;
+    --tree-view-header-hover-bg: color-mix(in srgb, Field 70%, hsl(0, 0%, 50%));
+    --listbox-selected-color: SelectedItemText;
+    --listbox-focused-selected-bg: SelectedItem;
+    --listbox-hover: color-mix(in srgb, var(--tree-view-bg) 90%, SelectedItem);
+    --listbox-selected-bg: color-mix(in srgb, var(--tree-view-bg) 80%, var(--listbox-focused-selected-bg));
+    --listbox-border-type: solid;
   }
 }
