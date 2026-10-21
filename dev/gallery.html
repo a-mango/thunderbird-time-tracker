@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Primitives gallery</title>
+    <link rel="stylesheet" href="/ui/styles/tokens.css" />
+    <link rel="stylesheet" href="/ui/styles/base.css" />
+    <link rel="stylesheet" href="/ui/styles/controls.css" />
+    <link rel="stylesheet" href="/ui/styles/components.css" />
+    <link rel="stylesheet" href="gallery.css" />
+    <script type="module" src="gallery.js"></script>
+  </head>
+  <!-- Dev-only page (never shipped). Section headings and demo labels are English on purpose;
+       strings the real UI will reuse come from _locales. Query: ?density=compact|relaxed, ?accent=… -->
+  <body>
+    <header class="gallery-toolbar">
+      <h1>Primitives gallery</h1>
+      <label
+        >Density
+        <select class="field" data-control="density">
+          <option value="compact">Compact</option>
+          <option value="" selected>Default</option>
+          <option value="relaxed">Relaxed</option>
+        </select>
+      </label>
+      <label
+        >Accent
+        <select class="field" data-control="accent">
+          <option value="" selected>System</option>
+          <option value="thunderbird">Thunderbird</option>
+          <option value="purple">Purple</option>
+          <option value="orange">Orange</option>
+          <option value="pink">Pink</option>
+          <option value="ink">Ink</option>
+          <option value="teal">Teal</option>
+        </select>
+      </label>
+    </header>
+
+    <main>
+      <section class="frame" aria-labelledby="frame-heading">
+        <h2 id="frame-heading" class="visually-hidden">Reference A: project pane and task list</h2>
+        <div class="three-pane">
+          <aside id="gallery-sidebar" class="sidebar" data-ref="sidebar">
+            <div class="sidebar-header">
+              <button class="button primary new-task" type="button" data-slot="new-task"></button>
+              <button class="icon-button" type="button" data-slot="add-entry"></button>
+              <button class="icon-button" type="button" data-slot="sidebar-more"></button>
+            </div>
+            <div class="sidebar-scroll scroll">
+              <div class="mode-header">
+                <h3 class="mode-name" id="mode-views" data-i18n="modeViews"></h3>
+              </div>
+              <tt-tree id="views-tree" aria-labelledby="mode-views"></tt-tree>
+              <div class="mode-header">
+                <h3 class="mode-name" id="mode-projects" data-i18n="modeProjects"></h3>
+                <button class="icon-button" type="button" data-slot="projects-more"></button>
+              </div>
+              <tt-tree
+                id="projects-tree"
+                aria-labelledby="mode-projects"
+                persist="gallery.projects"
+              ></tt-tree>
+            </div>
+          </aside>
+          <tt-splitter
+            controls="gallery-sidebar"
+            min="150"
+            max="480"
+            persist="gallery.sidebar"
+            data-i18n-label="sidebarResize"
+          ></tt-splitter>
+          <section class="list-pane" aria-labelledby="list-title">
+            <div class="list-header">
+              <h3 id="list-title" class="list-title"></h3>
+              <span class="list-count num"></span>
+              <span class="spacer"></span>
+              <button
+                class="button small"
+                type="button"
+                aria-pressed="true"
+                data-slot="quick-filter"
+              ></button>
+              <button class="icon-button" type="button" data-slot="display-options"></button>
+            </div>
+            <div class="quick-filter-bar" data-slot="qfb"></div>
+            <tt-table id="tasks-table" persist="gallery.tasks"></tt-table>
+            <p class="list-footer">
+              <span data-slot="done-hidden"></span> ·
+              <button class="link-button" type="button" data-i18n="doneShow"></button>
+            </p>
+          </section>
+        </div>
+      </section>
+
+      <section class="primitives" aria-labelledby="primitives-heading">
+        <h2 id="primitives-heading">Primitives</h2>
+        <div class="cards" data-slot="cards"></div>
+      </section>
+    </main>
+  </body>
+</html>

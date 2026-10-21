@@ -17,6 +17,7 @@ export default [
       'playwright-report/',
       'test-results/',
       '.tb-profile/',
+      '.tb-stage/',
     ],
   },
   js.configs.recommended,

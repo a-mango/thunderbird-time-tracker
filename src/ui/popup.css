@@ -3,7 +3,6 @@ body {
   min-width: 280px;
   background-color: var(--panel-background-color);
   color: var(--panel-text-color);
-  font: message-box;
 }
 
 main {

@@ -10,12 +10,12 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
-const profile = join(root, '.tb-profile');
+export const profile = join(root, '.tb-profile');
 const source = join(root, 'src');
-const webExt = join(root, 'node_modules', '.bin', 'web-ext');
+export const webExt = join(root, 'node_modules', '.bin', 'web-ext');
 
 // Fresh-profile prefs: no account wizard, no default-client prompt, no start page or telemetry.
-const PREFS = {
+export const PREFS = {
   'mail.provider.suppress_dialog_on_startup': true,
   'mail.shell.checkDefaultClient': false,
   'mailnews.start_page.enabled': false,
@@ -30,7 +30,7 @@ const PREFS = {
  * Calls the real binary, not the /usr/bin wrapper, so -profile/-no-remote reach it directly.
  * @returns {{kind: 'env' | 'rpm' | 'flatpak', bin: string, version: string}}
  */
-function detect() {
+export function detect() {
   if (process.env.TB_BIN)
     return { kind: 'env', bin: process.env.TB_BIN, version: version(process.env.TB_BIN) };
   for (const bin of ['/usr/lib64/thunderbird/thunderbird', '/usr/lib/thunderbird/thunderbird']) {
@@ -53,12 +53,16 @@ function version(bin) {
   return (out.stdout.match(/Thunderbird ([\d.]+\S*)/) ?? [])[1] ?? '?';
 }
 
-/** @param {{kind: string, bin: string}} tb */
-function runWebExt(tb) {
-  const args = [
+/**
+ * Arguments for `web-ext run` on .tb-profile/.
+ * @param {{kind: string, bin: string}} tb
+ * @param {string} [sourceDir]
+ */
+export function webExtArgs(tb, sourceDir = source) {
+  return [
     'run',
     '--source-dir',
-    source,
+    sourceDir,
     '--firefox',
     tb.bin,
     '--firefox-profile',
@@ -67,6 +71,11 @@ function runWebExt(tb) {
     '--keep-profile-changes',
     ...Object.entries(PREFS).map(([key, value]) => `--pref=${key}=${value}`),
   ];
+}
+
+/** @param {{kind: string, bin: string}} tb */
+function runWebExt(tb) {
+  const args = webExtArgs(tb);
   console.log(`web-ext ${args.join(' ')}\n`);
   const child = spawn(webExt, args, {
     stdio: 'inherit',
@@ -104,8 +113,10 @@ function runManual(tb) {
   child.on('exit', (code) => process.exit(code ?? 0));
 }
 
-const tb = detect();
-console.log(`Thunderbird ${tb.version} (${tb.kind}: ${tb.bin})`);
-console.log(`Profile: ${profile}`);
-if (process.argv.includes('--manual')) runManual(tb);
-else runWebExt(tb);
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const tb = detect();
+  console.log(`Thunderbird ${tb.version} (${tb.kind}: ${tb.bin})`);
+  console.log(`Profile: ${profile}`);
+  if (process.argv.includes('--manual')) runManual(tb);
+  else runWebExt(tb);
+}

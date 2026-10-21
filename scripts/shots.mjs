@@ -13,6 +13,18 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-empty-light', '/ui/tracker.html?fixtures=empty', 'light', { width: 1280, height: 800 }],
   ['popup-light', '/ui/popup.html', 'light', { width: 320, height: 200 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 320, height: 200 }],
+  // Primitives gallery: light/dark × the three densities, full page.
+  ...['light', 'dark'].flatMap((scheme) =>
+    ['compact', 'default', 'relaxed'].map(
+      (density) =>
+        /** @type {const} */ ([
+          `gallery-${scheme}-${density}`,
+          `/dev/gallery.html${density === 'default' ? '' : `?density=${density}`}`,
+          scheme,
+          { width: 1280, height: 800 },
+        ]),
+    ),
+  ),
 ]);
 
 await mkdir(outDir, { recursive: true });
@@ -28,7 +40,10 @@ try {
     const file = `${outDir}${name}.png`;
     // Popups size to their content in Thunderbird: clip to <body> instead of the viewport.
     if (path.includes('popup')) await page.locator('body').screenshot({ path: file });
-    else await page.screenshot({ path: file });
+    else if (path.includes('gallery')) {
+      await page.locator('html[data-ready]').waitFor();
+      await page.screenshot({ path: file, fullPage: true });
+    } else await page.screenshot({ path: file });
     console.log(file);
     await page.close();
   }
