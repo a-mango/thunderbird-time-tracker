@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   addDays,
   dayKey,
@@ -172,5 +172,39 @@ describe('splitByDay', () => {
     expect(splitByDay({ start, end: start }, { now: 0 })).toEqual([]);
     expect(splitByDay({ start, end: start - 1 }, { now: 0 })).toEqual([]);
     expect(splitByDay({ start, end: null }, { now: start - 1 })).toEqual([]);
+  });
+});
+
+describe('DST starting at midnight (America/Santiago, 2026-09-06 00:00 → 01:00)', () => {
+  // Node re-reads TZ when it changes; restore Zurich for the other suites.
+  beforeEach(() => {
+    process.env.TZ = 'America/Santiago';
+  });
+  afterEach(() => {
+    process.env.TZ = 'Europe/Zurich';
+  });
+  const H = 3_600_000;
+
+  it('starts the day at the first existing instant and lasts 23 h', () => {
+    const { start, end } = dayRange(new Date(2026, 8, 6, 12).getTime());
+    expect(new Date(start).getHours()).toBe(1);
+    expect(end).toBe(new Date(2026, 8, 7).getTime());
+    expect(end - start).toBe(23 * H);
+  });
+
+  it('books the next day from its own midnight', () => {
+    const start = new Date(2026, 8, 6, 22).getTime();
+    const end = new Date(2026, 8, 7, 2).getTime();
+    expect(splitByDay({ start, end }, { now: end }).map((p) => [p.day, p.ms])).toEqual([
+      ['2026-09-06', 2 * H],
+      ['2026-09-07', 2 * H],
+    ]);
+  });
+
+  it('gives the week starting on that Sunday 167 h', () => {
+    const { start, end } = weekRange(new Date(2026, 8, 10).getTime(), 0);
+    expect(dayKey(start)).toBe('2026-09-06');
+    expect(end).toBe(new Date(2026, 8, 13).getTime());
+    expect(end - start).toBe(167 * H);
   });
 });

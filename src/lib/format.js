@@ -1,7 +1,7 @@
 // Pure, DOM-free formatting of durations, times and dates. Render the results with tabular-nums.
 // The caller passes the UI locale (`messenger.i18n.getUILanguage()`); the hour cycle defaults
 // to the locale's own (en-US 12-hour, en-GB and de-CH 24-hour).
-import { addDays, startOfDay } from './time.js';
+import { startOfDay } from './time.js';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -91,10 +91,10 @@ export function formatRelative(ms, { now, locale, todayLabel, hourCycle }) {
   const today = startOfDay(now);
   const time = (/** @type {number} */ value) => formatTime(value, { locale, hourCycle });
   // Future timestamps (clock skew, edited entries) fall through to plain dates.
-  if (ms >= today && ms < addDays(today, 1)) {
+  if (ms >= today && ms < startOfDay(now, 1)) {
     return `${todayLabel} ${time(ms)}`;
   }
-  if (ms >= addDays(today, -6) && ms < today) {
+  if (ms >= startOfDay(now, -6) && ms < today) {
     const weekday = dateTimeFormat(locale, { weekday: 'short' }).format(ms);
     return `${weekday} ${time(ms)}`;
   }

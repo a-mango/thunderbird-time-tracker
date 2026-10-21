@@ -6,13 +6,15 @@
 /** @typedef {{day: string, start: number, end: number, ms: number}} DayPart */
 
 /**
- * Local midnight at the start of the day containing `ms`.
+ * Start of the local day containing `ms`, or of the day `days` calendar days later. Built from
+ * calendar fields, so where DST starts at midnight (e.g. America/Santiago) the day starts at the
+ * first existing instant (01:00) and the next day still starts at its own midnight.
  * @param {number} ms
+ * @param {number} [days]
  */
-export function startOfDay(ms) {
+export function startOfDay(ms, days = 0) {
   const date = new Date(ms);
-  date.setHours(0, 0, 0, 0);
-  return date.getTime();
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days).getTime();
 }
 
 /**
@@ -43,8 +45,7 @@ export function dayKey(ms) {
  * @returns {Range}
  */
 export function dayRange(ms) {
-  const start = startOfDay(ms);
-  return { start, end: addDays(start, 1) };
+  return { start: startOfDay(ms), end: startOfDay(ms, 1) };
 }
 
 /**
@@ -53,9 +54,7 @@ export function dayRange(ms) {
  * @param {WeekStart} weekStart
  */
 export function startOfWeek(ms, weekStart) {
-  const date = new Date(ms);
-  const back = (date.getDay() - weekStart + 7) % 7;
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - back).getTime();
+  return startOfDay(ms, -((new Date(ms).getDay() - weekStart + 7) % 7));
 }
 
 /**
@@ -65,8 +64,8 @@ export function startOfWeek(ms, weekStart) {
  * @returns {Range}
  */
 export function weekRange(ms, weekStart) {
-  const start = startOfWeek(ms, weekStart);
-  return { start, end: addDays(start, 7) };
+  const back = (new Date(ms).getDay() - weekStart + 7) % 7;
+  return { start: startOfDay(ms, -back), end: startOfDay(ms, 7 - back) };
 }
 
 /**
