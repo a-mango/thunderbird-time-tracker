@@ -18,6 +18,7 @@ import {
   ValidationError,
 } from '../../src/lib/errors.js';
 import { MIN, T0, allEntries, freshDB, runningPointer, seed } from './db-helpers.js';
+import { req, tx } from '../../src/db/idb.js';
 
 describe('projects', () => {
   it('creates root and child projects with defaults and sibling order', async () => {
@@ -225,5 +226,36 @@ describe('projects', () => {
     await expect(deleteProject(db, internal.id)).rejects.toMatchObject({
       details: { projects: 1, tasks: 2, entries: 0 },
     });
+  });
+});
+
+describe('corrupt project trees', () => {
+  /**
+   * Stores Harbor and Build as each other's parent, bypassing the repository.
+   * @param {IDBDatabase} db
+   */
+  async function corruptCycle(db) {
+    const tree = await seed(db);
+    await tx(db, ['projects'], 'readwrite', async ({ projects }) => {
+      await req(projects.put({ ...tree.harbor, parentId: tree.build.id }));
+    });
+    return tree;
+  }
+
+  it('stops the reparent walk on a stored cycle', async () => {
+    const { db } = await freshDB();
+    const { internal, build } = await corruptCycle(db);
+    await expect(updateProject(db, internal.id, { parentId: build.id })).rejects.toMatchObject({
+      constructor: InvariantError,
+      code: 'cycle',
+    });
+  });
+
+  it('deletes a subtree that contains a stored cycle', async () => {
+    const { db } = await freshDB();
+    const { harbor, build } = await corruptCycle(db);
+    const removed = await deleteProject(db, harbor.id, { cascade: true });
+    expect(new Set(removed.projects)).toEqual(new Set([harbor.id, build.id]));
+    expect(await getProject(db, build.id)).toBeNull();
   });
 });

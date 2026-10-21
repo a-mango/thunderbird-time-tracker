@@ -173,10 +173,13 @@ export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
     const current = await requireProject(projects, id);
     const next = { ...current, ...clean, updatedAt: now };
     if (clean.parentId !== undefined && clean.parentId !== current.parentId) {
+      // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
+      const seen = new Set();
       for (let cursor = clean.parentId; cursor !== null;) {
-        if (cursor === id) {
+        if (cursor === id || seen.has(cursor)) {
           throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
         }
+        seen.add(cursor);
         cursor = (await requireProject(projects, cursor)).parentId;
       }
       if (clean.order === undefined) next.order = await nextOrder(projects, clean.parentId);
@@ -231,7 +234,8 @@ export async function deleteProject(db, id, { cascade = false } = {}) {
         const children = await req(
           stores.projects.index(INDEXES.projectParent).getAllKeys(projectIds[i]),
         );
-        projectIds.push(...children.map(String));
+        // Skip ids already queued, so a stored cycle (corrupt data) can't grow the walk forever.
+        projectIds.push(...children.map(String).filter((child) => !projectIds.includes(child)));
       }
       /** @type {string[]} */
       const taskIds = [];
