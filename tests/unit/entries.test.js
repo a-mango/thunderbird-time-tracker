@@ -24,6 +24,7 @@ import {
   ValidationError,
 } from '../../src/lib/errors.js';
 import { MIN, T0, allEntries, freshDB, runningPointer, seed } from './db-helpers.js';
+import { req, tx } from '../../src/db/idb.js';
 
 const H = 60 * MIN;
 
@@ -385,5 +386,21 @@ describe('timer primitives', () => {
     expect(await discardRunning(db)).toMatchObject({ id: second.id });
     expect(await runningPointer(db)).toBeNull();
     expect((await allEntries(db)).map((e) => e.id)).toEqual([entry.id]);
+  });
+});
+
+describe('corrupt data', () => {
+  it('refuses to restore a deleted entry that has no end', async () => {
+    const { db } = await freshDB();
+    const { checkout } = await seed(db);
+    const entry = await addEntry(db, { taskId: checkout.id, start: T0 - H, end: T0 }, { now: T0 });
+    await tx(db, ['entries'], 'readwrite', ({ entries }) =>
+      req(entries.put({ ...entry, end: null, deletedAt: T0 })),
+    );
+    await expect(restoreEntry(db, entry.id)).rejects.toMatchObject({
+      constructor: InvariantError,
+      code: 'running',
+    });
+    expect(await getRunning(db)).toBeNull();
   });
 });

@@ -333,6 +333,7 @@ export async function softDeleteEntry(db, id, { now = Date.now() } = {}) {
  * @param {WriteOptions} [options]
  * @returns {Promise<Entry>}
  * @throws {NotFoundError} `entry` when missing or not deleted
+ * @throws {InvariantError} `running` when the stored entry has no end (corrupt data)
  */
 export async function restoreEntry(db, id, { now = Date.now() } = {}) {
   const restored = await tx(db, STORES.entries, 'readwrite', async ({ entries }) => {
@@ -340,6 +341,11 @@ export async function restoreEntry(db, id, { now = Date.now() } = {}) {
     const entry = await req(entries.get(id));
     if (!entry || entry.deletedAt === null) {
       throw new NotFoundError('entry', 'no deleted entry with this id', { id });
+    }
+    // Soft delete stops a running entry first, so only corrupt data gets here; restoring it
+    // would add a running entry the pointer doesn't know about.
+    if (entry.end === null) {
+      throw new InvariantError('running', 'a deleted entry cannot be running', { id });
     }
     const next = { ...entry, deletedAt: null, updatedAt: now };
     await req(entries.put(next));
