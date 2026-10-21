@@ -78,11 +78,11 @@ function validBackup() {
       },
       {
         id: 'e2',
-        taskId: 't2',
+        taskId: 't1',
         start: T0 + 60 * MINUTE,
         end: null,
         note: 'Re: agenda',
-        source: 'manual',
+        source: 'timer',
         createdAt: T0,
         updatedAt: T0,
         deletedAt: null,
@@ -91,7 +91,7 @@ function validBackup() {
         id: 'e3',
         taskId: 't1',
         start: T0 + 120 * MINUTE,
-        end: null,
+        end: T0 + 125 * MINUTE,
         note: '',
         source: 'split',
         createdAt: T0,
@@ -335,6 +335,27 @@ describe('parseBackup rejects', () => {
   it('two running entries', () => {
     const error = rejectChange((b) => (b.entries[0].end = null));
     expect(error.code).toBe('multiple-running');
+  });
+
+  it.each([
+    ['a deleted running entry', (b) => ((b.entries[0].end = null), (b.entries[0].deletedAt = T0))],
+    [
+      'a running entry on a done task',
+      (b) => ((b.entries[0].end = null), (b.entries[0].taskId = 't2')),
+    ],
+  ])('%s', (_name, change) => {
+    const error = rejectChange(change);
+    expect(error.code).toBe('running');
+    expect(error.details.path).toBe('entries[0].end');
+  });
+
+  it.each([
+    ['a fractional estimate', (b) => (b.tasks[0].estimateMin = 1.5)],
+    ['a blank task name', (b) => (b.tasks[0].name = '   ')],
+    ['a blank project name', (b) => (b.projects[0].name = '\t')],
+    ['a blank tag', (b) => (b.tasks[0].tags = [' '])],
+  ])('%s', (_name, change) => {
+    expect(rejectChange(change).code).toBe('type');
   });
 
   it.each([
