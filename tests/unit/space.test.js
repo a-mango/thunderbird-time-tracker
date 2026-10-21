@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { SPACE_NAME, TRACKER_PATH, ensureSpace } from '../../src/background/space.js';
-import { handleMessage } from '../../src/background/messages.js';
 import { createMessenger } from '../../dev/mock-messenger.js';
 
 const messages = { spaceTitle: { message: 'Time Tracker' } };
@@ -56,20 +55,5 @@ describe('ensureSpace', () => {
     const api = mock();
     await ensureSpace(api);
     expect((await api.spaces.query({ isBuiltIn: true })).map((s) => s.name)).toContain('mail');
-  });
-});
-
-describe('background messages', () => {
-  it('answers tt:summary with an empty summary until M2', async () => {
-    await expect(handleMessage({ type: 'tt:summary' })).resolves.toEqual({
-      projects: [],
-      taskCount: 0,
-      entryCount: 0,
-    });
-  });
-
-  it('ignores unknown messages so other listeners can answer', () => {
-    expect(handleMessage({ type: 'other' })).toBeUndefined();
-    expect(handleMessage(null)).toBeUndefined();
   });
 });

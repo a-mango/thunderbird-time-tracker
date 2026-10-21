@@ -1,5 +1,6 @@
 import { ensureSpace } from './space.js';
 import { handleMessage } from './messages.js';
+import { openDB, purgeDeleted } from '../db/index.js';
 
 // Event page: listeners are registered synchronously at top level, no state in memory.
 
@@ -15,8 +16,20 @@ messenger.runtime.onInstalled.addListener(() => {
   spaceReady.then(() => ensureSpace(messenger, { repair: true })).catch(logSpaceError);
 });
 
-// Registered so the event page starts with Thunderbird; the top-level check does the work.
-messenger.runtime.onStartup.addListener(() => {});
+// Thunderbird start: the space check runs at top level; this ends the undo window for deleted
+// entries ("until the next session"). Not at top level: the event page wakes up many times.
+messenger.runtime.onStartup.addListener(async () => {
+  try {
+    const db = await openDB();
+    try {
+      await purgeDeleted(db);
+    } finally {
+      db.close();
+    }
+  } catch (error) {
+    console.error('time tracker: purging deleted entries failed', error);
+  }
+});
 
 messenger.runtime.onMessage.addListener((message) => handleMessage(message));
 
