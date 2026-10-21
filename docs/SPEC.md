@@ -82,7 +82,7 @@ tests/ui           Playwright (Firefox engine) against the dev harness
  *             date:number}} MessageLink  (S1) */
 ```
 - Stores: `projects` (index `parentId`), `tasks` (index `projectId`), `entries` (indexes `taskId`, `start`, `end`, `deletedAt`), `links` (S1), `meta` (`schemaVersion`, `settings`, `running`).
-- IndexedDB can't index `null`, so the running entry never appears in the `end` index. `meta.running` points at it and is read and written in the same transaction as every entry write.
+- IndexedDB can't index `null`, so the running entry never appears in the `end` index. `meta.running` points at it and is read and written in the same transaction as every write that starts, stops or removes the running entry.
 - Deleting an entry is a soft delete (`deletedAt` set; a running entry is stopped first). It stays restorable (undo) until the next Thunderbird start: `runtime.onStartup` purges soft-deleted entries.
 - Times are epoch ms (UTC). Day and week boundaries are computed in local time at read time. An entry that crosses midnight counts toward each day it overlaps.
 - **Invariants**, enforced in `db/` and tested:

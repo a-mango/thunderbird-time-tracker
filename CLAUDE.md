@@ -40,4 +40,6 @@ Read only the sections the current task needs.
 - `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
 - Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
 - Dev harness URLs: `?fixtures=empty` (no data), `?fixtures=none` (no background), `?seed=N`.
+- Unit tests run in `TZ=Europe/Zurich` (`vitest.config.js`). db tests use `freshDB()` from `tests/unit/db-helpers.js` (own `IDBFactory`, sets the `IDBKeyRange` global Node lacks).
+- `npm test -- --coverage` fails below 90% lines in `src/lib/**` or `src/db/**`.
 - Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).
