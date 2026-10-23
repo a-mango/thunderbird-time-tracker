@@ -248,5 +248,41 @@
   "taskRunning": {
     "message": "Running",
     "description": "Accessible label of the timer icon in the running task row."
+  },
+  "colorBlue": {
+    "message": "Blue",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorDarkBlue": {
+    "message": "Dark blue",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorTeal": {
+    "message": "Teal",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorGreen": {
+    "message": "Green",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorYellow": {
+    "message": "Yellow",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorOrange": {
+    "message": "Orange",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorPink": {
+    "message": "Pink",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorPurple": {
+    "message": "Purple",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorInk": {
+    "message": "Ink",
+    "description": "Name of a project colour in the colour picker."
   }
 }
