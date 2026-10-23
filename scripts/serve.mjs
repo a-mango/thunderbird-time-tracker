@@ -1,4 +1,4 @@
-// Dev server (Node built-ins only): serves src/ at / and dev/ at /dev/.
+// Dev server (Node built-ins only): serves src/ at / (and /src/) and dev/ at /dev/.
 // Injects the mock messenger into every served HTML page; shipped files never reference dev/.
 // Usage: node scripts/serve.mjs [--port 5173]
 import { createServer } from 'node:http';
@@ -29,20 +29,34 @@ function within(dir, relative) {
 /** @param {string} pathname */
 function resolvePath(pathname) {
   if (pathname.startsWith('/dev/')) return within(devDir, pathname.slice('/dev/'.length));
+  // dev/ modules import src/ as ../src/ (the path that also works in Node and Vitest).
+  if (pathname.startsWith('/src/')) return within(srcDir, pathname.slice('/src/'.length));
   return within(srcDir, pathname.slice(1));
 }
 
-/** @param {string} html */
-async function injectMock(html) {
+const MODULE_SCRIPT = /<script type="module" src="([^"]+)"><\/script>/g;
+
+/**
+ * Injects the mock messenger and its locale messages. The page's own module scripts are replaced
+ * by an inline module that awaits the mock's `ready` (globals installed, database seeded) and then
+ * imports them: a top-level await in a separate module script would not hold back the next one.
+ * @param {string} html
+ */
+export async function injectMock(html) {
   const messages = await readFile(join(srcDir, '_locales', 'en', 'messages.json'), 'utf8');
   const json = JSON.stringify(JSON.parse(messages)).replaceAll('<', '\\u003c');
-  const tags =
-    `<script type="application/json" id="tt-dev-messages">${json}</script>\n` +
-    `    <script type="module" src="/dev/mock-messenger.js"></script>\n`;
-  // Right after <meta charset> (or <head>), before the page's own scripts, so the mock
-  // module executes first: deferred module scripts run in document order.
+  const tag = `<script type="application/json" id="tt-dev-messages">${json}</script>\n    `;
   const anchor = /<meta charset=[^>]*>\s*/i.test(html) ? /<meta charset=[^>]*>\s*/i : /<head>\s*/i;
-  return html.replace(anchor, (match) => `${match}${tags}    `);
+  const withMessages = html.replace(anchor, (match) => `${match}${tag}`);
+  return withMessages.replace(
+    MODULE_SCRIPT,
+    (_match, src) =>
+      `<script type="module">\n` +
+      `      import { ready } from '/dev/mock-messenger.js';\n` +
+      `      await ready.catch((error) => console.error('dev harness: setup failed', error));\n` +
+      `      await import(new URL(${JSON.stringify(src)}, document.baseURI).href);\n` +
+      `    </script>`,
+  );
 }
 
 export function createDevServer() {

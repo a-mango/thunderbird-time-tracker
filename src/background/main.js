@@ -1,4 +1,5 @@
 import { ensureSpace } from './space.js';
+import { registerMenus } from './menus.js';
 import { handleMessage } from './messages.js';
 import { openDB, purgeDeleted } from '../db/index.js';
 
@@ -10,6 +11,10 @@ const logSpaceError = (error) => console.error('time tracker: space setup failed
 // Every background start (app start, install, re-enable, wake-up) makes sure the space exists:
 // Thunderbird drops extension spaces when the add-on shuts down.
 const spaceReady = ensureSpace().catch(logSpaceError);
+
+// Context menu items for the tracker tab. Recreated on every background start like the space
+// (the M1 spike's proven path); the tracker page handles onShown/onClicked.
+registerMenus().catch((error) => console.error('time tracker: menu setup failed', error));
 
 messenger.runtime.onInstalled.addListener(() => {
   // After the startup check, so both never race to create the space.

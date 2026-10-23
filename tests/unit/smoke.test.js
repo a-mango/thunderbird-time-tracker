@@ -20,8 +20,8 @@ describe('manifest', () => {
     expect(manifest.browser_specific_settings.gecko.strict_min_version).toBe('157.0');
   });
 
-  it('requests no permissions in M0', () => {
-    expect(manifest.permissions ?? []).toEqual([]);
+  it('requests only the permissions listed in docs/SPEC.md (M3: native context menus)', () => {
+    expect(manifest.permissions ?? []).toEqual(['menus', 'menus.overrideContext']);
     expect(manifest.host_permissions ?? []).toEqual([]);
   });
 
