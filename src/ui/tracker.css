@@ -1,35 +1,52 @@
-.placeholder {
-  padding: calc(var(--space-step) * 8);
+/* Tracker tab layout (docs/DESIGN.md, Layout A): the three panes fill the tab. Pane looks are in
+ * styles/panes.css. Sizes: tt-splitter sets the side panes' inline-size and the auto tracks
+ * follow it (about3Pane's --folderPaneSplitter-width). Each splitter sits inside the pane it
+ * resizes, on the edge facing the list, so it belongs to that pane's landmark. */
+
+html,
+body {
+  block-size: 100%;
 }
 
-h1 {
-  margin-block: 0 calc(var(--space-step) * 2);
-  font-size: 1.4em;
-  font-weight: 600;
+body {
+  overflow: hidden;
 }
 
-h2 {
-  margin-block: calc(var(--space-step) * 6) calc(var(--space-step) * 2);
-  font-size: 1.1em;
-  font-weight: 600;
+.tracker {
+  display: grid;
+  grid-template-columns: auto minmax(320px, 1fr) auto;
+  block-size: 100%;
 }
 
-p {
-  margin: 0;
-  color: var(--layout-color-2);
+#sidebar {
+  inline-size: 18em;
+  min-inline-size: 100px;
 }
 
-.summary-counts {
-  font-variant-numeric: tabular-nums;
+#detail {
+  inline-size: 470px;
+  min-inline-size: 320px;
 }
 
-.project-list {
-  margin: calc(var(--space-step) * 2) 0 0;
-  padding: 0;
-  list-style: none;
+#sidebar,
+#detail {
+  position: relative;
+
+  & > tt-splitter {
+    position: absolute;
+    inset-block: 0;
+  }
 }
 
-.project-list li {
-  padding-block: var(--space-step);
-  padding-inline-start: calc(var(--tt-indent-step) * var(--depth, 0));
+#sidebar > tt-splitter {
+  inset-inline-end: 0;
+}
+
+#detail > tt-splitter {
+  inset-inline-start: 0;
+}
+
+/* Notifications sit at the top of the list pane (docs/DESIGN.md, Components). */
+.list-pane > tt-notification-bar {
+  flex: none;
 }
