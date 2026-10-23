@@ -6,6 +6,7 @@ import {
   deleteProject,
   getProject,
   listProjects,
+  moveProject,
   unarchiveProject,
   updateProject,
 } from '../../src/db/projects.js';
@@ -134,6 +135,93 @@ describe('projects', () => {
       NotFoundError,
     );
     expect((await getProject(db, client.id))?.parentId).toBeNull();
+  });
+
+  it('moves a project before a sibling and renumbers the siblings', async () => {
+    const { db, notify } = await freshDB();
+    const { client, internal } = await seed(db);
+    const training = await createProject(db, { name: 'Training' }, { now: T0 });
+    notify.mockClear();
+    const moved = await moveProject(
+      db,
+      training.id,
+      { parentId: null, beforeId: client.id },
+      {
+        now: T0 + MIN,
+      },
+    );
+    expect(moved).toMatchObject({ id: training.id, parentId: null, order: 0, updatedAt: T0 + MIN });
+    const roots = (await listProjects(db)).filter((p) => p.parentId === null);
+    expect(roots.map((p) => [p.name, p.order])).toEqual([
+      ['Training', 0],
+      ['Client work', 1],
+      ['Internal', 2],
+    ]);
+    // Siblings keep their updatedAt: only the order bookkeeping changed.
+    expect((await getProject(db, internal.id))?.updatedAt).toBe(internal.updatedAt);
+    expect(notify).toHaveBeenCalledTimes(1);
+    expect(notify.mock.calls[0][0]).toEqual({
+      type: 'projects',
+      ids: expect.arrayContaining([training.id, client.id, internal.id]),
+    });
+  });
+
+  it('moves a project last, and reparents it before a new sibling', async () => {
+    const { db } = await freshDB();
+    const { client, harbor, build, internal } = await seed(db);
+    const last = await moveProject(db, client.id, { parentId: null });
+    expect(last).toMatchObject({ order: 1 });
+    expect((await getProject(db, internal.id))?.order).toBe(0);
+    const content = await createProject(db, { name: 'Content', parentId: internal.id });
+    await moveProject(db, build.id, { parentId: internal.id, beforeId: content.id });
+    const children = (await listProjects(db)).filter((p) => p.parentId === internal.id);
+    expect(children.map((p) => [p.name, p.order])).toEqual([
+      ['Build', 0],
+      ['Content', 1],
+    ]);
+    expect((await listProjects(db)).filter((p) => p.parentId === harbor.id)).toEqual([]);
+  });
+
+  it('only writes the projects whose order changed', async () => {
+    const { db, notify } = await freshDB();
+    const { client, internal } = await seed(db);
+    notify.mockClear();
+    await moveProject(db, internal.id, { parentId: null });
+    expect(notify).toHaveBeenCalledWith({ type: 'projects', ids: [internal.id] });
+    expect((await getProject(db, client.id))?.order).toBe(0);
+  });
+
+  it('refuses cycles, unknown ids and a beforeId that is not a target sibling', async () => {
+    const { db, notify } = await freshDB();
+    const { client, harbor, build, internal } = await seed(db);
+    notify.mockClear();
+    await expect(moveProject(db, client.id, { parentId: build.id })).rejects.toMatchObject({
+      constructor: InvariantError,
+      code: 'cycle',
+    });
+    await expect(moveProject(db, client.id, { parentId: client.id })).rejects.toMatchObject({
+      code: 'cycle',
+    });
+    await expect(
+      moveProject(db, build.id, { parentId: client.id, beforeId: internal.id }),
+    ).rejects.toMatchObject({ constructor: ValidationError, code: 'before' });
+    await expect(
+      moveProject(db, build.id, { parentId: harbor.id, beforeId: build.id }),
+    ).rejects.toMatchObject({ code: 'before' });
+    await expect(moveProject(db, 'missing', { parentId: null })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+    await expect(moveProject(db, build.id, { parentId: 'missing' })).rejects.toBeInstanceOf(
+      NotFoundError,
+    );
+    await expect(
+      moveProject(db, build.id, /** @type {any} */ ({ parentId: null, order: 1 })),
+    ).rejects.toBeInstanceOf(ValidationError);
+    await expect(moveProject(db, build.id, /** @type {any} */ ({}))).rejects.toBeInstanceOf(
+      ValidationError,
+    );
+    expect((await getProject(db, build.id))?.parentId).toBe(harbor.id);
+    expect(notify).not.toHaveBeenCalled();
   });
 
   it('archives and unarchives', async () => {

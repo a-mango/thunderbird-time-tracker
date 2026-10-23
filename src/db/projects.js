@@ -1,5 +1,10 @@
 // Projects repository: a folder-like tree via `parentId` (docs/SPEC.md, Data model).
-import { CascadeRequiredError, InvariantError, NotFoundError } from '../lib/errors.js';
+import {
+  CascadeRequiredError,
+  InvariantError,
+  NotFoundError,
+  ValidationError,
+} from '../lib/errors.js';
 import { emit, req, tx } from './idb.js';
 import { INDEXES, STORES } from './schema.js';
 import { removeTasks } from './tasks.js';
@@ -98,6 +103,26 @@ async function nextOrder(projects, parentId) {
 }
 
 /**
+ * Refuses `parentId` when it is `id` or one of its descendants. Every ancestor must exist.
+ * @param {IDBObjectStore} projects
+ * @param {string} id
+ * @param {string | null} parentId
+ * @throws {InvariantError} `cycle`
+ * @throws {NotFoundError} `project`
+ */
+async function checkNoCycle(projects, id, parentId) {
+  // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
+  const seen = new Set();
+  for (let cursor = parentId; cursor !== null;) {
+    if (cursor === id || seen.has(cursor)) {
+      throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
+    }
+    seen.add(cursor);
+    cursor = (await requireProject(projects, cursor)).parentId;
+  }
+}
+
+/**
  * Creates a project at the end of its siblings.
  * @param {IDBDatabase} db
  * @param {{name: string, parentId?: string|null, color?: string, order?: number}} input
@@ -173,15 +198,7 @@ export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
     const current = await requireProject(projects, id);
     const next = { ...current, ...clean, updatedAt: now };
     if (clean.parentId !== undefined && clean.parentId !== current.parentId) {
-      // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
-      const seen = new Set();
-      for (let cursor = clean.parentId; cursor !== null;) {
-        if (cursor === id || seen.has(cursor)) {
-          throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
-        }
-        seen.add(cursor);
-        cursor = (await requireProject(projects, cursor)).parentId;
-      }
+      await checkNoCycle(projects, id, clean.parentId);
       if (clean.order === undefined) next.order = await nextOrder(projects, clean.parentId);
     }
     await req(projects.put(next));
@@ -189,6 +206,55 @@ export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
   });
   emit(db, { type: 'projects', ids: [id] });
   return project;
+}
+
+/**
+ * Moves a project under `parentId` (root: `null`), just before its sibling `beforeId`, or last
+ * when `beforeId` is null. The new siblings are renumbered 0, 1, 2… in the same transaction, so
+ * drag-and-drop reorders never collide; the old siblings keep their (gapped) order.
+ * @param {IDBDatabase} db
+ * @param {string} id
+ * @param {{parentId: string | null, beforeId?: string | null}} target
+ * @param {WriteOptions} [options]
+ * @returns {Promise<Project>} the moved project
+ * @throws {ValidationError} `before` when `beforeId` is not a child of `parentId` (or is `id`)
+ * @throws {NotFoundError} `project`
+ * @throws {InvariantError} `cycle`
+ */
+export async function moveProject(db, id, target, { now = Date.now() } = {}) {
+  const fields = checkFields(target, ['parentId', 'beforeId']);
+  const parentId = fields.parentId === null ? null : checkId(fields.parentId, 'parentId');
+  const beforeId =
+    fields.beforeId === undefined || fields.beforeId === null
+      ? null
+      : checkId(fields.beforeId, 'beforeId');
+  const changed = await tx(db, STORES.projects, 'readwrite', async ({ projects }) => {
+    const current = await requireProject(projects, id);
+    await checkNoCycle(projects, id, parentId);
+    /** @type {Project[]} */
+    const all = await req(projects.getAll());
+    const siblings = all
+      .filter((project) => project.parentId === parentId && project.id !== id)
+      .sort(siblingOrder);
+    const index =
+      beforeId === null ? siblings.length : siblings.findIndex((p) => p.id === beforeId);
+    if (index < 0) {
+      throw new ValidationError('before', 'beforeId must be a sibling at the target', { beforeId });
+    }
+    siblings.splice(index, 0, { ...current, parentId });
+    /** @type {Project[]} */
+    const updated = [];
+    for (const [order, project] of siblings.entries()) {
+      const moved = project.id === id;
+      if (!moved && project.order === order) continue;
+      const next = { ...project, order, updatedAt: moved ? now : project.updatedAt };
+      await req(projects.put(next));
+      updated.push(next);
+    }
+    return updated;
+  });
+  emit(db, { type: 'projects', ids: changed.map((project) => project.id) });
+  return /** @type {Project} */ (changed.find((project) => project.id === id));
 }
 
 /**
