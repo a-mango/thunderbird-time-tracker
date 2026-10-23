@@ -61,6 +61,7 @@ tt-splitter {
 
 /* ---- tt-tree (list-container.css, about3Pane.css folder rows) ---- */
 tt-tree {
+  position: relative;
   display: block;
 
   & ul {
@@ -136,7 +137,6 @@ tt-tree {
   & li.root > .container .name {
     font-weight: bold;
   }
-  /* Running project: bold name in the accent colour ("new messages"). */
   /* Running project: bold name in --new-folder-color, like folders with new mail. */
   & li.running > .container .name {
     font-weight: bold;
@@ -166,6 +166,42 @@ tt-tree {
   &:focus-within .container[aria-selected='true'] {
     border-color: var(--list-container-border-selected-current-focused);
     background-color: var(--list-container-background-selected-current-focused);
+  }
+
+  /* Drag and drop (about3Pane.css, list-container.css). Dropping inside a row: the focused
+   * selection state. The dragged row: dashed and faded. */
+  & li.drop-target > .container {
+    border-color: var(--list-container-border-selected-current-focused);
+    background-color: var(--list-container-background-selected-current-focused);
+  }
+  & li.drag-target > .container {
+    border-style: dashed;
+    border-color: var(--list-container-border-selected-current);
+    color: color-mix(in srgb, currentColor 50%, transparent);
+  }
+  /* Reorder: Thunderbird's drop-indicator (a ring and a line in the accent colour, outlined in
+   * the selected text colour), drawn in CSS because <use> can't paint its two context colours. */
+  & > .drop-indicator {
+    position: absolute;
+    inset-inline-end: 3px;
+    z-index: 3;
+    block-size: 2px;
+    margin-block-start: -1px;
+    background-color: var(--selected-item-color);
+    box-shadow: 0 0 0 1px var(--selected-item-text-color);
+    pointer-events: none;
+
+    &::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: -8px;
+      inset-block-start: -3px;
+      inline-size: 8px;
+      block-size: 8px;
+      border: 2px solid var(--selected-item-color);
+      border-radius: 50%;
+      background-color: var(--selected-item-text-color);
+    }
   }
 }
 
@@ -371,6 +407,11 @@ tt-table {
       visibility: hidden;
     }
   }
+  & .menu-separator {
+    margin: var(--space-step) 0;
+    border: none;
+    border-block-start: 1px solid var(--panel-border-color);
+  }
 }
 
 /* ---- tt-dialog (inContentDialog.css) ---- */
@@ -396,6 +437,59 @@ tt-table {
     margin-block: 0 var(--space-base);
     font-size: 1.1em;
     line-height: 1.4em;
+  }
+  /* Forms: label above field, like Thunderbird's New Folder dialog. */
+  & .dialog-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-step);
+    margin-block-end: calc(var(--space-step) * 4);
+
+    & .field {
+      inline-size: 100%;
+    }
+  }
+  & .dialog-label {
+    padding: 0;
+    font-weight: 600;
+  }
+  & .swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-base);
+    margin: 0 0 calc(var(--space-step) * 4);
+    padding: 0;
+    border: none;
+
+    & > legend {
+      margin-block-end: var(--space-step);
+    }
+  }
+  /* Colour swatches: native radios, filled with the project colour; checked = accent ring. */
+  & .swatch {
+    appearance: none;
+    inline-size: 24px;
+    block-size: 24px;
+    margin: 0;
+    border: 1px solid color-mix(in srgb, currentColor 30%, transparent);
+    border-radius: var(--button-border-radius);
+    background-color: var(--swatch-color);
+
+    &:checked {
+      outline: 2px solid var(--selected-item-color);
+      outline-offset: 2px;
+    }
+    &:focus-visible {
+      outline: var(--focus-outline);
+      outline-offset: 2px;
+    }
+    @media (forced-colors: active) {
+      appearance: auto;
+    }
+  }
+  & .delete-counts {
+    margin: 0 0 var(--space-base);
+    padding-inline-start: calc(var(--space-step) * 6);
   }
   & .dialog-buttons {
     display: flex;

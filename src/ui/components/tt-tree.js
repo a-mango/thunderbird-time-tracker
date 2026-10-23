@@ -2,6 +2,11 @@ import { getLayout, setLayout } from '../layout-store.js';
 import { el, icon, renderList, setAttrs } from '../render.js';
 
 const TYPE_AHEAD_MS = 500;
+/** Hovering a collapsed row this long while dragging expands it (about3Pane.js _timedExpand). */
+const DRAG_EXPAND_MS = 1000;
+const DRAG_TYPE = 'application/x-tt-tree-item';
+
+/** @typedef {'before' | 'after' | 'inside'} DropPosition */
 
 /**
  * @typedef {object} TreeNode
@@ -17,13 +22,20 @@ const TYPE_AHEAD_MS = 500;
  * + `ul[role=group]`. Selection follows focus, with a roving tabindex.
  *
  * Attributes: `aria-label` (required, localized by the page); `persist` = layout-store key for
- * the expanded ids.
+ * the expanded ids; `dnd` = rows can be dragged and dropped (see `canDrag`/`canDrop`).
  *
  * Keyboard: Up/Down, Home/End, Right (expand, then first child), Left (collapse, then parent),
  * Enter (activate), printable characters (type-ahead on labels).
  * Pointer: click selects, click on the twisty toggles, double-click activates.
  *
- * Events (bubbling): `tt-select` {id}, `tt-toggle` {id, expanded}, `tt-activate` {id}.
+ * Drag and drop (with `dnd`), after Thunderbird's folder pane: the top quarter of a row drops
+ * before it, the bottom quarter after it (inside, if it is an expanded parent), the middle inside.
+ * Reorders show a line indicator, drops inside the `drop-target` row state; the dragged row is
+ * `drag-target`; a collapsed row expands after hovering 1s. Pointer only: the page offers a
+ * keyboard alternative (Move To…).
+ *
+ * Events (bubbling): `tt-select` {id}, `tt-toggle` {id, expanded}, `tt-activate` {id},
+ * `tt-drop` {id, targetId, position}.
  */
 export class TtTree extends HTMLElement {
   /** @type {TreeNode[]} */
@@ -39,7 +51,27 @@ export class TtTree extends HTMLElement {
   #typed = '';
   #typedAt = 0;
   #root = el('ul', { attrs: { role: 'none' } });
+  #indicator = el('div', { class: 'drop-indicator', hidden: true });
   #uid = `tt-tree-${crypto.randomUUID()}`;
+  /** @type {string | null} */
+  #dragId = null;
+  /** Last accepted drop location, set by dragover. */
+  /** @type {{targetId: string, position: DropPosition} | null} */
+  #drop = null;
+  /** @type {{id: string, timer: ReturnType<typeof setTimeout>} | null} */
+  #expandTimer = null;
+
+  /**
+   * Whether a row can be dragged (with `dnd`).
+   * @type {(id: string) => boolean}
+   */
+  canDrag = () => true;
+
+  /**
+   * Whether the dragged row `id` may be dropped at `position` of `targetId`.
+   * @type {(id: string, targetId: string, position: DropPosition) => boolean}
+   */
+  canDrop = () => false;
 
   /**
    * Fills a row's content (after the twisty). Override to add icons and badges.
@@ -51,16 +83,26 @@ export class TtTree extends HTMLElement {
 
   connectedCallback() {
     this.setAttribute('role', 'tree');
-    if (!this.#root.isConnected) this.append(this.#root);
+    if (!this.#root.isConnected) this.append(this.#root, this.#indicator);
     this.addEventListener('keydown', this.#onKeyDown);
     this.addEventListener('click', this.#onClick);
     this.addEventListener('dblclick', this.#onDblClick);
+    this.addEventListener('dragstart', this.#onDragStart);
+    this.addEventListener('dragover', this.#onDragOver);
+    this.addEventListener('dragleave', this.#onDragLeave);
+    this.addEventListener('drop', this.#onDrop);
+    this.addEventListener('dragend', this.#onDragEnd);
   }
 
   disconnectedCallback() {
     this.removeEventListener('keydown', this.#onKeyDown);
     this.removeEventListener('click', this.#onClick);
     this.removeEventListener('dblclick', this.#onDblClick);
+    this.removeEventListener('dragstart', this.#onDragStart);
+    this.removeEventListener('dragover', this.#onDragOver);
+    this.removeEventListener('dragleave', this.#onDragLeave);
+    this.removeEventListener('drop', this.#onDrop);
+    this.removeEventListener('dragend', this.#onDragEnd);
   }
 
   /**
@@ -105,6 +147,17 @@ export class TtTree extends HTMLElement {
     this.#selectedId = id && this.#byId.has(id) ? id : null;
     if (this.#selectedId) this.#revealAncestors(this.#selectedId);
     this.#render();
+  }
+
+  /**
+   * Id of the item whose row contains `element` (e.g. a contextmenu target), or null.
+   * @param {Element | null} element
+   */
+  itemIdAt(element) {
+    const li = /** @type {HTMLElement | null | undefined} */ (
+      element?.closest('[role="treeitem"]')?.parentElement
+    );
+    return li && this.contains(li) ? (li.dataset.id ?? null) : null;
   }
 
   /** @param {string} id */
@@ -240,6 +293,7 @@ export class TtTree extends HTMLElement {
       'aria-selected': String(node.id === this.#selectedId),
       'aria-expanded': hasChildren ? String(expanded) : null,
       'aria-owns': expanded ? group.id : null,
+      draggable: this.hasAttribute('dnd') && this.canDrag(node.id) ? 'true' : null,
     });
     item.style.setProperty('--depth', String(level - 1));
     const content = /** @type {HTMLElement} */ (item.lastElementChild);
@@ -280,6 +334,97 @@ export class TtTree extends HTMLElement {
     if (!id || /** @type {Element} */ (event.target).closest('.twisty')) return;
     this.dispatchEvent(new CustomEvent('tt-activate', { bubbles: true, detail: { id } }));
   };
+
+  /** @param {DragEvent} event */
+  #onDragStart = (event) => {
+    const li = this.#itemFromEvent(event);
+    const id = li?.dataset.id;
+    if (!id || !this.hasAttribute('dnd') || !event.dataTransfer) return;
+    this.#dragId = id;
+    event.dataTransfer.setData(DRAG_TYPE, id);
+    event.dataTransfer.effectAllowed = 'move';
+    li.classList.add('drag-target');
+  };
+
+  /** @param {DragEvent} event */
+  #onDragOver = (event) => {
+    const li = this.#itemFromEvent(event);
+    const targetId = li?.dataset.id;
+    if (!this.#dragId || !li || !targetId) return;
+    const row = /** @type {HTMLElement} */ (li.firstElementChild);
+    const rect = row.getBoundingClientRect();
+    const quarter = rect.height / 4;
+    const expandedParent = li.classList.contains('children') && this.#expanded.has(targetId);
+    /** @type {DropPosition} */
+    let position = 'inside';
+    if (event.clientY < rect.top + quarter) position = 'before';
+    else if (event.clientY > rect.bottom - quarter && !expandedParent) position = 'after';
+    this.#timedExpand(position === 'inside' ? targetId : null);
+    if (!this.canDrop(this.#dragId, targetId, position)) {
+      this.#clearDropTarget();
+      return;
+    }
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    this.#clearDropTarget();
+    this.#drop = { targetId, position };
+    if (position === 'inside') {
+      li.classList.add('drop-target');
+      return;
+    }
+    const host = this.getBoundingClientRect();
+    const content = /** @type {HTMLElement} */ (row.lastElementChild).getBoundingClientRect();
+    const rtl = getComputedStyle(this).direction === 'rtl';
+    this.#indicator.style.insetBlockStart = `${(position === 'before' ? rect.top : rect.bottom) - host.top}px`;
+    this.#indicator.style.insetInlineStart = `${rtl ? host.right - content.right : content.left - host.left}px`;
+    this.#indicator.hidden = false;
+  };
+
+  /** @param {DragEvent} event */
+  #onDragLeave = (event) => {
+    const to = /** @type {Node | null} */ (event.relatedTarget);
+    if (to && this.contains(to)) return;
+    this.#clearDropTarget();
+    this.#timedExpand(null);
+  };
+
+  /** @param {DragEvent} event */
+  #onDrop = (event) => {
+    const id = this.#dragId;
+    const drop = this.#drop;
+    this.#clearDropTarget();
+    if (!id || !drop) return;
+    event.preventDefault();
+    this.dispatchEvent(new CustomEvent('tt-drop', { bubbles: true, detail: { id, ...drop } }));
+  };
+
+  #onDragEnd = () => {
+    this.#dragId = null;
+    this.#clearDropTarget();
+    this.#timedExpand(null);
+    for (const li of this.querySelectorAll('li.drag-target')) li.classList.remove('drag-target');
+  };
+
+  #clearDropTarget() {
+    this.#drop = null;
+    for (const li of this.querySelectorAll('li.drop-target')) li.classList.remove('drop-target');
+    this.#indicator.hidden = true;
+  }
+
+  /** Expands `id` after a delay if it is a collapsed parent; null cancels. @param {string | null} id */
+  #timedExpand(id) {
+    if (this.#expandTimer?.id === id) return;
+    if (this.#expandTimer) clearTimeout(this.#expandTimer.timer);
+    this.#expandTimer = null;
+    if (!id || !this.#byId.get(id)?.children?.length || this.#expanded.has(id)) return;
+    this.#expandTimer = {
+      id,
+      timer: setTimeout(() => {
+        this.#expandTimer = null;
+        this.setExpanded(id, true);
+      }, DRAG_EXPAND_MS),
+    };
+  }
 
   /** @param {KeyboardEvent} event */
   #onKeyDown = (event) => {
