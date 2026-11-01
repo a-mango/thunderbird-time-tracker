@@ -9,7 +9,8 @@
  *            estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *            order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task
  * @typedef {{id:string, taskId:string, start:number, end:number|null, note:string,
- *            source:'timer'|'manual'|'split'|'idle', createdAt:number, updatedAt:number}} Entry
+ *            source:'timer'|'manual'|'split'|'idle', createdAt:number, updatedAt:number,
+ *            deletedAt:number|null}} Entry
  * @typedef {{projects: Project[], tasks: Task[], entries: Entry[]}} Fixtures
  */
 
@@ -29,7 +30,11 @@ const PROJECTS = [
   ['internal', null, 'Internal', '#2493ef'],
   ['bookkeeping', 'internal', 'Bookkeeping', '#e247c4'],
   ['training', 'internal', 'Training', '#2493ef'],
+  // Archived (fills the Archive root). Appended last so earlier ids and random draws stay stable.
+  ['fern-discovery', 'fern', 'Discovery', '#ea7308'],
 ];
+
+const ARCHIVED = new Set(['fern-discovery']);
 
 /** Tasks: [projectKey, name, status, starred, estimateMin, tags, entryCount]. */
 /** @type {[string, string, 'open'|'done', boolean, number|null, string[], number][]} */
@@ -49,6 +54,7 @@ const TASKS = [
   ['content', 'Payment provider test account', 'open', false, 30, [], 1],
   ['fern', 'Brand review call', 'open', false, 60, [], 2],
   ['support', 'Weekly client sync', 'open', false, null, [], 5],
+  ['fern-discovery', 'Client call notes', 'done', false, null, [], 2],
 ];
 
 const NOTES = ['', '', '', 'Inline errors for card fields', 'Re: Checkout flow — client feedback'];
@@ -94,7 +100,7 @@ export function generateFixtures({ seed = 42, now = Date.now(), running = true }
       name,
       color,
       order,
-      archived: false,
+      archived: ARCHIVED.has(key),
       createdAt: created,
       updatedAt: created,
     };
@@ -141,6 +147,7 @@ export function generateFixtures({ seed = 42, now = Date.now(), running = true }
         source: random() < 0.8 ? 'timer' : 'manual',
         createdAt: end,
         updatedAt: end,
+        deletedAt: null,
       });
     }
   });
@@ -156,35 +163,10 @@ export function generateFixtures({ seed = 42, now = Date.now(), running = true }
       source: 'timer',
       createdAt: start,
       updatedAt: start,
+      deletedAt: null,
     });
   }
 
   entries.sort((a, b) => a.start - b.start);
   return { projects, tasks, entries };
-}
-
-/**
- * The `tt:summary` answer the background will give once M2 exists.
- * @param {Fixtures} fixtures
- * @returns {import('../src/background/messages.js').Summary}
- */
-export function summarize({ projects, tasks, entries }) {
-  /** @type {Map<string | null, Project[]>} */
-  const children = new Map();
-  for (const project of projects) {
-    const siblings = children.get(project.parentId) ?? [];
-    siblings.push(project);
-    children.set(project.parentId, siblings);
-  }
-  /** @type {import('../src/background/messages.js').Summary['projects']} */
-  const flat = [];
-  /** @param {string | null} parentId @param {number} depth */
-  const walk = (parentId, depth) => {
-    for (const project of (children.get(parentId) ?? []).sort((a, b) => a.order - b.order)) {
-      flat.push({ id: project.id, name: project.name, depth });
-      walk(project.id, depth + 1);
-    }
-  };
-  walk(null, 0);
-  return { projects: flat, taskCount: tasks.length, entryCount: entries.length };
 }

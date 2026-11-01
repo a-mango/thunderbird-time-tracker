@@ -36,69 +36,15 @@ body {
   block-size: 560px;
 }
 
+/* Sidebar, list header and panes: src/ui/styles/panes.css. Gallery-only sizes below. */
 .sidebar {
-  display: flex;
-  flex-direction: column;
   flex: none;
   inline-size: 18em;
-  min-inline-size: 0;
-  background-color: var(--sidebar-background);
-  color: var(--sidebar-color);
-}
-
-.sidebar-header {
-  display: flex;
-  align-items: center;
-  gap: var(--sidebar-header-gap);
-  padding: var(--sidebar-header-spacing);
-
-  & .new-task {
-    flex: 1;
-  }
-}
-
-.sidebar-scroll {
-  flex: 1;
-}
-
-.view-icon {
-  --icon-color: var(--folder-color-inbox);
-
-  &.starred {
-    --icon-color: var(--tt-starred);
-  }
 }
 
 .list-pane {
-  display: flex;
-  flex-direction: column;
   flex: 1;
   min-inline-size: 320px;
-  background-color: var(--tree-view-bg);
-}
-
-/* threadPane.css #threadPaneHeaderBar */
-.list-header {
-  display: flex;
-  align-items: center;
-  gap: var(--space-step);
-  padding: var(--thread-pane-header-padding);
-  padding-inline-start: calc(var(--thread-pane-header-padding) + 9px);
-  border-block-end: 1px solid var(--layout-border-0);
-  background-color: var(--layout-background-1);
-
-  & .list-title {
-    margin: 0;
-    font-size: 1.2rem;
-    font-weight: 600;
-  }
-  & .list-count {
-    padding-inline-start: 9px;
-    color: var(--tt-text-muted);
-  }
-  & .spacer {
-    flex: 1;
-  }
 }
 
 /* quickFilterBar.css */

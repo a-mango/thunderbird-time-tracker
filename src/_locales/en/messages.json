@@ -19,39 +19,9 @@
     "message": "Start the last task or stop the running timer",
     "description": "Keyboard shortcut description in the add-on shortcut settings."
   },
-  "trackerHeading": {
-    "message": "Time Tracker",
-    "description": "Heading of the tracker tab."
-  },
-  "trackerPlaceholder": {
-    "message": "Projects, tasks and time entries will appear here.",
-    "description": "Placeholder text in the tracker tab before the real UI exists."
-  },
-  "trackerProjectsLabel": {
-    "message": "Projects",
-    "description": "Heading of the project list in the tracker tab."
-  },
-  "trackerSummary": {
-    "message": "Projects: $PROJECTS$ · Tasks: $TASKS$ · Time entries: $ENTRIES$",
-    "description": "Data summary in the tracker tab.",
-    "placeholders": {
-      "projects": {
-        "content": "$1",
-        "example": "6"
-      },
-      "tasks": {
-        "content": "$2",
-        "example": "14"
-      },
-      "entries": {
-        "content": "$3",
-        "example": "120"
-      }
-    }
-  },
   "trackerEmpty": {
     "message": "No projects yet.",
-    "description": "Shown in the tracker tab when there is no data."
+    "description": "Shown in the project tree when there are no projects."
   },
   "popupHeading": {
     "message": "Time Tracker",
@@ -63,7 +33,7 @@
   },
   "trackerLoadError": {
     "message": "Could not load your data. Try reopening this tab.",
-    "description": "Shown in the tracker tab when the background does not answer."
+    "description": "Shown in the tracker tab when the database cannot be opened or read."
   },
   "tableColumnPicker": {
     "message": "Select columns to display",
@@ -248,5 +218,237 @@
   "taskRunning": {
     "message": "Running",
     "description": "Accessible label of the timer icon in the running task row."
+  },
+  "colorBlue": {
+    "message": "Blue",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorDarkBlue": {
+    "message": "Dark blue",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorTeal": {
+    "message": "Teal",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorGreen": {
+    "message": "Green",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorYellow": {
+    "message": "Yellow",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorOrange": {
+    "message": "Orange",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorPink": {
+    "message": "Pink",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorPurple": {
+    "message": "Purple",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "colorInk": {
+    "message": "Ink",
+    "description": "Name of a project colour in the colour picker."
+  },
+  "sidebarLabel": {
+    "message": "Projects and views",
+    "description": "Accessible name of the project pane (left column)."
+  },
+  "detailResize": {
+    "message": "Resize the task details pane",
+    "description": "Accessible name of the splitter between the task list and the details pane."
+  },
+  "listPlaceholder": {
+    "message": "Tasks will appear here.",
+    "description": "Placeholder in the task list until the task list exists."
+  },
+  "detailEmpty": {
+    "message": "No task selected.",
+    "description": "Shown in the details pane when no task is selected."
+  },
+  "detailLabel": {
+    "message": "Task details",
+    "description": "Accessible name of the details pane."
+  },
+  "menuNewProject": {
+    "message": "New Project…",
+    "description": "Menu item: opens the new project dialog. Shortcut Ctrl+Shift+N."
+  },
+  "menuNewSubproject": {
+    "message": "New Subproject…",
+    "description": "Project context menu item (like New Subfolder… in Thunderbird)."
+  },
+  "menuRename": {
+    "message": "Rename Project…",
+    "description": "Project context menu item: opens the project dialog. Shortcut F2."
+  },
+  "menuColor": {
+    "message": "Color",
+    "description": "Project context menu item: submenu of colours."
+  },
+  "menuMoveTo": {
+    "message": "Move To…",
+    "description": "Project context menu item: opens the Move To dialog."
+  },
+  "menuArchive": {
+    "message": "Archive",
+    "description": "Project context menu item: moves the project to the Archive."
+  },
+  "menuUnarchive": {
+    "message": "Unarchive",
+    "description": "Project context menu item: brings an archived project back."
+  },
+  "menuDelete": {
+    "message": "Delete Project",
+    "description": "Project context menu item. Shortcut Delete."
+  },
+  "menuSettings": {
+    "message": "Settings",
+    "description": "Menu item in the project pane menu."
+  },
+  "menuExport": {
+    "message": "Export…",
+    "description": "Menu item in the project pane menu."
+  },
+  "projectDialogNew": {
+    "message": "New Project",
+    "description": "Title of the dialog that creates a project."
+  },
+  "projectDialogEdit": {
+    "message": "Project Properties",
+    "description": "Title of the dialog that edits a project."
+  },
+  "projectName": {
+    "message": "Name",
+    "description": "Label of the project name field."
+  },
+  "projectColor": {
+    "message": "Color",
+    "description": "Label of the project colour choices."
+  },
+  "projectParent": {
+    "message": "Create as a subproject of",
+    "description": "Label of the parent project choice in the new project dialog (like Thunderbird New Folder)."
+  },
+  "projectParentEdit": {
+    "message": "Subproject of",
+    "description": "Label of the parent project choice in the project properties dialog."
+  },
+  "projectTopLevel": {
+    "message": "None (top level)",
+    "description": "Parent choice: no parent project."
+  },
+  "projectCreate": {
+    "message": "Create Project",
+    "description": "Primary button of the new project dialog."
+  },
+  "dialogSave": {
+    "message": "Save",
+    "description": "Primary button of edit dialogs."
+  },
+  "moveDialogTitle": {
+    "message": "Move Project",
+    "description": "Title of the Move To dialog."
+  },
+  "moveDialogLabel": {
+    "message": "Move to",
+    "description": "Label of the destination choice in the Move To dialog."
+  },
+  "moveButton": {
+    "message": "Move",
+    "description": "Primary button of the Move To dialog."
+  },
+  "deleteDialogTitle": {
+    "message": "Delete Project",
+    "description": "Title of the delete confirmation dialog."
+  },
+  "deleteButton": {
+    "message": "Delete",
+    "description": "Destructive button of the delete confirmation dialog."
+  },
+  "deleteCascadeNote": {
+    "message": "Everything in it is deleted too. This can’t be undone.",
+    "description": "Delete dialog: shown under the list of what goes with the project."
+  },
+  "errorSave": {
+    "message": "Could not save the change. Try again.",
+    "description": "Notification when a write to the database fails."
+  },
+  "dbUpgraded": {
+    "message": "Time Tracker was updated in another tab. Reload this tab to continue.",
+    "description": "Notification when another tab upgraded or deleted the database."
+  },
+  "notificationReload": {
+    "message": "Reload",
+    "description": "Button on a notification that reloads the tab."
+  },
+  "deleteConfirm": {
+    "message": "Delete the project “$NAME$”?",
+    "description": "Delete dialog text for a project without content.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Training"
+      }
+    }
+  },
+  "deleteCascade": {
+    "message": "Delete the project “$NAME$” and everything in it?",
+    "description": "Delete dialog text for a project with subprojects or tasks.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Client work"
+      }
+    }
+  },
+  "deleteCountProjects": {
+    "message": "Subprojects: $COUNT$",
+    "description": "Delete dialog: number of subprojects that go with the project.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "deleteCountTasks": {
+    "message": "Tasks: $COUNT$",
+    "description": "Delete dialog: number of tasks that go with the project.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "deleteCountEntries": {
+    "message": "Time entries: $COUNT$",
+    "description": "Delete dialog: number of time entries that go with the project.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "40"
+      }
+    }
+  },
+  "moveDialogText": {
+    "message": "Move “$NAME$” to:",
+    "description": "Text of the Move To dialog.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Build"
+      }
+    }
+  },
+  "projectNameRequired": {
+    "message": "Enter a name for the project.",
+    "description": "Validation message when the project name is empty or only spaces."
   }
 }

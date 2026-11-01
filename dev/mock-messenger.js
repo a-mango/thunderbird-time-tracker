@@ -4,9 +4,12 @@
 //
 // In the browser, scripts/serve.mjs injects this module first in <head>, together with
 // a <script type="application/json" id="tt-dev-messages"> holding _locales/en/messages.json.
-// The mock also plays the background page: it answers runtime messages from dev fixtures.
+// The mock also plays the background page where pages need it: it registers the context menu
+// items, and before the page script runs it seeds IndexedDB with fixtures (see `ready`).
 
-import { generateFixtures, summarize } from './fixtures.js';
+import { registerMenus } from '../src/background/menus.js';
+import { generateFixtures } from './fixtures.js';
+import { databaseExists, deleteDatabase, seedDatabase, seedSettings } from './seed.js';
 
 /**
  * @template {(...args: any[]) => any} T
@@ -287,9 +290,16 @@ export function createMessenger({
 
   /** @type {Map<string, messenger.alarms.Alarm>} */
   const alarms = new Map();
-  /** @type {Map<string | number, object>} */
+  /** @type {Map<string | number, messenger.menus.CreateProperties>} */
   const menuItems = new Map();
   let nextMenuId = 1;
+  /** Elements of recent contextmenu events, by targetElementId (see menus._contextMenu). */
+  /** @type {Map<number, Element>} */
+  const menuTargets = new Map();
+  let nextTargetId = 1;
+
+  /** @type {{overridden: object | null, lastTarget: number | null}} */
+  const menuState = { overridden: null, lastTarget: null };
 
   return {
     spaces: spacesApi,
@@ -356,7 +366,11 @@ export function createMessenger({
       /** @param {messenger.menus.CreateProperties} props */
       create(props) {
         const id = props.id ?? nextMenuId++;
-        menuItems.set(id, { ...props, id });
+        if (menuItems.has(id)) throw new Error(`ID already exists: ${id}`);
+        if (props.parentId !== undefined && !menuItems.has(props.parentId)) {
+          throw new Error(`Could not find any MenuItem with id: ${props.parentId}`);
+        }
+        menuItems.set(id, { ...props, id: /** @type {string} */ (id) });
         return id;
       },
       /** @param {string | number} id @param {object} props */
@@ -368,10 +382,34 @@ export function createMessenger({
       remove: async (id) => void menuItems.delete(id),
       removeAll: async () => menuItems.clear(),
       refresh: async () => {},
-      overrideContext: () => {},
+      /** @type {(options: {showDefaults?: boolean, context?: string}) => void} */
+      overrideContext: (options) => {
+        menuState.overridden = options;
+      },
+      /** @param {number} targetElementId */
+      getTargetElement: (targetElementId) => {
+        const element = menuTargets.get(targetElementId);
+        return element?.isConnected ? element : null;
+      },
       onClicked: createEvent(),
       onShown: createEvent(),
       onHidden: createEvent(),
+      /**
+       * Test helper (not part of the API): what Thunderbird does on a contextmenu event. Records
+       * the target and returns its targetElementId; `overridden` is reset for the new menu.
+       * @param {Element} target
+       */
+      _contextMenu(target) {
+        const id = nextTargetId++;
+        menuTargets.set(id, target);
+        menuState.overridden = null;
+        menuState.lastTarget = id;
+        return id;
+      },
+      /** Test helper: state of the last menu (`overridden` options, `lastTarget` id). */
+      _state: () => menuState,
+      /** Test helper: a copy of every item. */
+      _items: () => [...menuItems.values()].map((item) => ({ ...item })),
     },
     i18n: {
       /** @param {string} name @param {string | string[]} [substitutions] */
@@ -431,30 +469,53 @@ export function createMessenger({
 }
 
 /**
- * Dev-only background stand-in: answers `tt:summary` from seeded fixtures.
- * @param {ReturnType<typeof createMessenger>} api
- * @param {import('./fixtures.js').Fixtures} fixtures
+ * Prepares the dev database from the page URL before the page script runs:
+ * - default: seed fixtures (seed 42) only if the database doesn't exist yet, so changes survive
+ *   reloads;
+ * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything;
+ * - `?density=` / `?accent=`: store those settings (for screenshots).
+ * @param {URLSearchParams} params
  */
-export function serveFixtures(api, fixtures) {
-  api.runtime.onMessage.addListener((/** @type {any} */ message) => {
-    if (message?.type === 'tt:summary') return Promise.resolve(summarize(fixtures));
-    return undefined;
-  });
+export async function prepareDatabase(params) {
+  const seed = params.get('seed');
+  if (params.get('fixtures') === 'empty') await deleteDatabase();
+  else if (seed !== null || !(await databaseExists())) {
+    await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }));
+  }
+  /** @type {Record<string, string>} */
+  const settings = {};
+  for (const name of ['density', 'accent']) {
+    const value = params.get(name);
+    if (value) settings[name] = value;
+  }
+  if (Object.keys(settings).length > 0) await seedSettings(settings);
 }
 
-// Browser entry: install globals when loaded by the dev server.
-if (typeof document !== 'undefined' && !('messenger' in globalThis)) {
+/**
+ * Browser entry: installs the globals, registers the context menu items and prepares the database.
+ * scripts/serve.mjs awaits this before importing the page's own module script.
+ */
+async function boot() {
   const data = document.getElementById('tt-dev-messages');
-  const params = new URLSearchParams(location.search);
   const api = createMessenger({
     messages: data ? JSON.parse(data.textContent ?? '{}') : {},
     baseUrl: `${location.origin}/`,
   });
-  // ?fixtures=empty: no data. ?fixtures=none: no background at all (sendMessage rejects).
-  const mode = params.get('fixtures');
-  if (mode === 'empty') serveFixtures(api, { projects: [], tasks: [], entries: [] });
-  else if (mode !== 'none') {
-    serveFixtures(api, generateFixtures({ seed: Number(params.get('seed') ?? 42) }));
-  }
   Object.assign(globalThis, { messenger: api, browser: api });
+  // Like Thunderbird, record the target before the page's own contextmenu listeners run.
+  window.addEventListener(
+    'contextmenu',
+    (event) => api.menus._contextMenu(/** @type {Element} */ (event.target)),
+    { capture: true },
+  );
+  await registerMenus(/** @type {any} */ (api));
+  // The gallery renders from in-memory fixtures and needs no database.
+  if (!location.pathname.startsWith('/dev/')) {
+    await prepareDatabase(new URLSearchParams(location.search));
+  }
+  // Tests can tell the harness's own database work from the page's.
+  document.documentElement.dataset.devReady = '';
 }
+
+export const ready =
+  typeof document !== 'undefined' && !('messenger' in globalThis) ? boot() : Promise.resolve();

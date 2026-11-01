@@ -257,6 +257,17 @@ export async function listEntriesByTask(db, taskId) {
 }
 
 /**
+ * Every live entry, the running one included, by start time (rollups need all of them).
+ * @param {IDBDatabase} db
+ * @returns {Promise<Entry[]>}
+ */
+export async function listEntries(db) {
+  /** @type {Entry[]} */
+  const all = await tx(db, STORES.entries, 'readonly', ({ entries }) => req(entries.getAll()));
+  return byStart(all.filter(isLive));
+}
+
+/**
  * Live entries overlapping `[from, to)`: stopped entries with `start < to && end > from`, plus the
  * running entry if it started before `to`. By start time.
  * @param {IDBDatabase} db

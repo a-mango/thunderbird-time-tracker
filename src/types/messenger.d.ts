@@ -203,6 +203,8 @@ declare namespace messenger {
       checked?: boolean;
       wasChecked?: boolean;
       pageUrl?: string;
+      targetElementId?: number;
+      viewType?: 'tab' | 'popup' | 'sidebar';
     }
     function create(createProperties: CreateProperties, callback?: () => void): string | number;
     function update(
@@ -213,6 +215,8 @@ declare namespace messenger {
     function removeAll(): Promise<void>;
     function refresh(): Promise<void>;
     function overrideContext(contextOptions: { showDefaults?: boolean; context?: string }): void;
+    /** menus_child.json: synchronous, extension pages and content only. */
+    function getTargetElement(targetElementId: number): Element | null;
     const onClicked: WebExtEvent<(info: OnClickData, tab?: tabs.Tab) => void>;
     const onShown: WebExtEvent<
       (

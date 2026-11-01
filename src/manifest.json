@@ -13,6 +13,7 @@
       }
     }
   },
+  "permissions": ["menus", "menus.overrideContext"],
   "background": {
     "scripts": ["background/main.js"],
     "type": "module"

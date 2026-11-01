@@ -26,6 +26,10 @@
 | Components | Light-DOM custom elements (`tt-tree`, `tt-table`, `tt-splitter`, `tt-dialog`, `tt-notification-bar`) styled by `components.css` | Global tokens apply without shadow-DOM duplication, like Thunderbird's own `tree-listbox` |
 | Layout persistence | `ui/layout-store.js` over `localStorage`, swappable with `setLayoutStore()` | pane and column sizes are per-window UI state (`storage` was deferred in M2) |
 | DOM unit tests | `jsdom` 30.1.2 (dev only) via `// @vitest-environment jsdom` | Render helper and layout store need a DOM; Node env stays the default |
+| UI state (M3) | Splitter widths, collapsed projects and the current selection live in `ui/layout-store.js` (`localStorage`), not in settings | Per-window UI state, like Thunderbird's xulstore; settings stay user preferences (M1 decision) |
+| Project colours (M3) | `src/lib/palette.js` maps 9 stored `#rrggbb` values to Thunderbird tokens; rows draw `var(--token)` | Stored data stays portable hex; the UI follows theme tokens. `tests/unit/palette.test.js` checks the values against `tokens.css` |
+| Page data access (M3) | The tracker page reads and writes `db/` directly; `tt:summary` and `?fixtures=none` are gone | One data path for page, popup and background; `TrackerData` applies its own writes and other pages' `BroadcastChannel` changes |
+| Context menus (M3) | The background creates hidden items (`background/menus.js`); the page calls `overrideContext` on a project row, shows the right items in `menus.onShown`, and acts in `menus.onClicked` only if `menus.getTargetElement()` finds the element in its own document | `onShown`/`onClicked` fire in every extension page. Every command also has a keyboard path: F2, Delete, Enter/double-click, Ctrl+Shift+N, the Projects ⋮ menu |
 | In-TB measurements | `npm run tb:spike`: stage copy + `web-ext run --marionette -remote-allow-system-access`, chrome-scope scripts | Reproducible spike evidence without hand steps; nothing changes in `src/` or the shipped manifest |
 
 ## How each milestone runs (Claude Code on your machine)
@@ -139,3 +143,9 @@ Details and numbers: `docs/DESIGN.md` → M1 spike outcomes (measured on Thunder
 - `font: message-box`, `AccentColor`, folder/thread row heights and mode header size match the mail tab exactly (after making tree rows content-box).
 - Thunderbird's font-size, accent and density prefs don't reach extension pages (`UIFontSize` skips them; `-moz-pref()` never matches), so density and accent stay our own settings.
 - `menus.overrideContext()` works in our tab → M3 uses native context menus and adds `menus`, `menus.overrideContext`.
+
+### M3 spike outcomes
+- **Drag and drop in Playwright**: Firefox `locator.dragTo` drives HTML5 drag and drop (dragstart → dragover → drop → dragend, with `targetPosition` offsets), so reorder and reparent are tested end to end.
+- **Native context menu in Thunderbird** (`npm run tb:spike`, Thunderbird 158.0, `artifacts/tb/spike.json` → `tracker`): a right-click on a project row in `ui/tracker.html` shows exactly our items (New Subproject…, Rename Project…, Color, Move To…, Archive, Delete Project); activating Rename Project… fires `menus.onClicked` **in the tab page** with a `targetElementId`, and the Project Properties dialog opens. The fallback (background forwards `{menuItemId, targetElementId}`) isn't needed.
+- **Restart survival**: `web-ext run` uninstalls the temporary add-on on quit, which drops its IndexedDB; `npm run tb` sets `extensions.webextensions.keepStorageOnUninstall` and `keepUuidOnUninstall`.
+- Marionette chrome screenshots drop elements with `opacity < 1` (disabled buttons look absent in `artifacts/tb/*.png`; computed styles are correct). Judge disabled states by eye in Thunderbird.
