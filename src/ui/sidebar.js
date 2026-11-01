@@ -242,12 +242,17 @@ export function createSidebar({ data, run, drop, onSelect }) {
 
   /** The selected project is gone (deleted, maybe in another tab): its parent, else Today. */
   function selectFallback() {
-    if (selectedParent && data.project(selectedParent)) {
-      projectsTree.selectedId = selectedParent;
-      select({ tree: 'projects', id: selectedParent });
+    // The removed row had focus (a keyboard delete): the fallback takes it, not <body>.
+    const focusLost = !document.activeElement || document.activeElement === document.body;
+    const parent = selectedParent;
+    if (parent && data.project(parent)) {
+      if (focusLost) projectsTree.focusItem(parent);
+      else projectsTree.selectedId = parent;
+      select({ tree: 'projects', id: parent });
       return;
     }
-    viewsTree.selectedId = DEFAULT_SELECTION.id;
+    if (focusLost) viewsTree.focusItem(DEFAULT_SELECTION.id);
+    else viewsTree.selectedId = DEFAULT_SELECTION.id;
     select(DEFAULT_SELECTION);
   }
 
