@@ -6,6 +6,7 @@ import {
   discardRunning,
   getEntry,
   getRunning,
+  listEntries,
   listEntriesByTask,
   listEntriesInRange,
   purgeDeleted,
@@ -238,6 +239,17 @@ describe('queries', () => {
     // A running entry that starts after the range is not in it.
     expect((await listEntriesInRange(db, from, from + H)).map((e) => e.id)).toEqual([across.id]);
     await expect(listEntriesInRange(db, to, from)).rejects.toBeInstanceOf(ValidationError);
+  });
+
+  it('lists every live entry, the running one included, by start time', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    const late = await addEntry(db, { taskId: pipeline.id, start: T0 - H, end: T0 - MIN });
+    const early = await addEntry(db, { taskId: checkout.id, start: T0 - 3 * H, end: T0 - 2 * H });
+    const gone = await addEntry(db, { taskId: checkout.id, start: T0 - 4 * H, end: T0 - 3 * H });
+    await softDeleteEntry(db, gone.id, { now: T0 });
+    const { entry: running } = await startEntry(db, checkout.id, { now: T0 });
+    expect((await listEntries(db)).map((e) => e.id)).toEqual([early.id, late.id, running.id]);
   });
 
   it('counts live entries', async () => {

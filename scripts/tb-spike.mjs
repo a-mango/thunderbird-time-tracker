@@ -4,7 +4,9 @@
 //   - measures the mail tab (about:3pane) and our gallery tab: font, row heights, AccentColor;
 //   - screenshots both tabs into artifacts/tb/;
 //   - right-clicks the gallery (project tree → menus.overrideContext(); table → default menu)
-//     and records which menu items open.
+//     and records which menu items open;
+//   - M3: right-clicks a project row in the real tracker page, activates "Rename Project…" and
+//     records whether menus.onClicked reached the page and opened the dialog.
 // Writes artifacts/tb/spike.json. Nothing in src/ or the shipped manifest changes.
 // Usage: node scripts/tb-spike.mjs [--keep-open]
 import { spawn } from 'node:child_process';
@@ -37,6 +39,14 @@ async function buildStage() {
     html.replace(
       '<script type="module" src="gallery.js"></script>',
       '<script type="module" src="gallery.js"></script>\n    <script type="module" src="tb-spike/page.js"></script>',
+    ),
+  );
+  const tracker = await readFile(join(root, 'src', 'ui', 'tracker.html'), 'utf8');
+  await writeFile(
+    join(stage, 'ui', 'tracker.html'),
+    tracker.replace(
+      '<script type="module" src="tracker.js"></script>',
+      '<script type="module" src="tracker.js"></script>\n    <script type="module" src="../dev/tb-spike/tracker-probe.js"></script>',
     ),
   );
   const manifest = JSON.parse(await readFile(join(root, 'src', 'manifest.json'), 'utf8'));
@@ -292,6 +302,8 @@ async function main() {
     const rightClick = async (
       /** @type {{x: number, y: number}} */ point,
       /** @type {string} */ shot,
+      /** label of a menu item to activate after listing */
+      /** @type {string | undefined} */ activate = undefined,
     ) => {
       // Chrome-window CSS px of the point, then a real right-click through WebDriver actions.
       const at = /** @type {{x: number, y: number}} */ (
@@ -329,6 +341,16 @@ async function main() {
           }));
       `);
       await client.screenshot(join(outDir, shot));
+      if (activate) {
+        await client.run(
+          `const item = [...document.querySelectorAll('menupopup')]
+             .filter((p) => p.state === 'open')
+             .flatMap((p) => [...p.children])
+             .find((c) => c.getAttribute('label') === arguments[0]);
+           item?.closest('menupopup').activateItem(item);`,
+          [activate],
+        );
+      }
       await client.run(`
         for (const p of document.querySelectorAll('menupopup')) if (p.state === 'open') p.hidePopup();
       `);
@@ -347,16 +369,54 @@ async function main() {
     );
     const after = /** @type {Record<string, any>} */ (await readPage());
 
+    // M3: the real tracker page and its native context menu.
+    const trackerUrl = await client.run(
+      `return WebExtensionPolicy.getByID(arguments[0]).getURL('ui/tracker.html');`,
+      [id],
+    );
+    await client.run(
+      `document.getElementById('tabmail').openTab('contentTab', { url: arguments[0], background: false });`,
+      [trackerUrl],
+    );
+    const readProbe = () =>
+      client.run(`
+        const title = document.getElementById('tabmail').currentTabInfo.browser?.contentTitle ?? '';
+        return title.startsWith('TT-PROBE ') ? JSON.parse(title.slice(9)) : null;
+      `);
+    const probe = /** @type {Record<string, any>} */ (
+      await waitFor(async () => {
+        const value = await readProbe();
+        return value?.row ? value : null;
+      }, 'a project row in the tracker')
+    );
+    await sleep(500);
+    const trackerMenu = await rightClick(
+      { x: probe.row.x + 40, y: probe.row.y + probe.row.height / 2 },
+      'tracker-context.png',
+      'Rename Project…',
+    );
+    await sleep(1000);
+    const clicked = /** @type {Record<string, any>} */ (await readProbe());
+    const trackerShot = await client.screenshot(join(outDir, 'tracker-tab.png'));
+
     const result = {
       thunderbird: tb.version,
       mail,
       gallery: { ...page, overrides: after?.overrides ?? page.overrides },
       contextMenu: { overrideOnProjectTree: overrideMenu, defaultOnTable: defaultMenu },
+      tracker: {
+        menuOnProjectRow: trackerMenu,
+        onClickedInPage: clicked?.clicked ?? null,
+        dialogOpened: clicked?.dialog ?? null,
+        header: clicked?.header ?? null,
+      },
       shots: [
         mailShot,
         galleryShot,
         join(outDir, 'context-override.png'),
         join(outDir, 'context-default.png'),
+        join(outDir, 'tracker-context.png'),
+        trackerShot,
       ],
     };
     await writeFile(join(outDir, 'spike.json'), `${JSON.stringify(result, null, 2)}\n`);

@@ -24,8 +24,8 @@ import { el } from '../render.js';
  * Children of the element become the dialog body.
  *
  * Keyboard: Tab stays inside (native modal), Escape cancels (resolves null), Enter in a field
- * submits the primary button. Focus goes to the first field (or the primary button) on open
- * and back to the previously focused element on close.
+ * or a select submits the primary button. Focus goes to the first field (or the primary button)
+ * on open and back to the previously focused element on close.
  */
 export class TtDialog extends HTMLElement {
   heading = '';
@@ -116,6 +116,13 @@ export class TtDialog extends HTMLElement {
         ),
       ),
     );
+    // HTML's implicit submission skips <select>; Thunderbird dialogs accept on Enter anywhere.
+    form.addEventListener('keydown', (event) => {
+      if (event.key !== 'Enter' || event.altKey || event.ctrlKey || event.metaKey) return;
+      if (!(event.target instanceof HTMLSelectElement)) return;
+      event.preventDefault();
+      /** @type {HTMLButtonElement | null} */ (form.querySelector('button.primary'))?.click();
+    });
     this.#dialog.setAttribute('aria-labelledby', titleId);
     this.#dialog.replaceChildren(form);
     this.#dialog.onclose = () => this.#finish(this.#dialog.returnValue || null);

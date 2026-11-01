@@ -1,0 +1,101 @@
+/* The tracker's panes after Thunderbird's about3Pane: folder pane (sidebar), thread pane header
+ * (list header) and the empty message pane. Shared by ui/tracker.html and dev/gallery.html. */
+
+/* ---- Project pane (about3Pane.css #folderPane) ---- */
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+  background-color: var(--sidebar-background);
+  color: var(--sidebar-color);
+}
+
+/* #folderPaneHeaderBar: New Message fills the row, icon buttons after it. */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sidebar-header-gap);
+  padding: var(--sidebar-header-spacing);
+
+  & .new-task {
+    flex: 1;
+    min-inline-size: 0;
+  }
+}
+
+.sidebar-scroll {
+  flex: 1;
+  min-block-size: 0;
+}
+
+.view-icon {
+  --icon-color: var(--folder-color-inbox);
+
+  &.starred {
+    --icon-color: var(--tt-starred);
+  }
+}
+
+/* Empty project tree: a muted hint where the rows would be. */
+.tree-empty {
+  margin: 0;
+  padding-block: var(--space-step);
+  padding-inline-start: calc(var(--list-item-buttons-size) + 3px + 1px);
+  color: var(--tt-text-muted);
+}
+
+/* ---- Task list pane (threadPane.css) ---- */
+.list-pane {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+  background-color: var(--tree-view-bg);
+}
+
+/* threadPane.css #threadPaneHeaderBar */
+.list-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-step);
+  min-block-size: calc(var(--button-min-height) + 2 * var(--thread-pane-header-padding) + 1px);
+  padding: var(--thread-pane-header-padding);
+  padding-inline-start: calc(var(--thread-pane-header-padding) + 9px);
+  border-block-end: 1px solid var(--layout-border-0);
+  background-color: var(--layout-background-1);
+
+  & .list-title {
+    margin: 0;
+    overflow: hidden;
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & .list-count {
+    flex: none;
+    padding-inline-start: 9px;
+    color: var(--tt-text-muted);
+  }
+  & .spacer {
+    flex: 1;
+  }
+}
+
+/* ---- Details pane (empty message pane) ---- */
+.detail-pane {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+  min-block-size: 0;
+  background-color: var(--layout-background-0);
+}
+
+/* Placeholder text in an empty pane, like Thunderbird's empty thread pane. */
+.pane-placeholder {
+  margin: auto;
+  padding: calc(var(--space-step) * 4);
+  color: var(--tt-text-muted);
+  text-align: center;
+}

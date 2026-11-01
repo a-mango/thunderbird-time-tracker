@@ -1,5 +1,10 @@
 // Projects repository: a folder-like tree via `parentId` (docs/SPEC.md, Data model).
-import { CascadeRequiredError, InvariantError, NotFoundError } from '../lib/errors.js';
+import {
+  CascadeRequiredError,
+  InvariantError,
+  NotFoundError,
+  ValidationError,
+} from '../lib/errors.js';
 import { emit, req, tx } from './idb.js';
 import { INDEXES, STORES } from './schema.js';
 import { removeTasks } from './tasks.js';
@@ -22,6 +27,8 @@ import {
  */
 
 /** Colour of a new project unless one is given (the first tree colour of the reference design). */
+/** @typedef {{projects: number, tasks: number, entries: number}} CascadeCounts */
+
 export const DEFAULT_PROJECT_COLOR = '#2493ef';
 
 /** @param {Project} a @param {Project} b */
@@ -95,6 +102,26 @@ async function nextOrder(projects, parentId) {
   return all
     .filter((project) => project.parentId === parentId)
     .reduce((max, project) => Math.max(max, project.order + 1), 0);
+}
+
+/**
+ * Refuses `parentId` when it is `id` or one of its descendants. Every ancestor must exist.
+ * @param {IDBObjectStore} projects
+ * @param {string} id
+ * @param {string | null} parentId
+ * @throws {InvariantError} `cycle`
+ * @throws {NotFoundError} `project`
+ */
+async function checkNoCycle(projects, id, parentId) {
+  // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
+  const seen = new Set();
+  for (let cursor = parentId; cursor !== null;) {
+    if (cursor === id || seen.has(cursor)) {
+      throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
+    }
+    seen.add(cursor);
+    cursor = (await requireProject(projects, cursor)).parentId;
+  }
 }
 
 /**
@@ -173,15 +200,7 @@ export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
     const current = await requireProject(projects, id);
     const next = { ...current, ...clean, updatedAt: now };
     if (clean.parentId !== undefined && clean.parentId !== current.parentId) {
-      // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
-      const seen = new Set();
-      for (let cursor = clean.parentId; cursor !== null;) {
-        if (cursor === id || seen.has(cursor)) {
-          throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
-        }
-        seen.add(cursor);
-        cursor = (await requireProject(projects, cursor)).parentId;
-      }
+      await checkNoCycle(projects, id, clean.parentId);
       if (clean.order === undefined) next.order = await nextOrder(projects, clean.parentId);
     }
     await req(projects.put(next));
@@ -189,6 +208,55 @@ export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
   });
   emit(db, { type: 'projects', ids: [id] });
   return project;
+}
+
+/**
+ * Moves a project under `parentId` (root: `null`), just before its sibling `beforeId`, or last
+ * when `beforeId` is null. The new siblings are renumbered 0, 1, 2… in the same transaction, so
+ * drag-and-drop reorders never collide; the old siblings keep their (gapped) order.
+ * @param {IDBDatabase} db
+ * @param {string} id
+ * @param {{parentId: string | null, beforeId?: string | null}} target
+ * @param {WriteOptions} [options]
+ * @returns {Promise<Project>} the moved project
+ * @throws {ValidationError} `before` when `beforeId` is not a child of `parentId` (or is `id`)
+ * @throws {NotFoundError} `project`
+ * @throws {InvariantError} `cycle`
+ */
+export async function moveProject(db, id, target, { now = Date.now() } = {}) {
+  const fields = checkFields(target, ['parentId', 'beforeId']);
+  const parentId = fields.parentId === null ? null : checkId(fields.parentId, 'parentId');
+  const beforeId =
+    fields.beforeId === undefined || fields.beforeId === null
+      ? null
+      : checkId(fields.beforeId, 'beforeId');
+  const changed = await tx(db, STORES.projects, 'readwrite', async ({ projects }) => {
+    const current = await requireProject(projects, id);
+    await checkNoCycle(projects, id, parentId);
+    /** @type {Project[]} */
+    const all = await req(projects.getAll());
+    const siblings = all
+      .filter((project) => project.parentId === parentId && project.id !== id)
+      .sort(siblingOrder);
+    const index =
+      beforeId === null ? siblings.length : siblings.findIndex((p) => p.id === beforeId);
+    if (index < 0) {
+      throw new ValidationError('before', 'beforeId must be a sibling at the target', { beforeId });
+    }
+    siblings.splice(index, 0, { ...current, parentId });
+    /** @type {Project[]} */
+    const updated = [];
+    for (const [order, project] of siblings.entries()) {
+      const moved = project.id === id;
+      if (!moved && project.order === order) continue;
+      const next = { ...project, order, updatedAt: moved ? now : project.updatedAt };
+      await req(projects.put(next));
+      updated.push(next);
+    }
+    return updated;
+  });
+  emit(db, { type: 'projects', ids: changed.map((project) => project.id) });
+  return /** @type {Project} */ (changed.find((project) => project.id === id));
 }
 
 /**
@@ -213,15 +281,17 @@ export function unarchiveProject(db, id, options) {
 /**
  * Deletes a project. If it has subprojects or tasks, `{cascade: true}` is required and removes
  * the whole subtree (projects, tasks, entries, soft-deleted ones too) in one transaction; the
- * running pointer is cleared if its entry goes.
+ * running pointer is cleared if its entry goes. `expected` (the counts the user confirmed) makes
+ * the cascade refuse, in the same transaction, if the subtree changed meanwhile.
  * @param {IDBDatabase} db
  * @param {string} id
- * @param {{cascade?: boolean}} [options]
+ * @param {{cascade?: boolean, expected?: CascadeCounts}} [options]
  * @returns {Promise<{projects: string[], tasks: string[], entries: string[]}>} removed ids
  * @throws {NotFoundError} `project`
- * @throws {CascadeRequiredError} `cascade`; `details` counts subprojects, tasks and live entries
+ * @throws {CascadeRequiredError} `cascade`; `details` (CascadeCounts) counts subprojects, tasks
+ *   and live entries. Also when `expected` no longer matches.
  */
-export async function deleteProject(db, id, { cascade = false } = {}) {
+export async function deleteProject(db, id, { cascade = false, expected } = {}) {
   const removed = await tx(
     db,
     [STORES.projects, STORES.tasks, STORES.entries, STORES.meta],
@@ -243,18 +313,28 @@ export async function deleteProject(db, id, { cascade = false } = {}) {
         const keys = await req(stores.tasks.index(INDEXES.taskProject).getAllKeys(projectId));
         taskIds.push(...keys.map(String));
       }
-      if ((projectIds.length > 1 || taskIds.length > 0) && !cascade) {
+      const hasContent = projectIds.length > 1 || taskIds.length > 0;
+      if ((hasContent && !cascade) || expected) {
         let entries = 0;
         for (const taskId of taskIds) {
           /** @type {import('../lib/types.js').Entry[]} */
           const rows = await req(stores.entries.index(INDEXES.entryTask).getAll(taskId));
           entries += rows.filter((entry) => entry.deletedAt === null).length;
         }
-        throw new CascadeRequiredError('cascade', 'the project has subprojects or tasks', {
-          projects: projectIds.length - 1,
-          tasks: taskIds.length,
-          entries,
-        });
+        /** @type {CascadeCounts} */
+        const counts = { projects: projectIds.length - 1, tasks: taskIds.length, entries };
+        const changed =
+          expected &&
+          (expected.projects !== counts.projects ||
+            expected.tasks !== counts.tasks ||
+            expected.entries !== counts.entries);
+        if ((hasContent && !cascade) || changed) {
+          throw new CascadeRequiredError(
+            'cascade',
+            changed ? 'the project changed since it was confirmed' : 'the project has content',
+            counts,
+          );
+        }
       }
       const entries = await removeTasks(stores, taskIds);
       for (const projectId of projectIds) await req(stores.projects.delete(projectId));

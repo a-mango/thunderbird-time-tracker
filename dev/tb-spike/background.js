@@ -1,11 +1,12 @@
-// Spike stage only (scripts/tb-spike.mjs): the real background plus one menu item limited to
-// our own pages, to test menus.overrideContext() in a tab. Never shipped.
+// Spike stage only (scripts/tb-spike.mjs): the real background (its menus included) plus one item
+// limited to our own pages, to test menus.overrideContext() in the gallery tab. Never shipped.
 import '../../background/main.js';
 
-await messenger.menus.removeAll();
+// After main.js has recreated its items (registerMenus starts with removeAll).
+await new Promise((resolve) => setTimeout(resolve, 1000));
 messenger.menus.create({
   id: 'tt-spike-item',
   title: 'Time Tracker spike item',
   contexts: ['all'],
-  documentUrlPatterns: [`${location.origin}/*`],
+  documentUrlPatterns: [`${location.origin}/dev/*`],
 });

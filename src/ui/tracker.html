@@ -5,18 +5,83 @@
     <title>Time Tracker</title>
     <link rel="stylesheet" href="styles/tokens.css" />
     <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/controls.css" />
+    <link rel="stylesheet" href="styles/components.css" />
+    <link rel="stylesheet" href="styles/panes.css" />
     <link rel="stylesheet" href="tracker.css" />
     <script type="module" src="tracker.js"></script>
   </head>
   <body>
-    <main class="placeholder">
-      <h1 data-i18n="trackerHeading"></h1>
-      <p data-i18n="trackerPlaceholder"></p>
-      <section class="summary" aria-labelledby="projects-heading">
-        <h2 id="projects-heading" data-i18n="trackerProjectsLabel"></h2>
-        <p class="summary-counts" data-summary-counts></p>
-        <ul class="project-list" data-project-list></ul>
+    <div class="tracker">
+      <aside id="sidebar" class="sidebar" data-i18n-label="sidebarLabel">
+        <div class="sidebar-header">
+          <button class="button primary new-task" type="button" data-ref="new-task" disabled>
+            <span data-i18n="sidebarNewTask"></span>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-ref="add-entry"
+            data-i18n-label="sidebarAddEntry"
+            disabled
+          ></button>
+          <button
+            class="icon-button"
+            type="button"
+            data-ref="more"
+            data-i18n-label="sidebarMore"
+            aria-haspopup="menu"
+          ></button>
+        </div>
+        <div class="sidebar-scroll scroll" data-ref="sidebar-scroll">
+          <div class="mode-header">
+            <h2 class="mode-name" id="mode-views" data-i18n="modeViews"></h2>
+          </div>
+          <tt-tree id="views-tree" aria-labelledby="mode-views"></tt-tree>
+          <div class="mode-header">
+            <h2 class="mode-name" id="mode-projects" data-i18n="modeProjects"></h2>
+            <button
+              class="icon-button"
+              type="button"
+              data-ref="projects-more"
+              aria-haspopup="menu"
+            ></button>
+          </div>
+          <tt-tree
+            id="projects-tree"
+            aria-labelledby="mode-projects"
+            persist="tracker.projects"
+            dnd
+          ></tt-tree>
+          <p class="tree-empty" data-ref="projects-empty" data-i18n="trackerEmpty" hidden></p>
+        </div>
+        <tt-splitter
+          controls="sidebar"
+          min="100"
+          max="480"
+          persist="tracker.sidebar"
+          data-i18n-label="sidebarResize"
+        ></tt-splitter>
+      </aside>
+      <main id="list" class="list-pane" aria-labelledby="list-title">
+        <tt-notification-bar data-ref="notification" hidden></tt-notification-bar>
+        <div class="list-header">
+          <h1 id="list-title" class="list-title" data-ref="list-title"></h1>
+          <span class="list-count num" data-ref="list-count"></span>
+        </div>
+        <p class="pane-placeholder" data-i18n="listPlaceholder"></p>
+      </main>
+      <section id="detail" class="detail-pane" data-i18n-label="detailLabel">
+        <tt-splitter
+          controls="detail"
+          pane="after"
+          min="320"
+          max="900"
+          persist="tracker.detail"
+          data-i18n-label="detailResize"
+        ></tt-splitter>
+        <p class="pane-placeholder" data-i18n="detailEmpty"></p>
       </section>
-    </main>
+    </div>
   </body>
 </html>

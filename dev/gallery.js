@@ -11,6 +11,7 @@ import {
   formatRelative,
   NO_VALUE,
 } from '../lib/format.js';
+import { buildProjectTree } from '../lib/sidebar.js';
 import { generateFixtures } from './fixtures.js';
 
 /** @typedef {import('./fixtures.js').Project} Project */
@@ -148,22 +149,24 @@ viewsTree.renderRow = (node, content) => {
 viewsTree.setItems(VIEWS.map(({ id, label }) => ({ id, label })));
 
 const projectsTree = /** @type {TtTree} */ (document.getElementById('projects-tree'));
-/** @param {string | null} parentId @returns {TreeNode[]} */
-const projectNodes = (parentId) =>
-  (childrenOf.get(parentId) ?? [])
-    .sort((a, b) => a.order - b.order)
-    .map((p) => ({ id: p.id, label: p.name, expanded: true, children: projectNodes(p.id) }));
+const projectTree = buildProjectTree(/** @type {any} */ (projects));
+/** @param {TreeNode[]} nodes @returns {TreeNode[]} */
+const expanded = (nodes) =>
+  nodes.map((n) => ({ ...n, expanded: true, children: expanded(n.children ?? []) }));
+/** @param {TreeNode} n @returns {string[]} */
+const subtree = (n) => [n.id, ...(n.children ?? []).flatMap(subtree)];
+const archivedIds = new Set(projectTree.archived.flatMap(subtree));
 const ARCHIVE = {
   id: 'archive',
   label: t('projectArchive'),
   expanded: false,
-  children: [{ id: 'archive-1', label: 'Harbor Coffee — launch' }],
+  children: projectTree.archived,
 };
 projectsTree.renderRow = (node, content) => {
   const li = /** @type {HTMLElement} */ (content.closest('li'));
   const project = projectById.get(node.id);
   li.classList.toggle('root', Boolean(project) && !project?.parentId);
-  li.classList.toggle('muted', node.id === ARCHIVE.id || node.id.startsWith('archive-'));
+  li.classList.toggle('muted', node.id === ARCHIVE.id || archivedIds.has(node.id));
   li.classList.toggle('running', node.id === runningTask?.projectId);
   const folder = icon('folder');
   if (project) folder.style.setProperty('--icon-color', project.color);
@@ -175,7 +178,7 @@ projectsTree.renderRow = (node, content) => {
     badge.classList.add('outlined');
   content.append(badge);
 };
-projectsTree.setItems([...projectNodes(null), ARCHIVE]);
+projectsTree.setItems([...expanded(projectTree.nodes), ARCHIVE]);
 const selectedProject = /** @type {Project} */ (projects.find((p) => p.name === 'Build'));
 projectsTree.selectedId = selectedProject.id;
 

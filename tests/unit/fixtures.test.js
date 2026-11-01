@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { generateFixtures, summarize } from '../../dev/fixtures.js';
+import { generateFixtures } from '../../dev/fixtures.js';
+import { parseBackup } from '../../src/lib/importer.js';
 
 const now = Date.UTC(2026, 9, 20, 12, 0);
 
@@ -44,12 +45,10 @@ describe('dev fixtures', () => {
     for (const name of [...names, ...notes]) expect(html, name).toContain(name);
   });
 
-  it('summarize flattens the tree depth-first in order', () => {
-    const summary = summarize(generateFixtures({ now }));
-    expect(summary.projects.slice(0, 3).map((p) => [p.name, p.depth])).toEqual([
-      ['Client work', 0],
-      ['Harbor Coffee — website', 1],
-      ['Discovery', 2],
-    ]);
+  it('pass the backup importer, with one archived project', () => {
+    const fixtures = generateFixtures({ now });
+    const backup = { format: 'thunderbird-time-tracker', version: 1, exportedAt: now, ...fixtures };
+    expect(parseBackup(JSON.stringify(backup)).projects).toHaveLength(fixtures.projects.length);
+    expect(fixtures.projects.filter((p) => p.archived).map((p) => p.name)).toEqual(['Discovery']);
   });
 });

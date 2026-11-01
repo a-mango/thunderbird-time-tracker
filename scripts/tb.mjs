@@ -23,6 +23,10 @@ export const PREFS = {
   'toolkit.telemetry.reportingpolicy.firstRun': false,
   'app.update.auto': false,
   'browser.shell.checkDefaultBrowser': false,
+  // web-ext uninstalls the temporary add-on on quit; keep its moz-extension:// UUID and IndexedDB
+  // so data survives a restart (M3 manual check).
+  'extensions.webextensions.keepStorageOnUninstall': true,
+  'extensions.webextensions.keepUuidOnUninstall': true,
 };
 
 /**
