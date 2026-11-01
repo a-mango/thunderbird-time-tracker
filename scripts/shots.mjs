@@ -6,11 +6,19 @@ import { listen } from './serve.mjs';
 
 const outDir = new URL('../artifacts/shots/', import.meta.url).pathname;
 
+/** Tue 20 Oct 2026, 14:45 local, like reference A (fixtures are generated around "now"). */
+const NOW = new Date(2026, 9, 20, 14, 45);
+/** Our tab's content area in reference A (1440×900 window minus spaces bar, tabs, toolbar, status). */
+const TAB = { width: 1394, height: 796 };
+
 /** name, path, colour scheme, viewport */
 const SHOTS = /** @type {const} */ ([
-  ['tracker-light', '/ui/tracker.html', 'light', { width: 1280, height: 800 }],
-  ['tracker-dark', '/ui/tracker.html', 'dark', { width: 1280, height: 800 }],
-  ['tracker-empty-light', '/ui/tracker.html?fixtures=empty', 'light', { width: 1280, height: 800 }],
+  ['tracker-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-compact-light', '/ui/tracker.html?density=compact', 'light', TAB],
+  ['tracker-compact-dark', '/ui/tracker.html?density=compact', 'dark', TAB],
+  ['tracker-relaxed-light', '/ui/tracker.html?density=relaxed', 'light', TAB],
+  ['tracker-empty-light', '/ui/tracker.html?fixtures=empty', 'light', TAB],
   ['popup-light', '/ui/popup.html', 'light', { width: 320, height: 200 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 320, height: 200 }],
   // Primitives gallery: light/dark × the three densities, full page.
@@ -34,7 +42,9 @@ const port = typeof address === 'object' && address ? address.port : 0;
 const browser = await firefox.launch();
 try {
   for (const [name, path, colorScheme, viewport] of SHOTS) {
-    const page = await browser.newPage({ colorScheme, viewport });
+    // A new page is a new context: its own IndexedDB, seeded by the mock.
+    const page = await browser.newPage({ colorScheme, viewport, reducedMotion: 'reduce' });
+    await page.clock.setFixedTime(NOW);
     await page.goto(`http://localhost:${port}${path}`);
     await page.waitForLoadState('networkidle');
     const file = `${outDir}${name}.png`;
@@ -43,7 +53,20 @@ try {
     else if (path.includes('gallery')) {
       await page.locator('html[data-ready]').waitFor();
       await page.screenshot({ path: file, fullPage: true });
-    } else await page.screenshot({ path: file });
+    } else {
+      await page.locator('html[data-ready]').waitFor();
+      // Like the reference: Build selected and focused.
+      const build = page.getByRole('treeitem', { name: /^Build( |$)/ });
+      await page.bringToFront();
+      if (await build.count()) await build.click();
+      await page.mouse.move(0, 0);
+      await page.screenshot({ path: file });
+      if (!path.includes('fixtures=empty')) {
+        const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
+        await page.locator('#sidebar').screenshot({ path: clip });
+        console.log(clip);
+      }
+    }
     console.log(file);
     await page.close();
   }
