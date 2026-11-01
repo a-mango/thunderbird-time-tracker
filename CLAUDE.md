@@ -39,7 +39,10 @@ Read only the sections the current task needs.
 - `.ref/comm-central` is really `thunderbird/thunderbird-desktop` at tag `THUNDERBIRD_157_0_RELEASE` (sparse); the name is kept for stable paths.
 - `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
 - Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
-- Dev harness URLs: `?fixtures=empty` (no data), `?fixtures=none` (no background), `?seed=N`.
+- Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?density=`/`?accent=` write settings.
+- `scripts/serve.mjs` serves `/src/`; `<html data-dev-ready>` is set after seeding, `data-ready` once the page rendered.
+- Colour tokens in tests: assert the inline style (`--icon-color: var(--color-accent-teal)`); computed style resolves `var()`.
+- Port 5173 may be taken by another app (Playwright then reuses it and every test times out): run `PORT=5199 npm run test:ui`.
 - Unit tests run in `TZ=Europe/Zurich` (`vitest.config.js`). db tests use `freshDB()` from `tests/unit/db-helpers.js` (own `IDBFactory`, sets the `IDBKeyRange` global Node lacks).
 - `npm test -- --coverage` fails below 90% lines in `src/lib/**` or `src/db/**`.
 - Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).
