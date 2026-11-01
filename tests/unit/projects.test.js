@@ -315,6 +315,36 @@ describe('projects', () => {
       details: { projects: 1, tasks: 2, entries: 0 },
     });
   });
+  it('refuses a cascade whose confirmed counts no longer match, in the same transaction', async () => {
+    const { db } = await freshDB();
+    const { build } = await seed(db);
+    const expected = { projects: 0, tasks: 2, entries: 0 };
+    // Another tab adds a task while the confirmation is open.
+    await createTask(db, { projectId: build.id, name: 'Staging deploy script' });
+    await expect(deleteProject(db, build.id, { cascade: true, expected })).rejects.toMatchObject({
+      constructor: CascadeRequiredError,
+      details: { projects: 0, tasks: 3, entries: 0 },
+    });
+    expect(await getProject(db, build.id)).not.toBeNull();
+    const removed = await deleteProject(db, build.id, {
+      cascade: true,
+      expected: { projects: 0, tasks: 3, entries: 0 },
+    });
+    expect(removed.tasks).toHaveLength(3);
+  });
+
+  it('checks `expected` for an empty project too', async () => {
+    const { db } = await freshDB();
+    const empty = await createProject(db, { name: 'Training' });
+    await expect(
+      deleteProject(db, empty.id, {
+        cascade: true,
+        expected: { projects: 0, tasks: 1, entries: 0 },
+      }),
+    ).rejects.toBeInstanceOf(CascadeRequiredError);
+    await deleteProject(db, empty.id, { expected: { projects: 0, tasks: 0, entries: 0 } });
+    expect(await getProject(db, empty.id)).toBeNull();
+  });
 });
 
 describe('corrupt project trees', () => {

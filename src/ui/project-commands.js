@@ -83,10 +83,11 @@ export function createProjectCommands({ data, reveal, onError }) {
           });
           if (!input) return;
           const { parentId, ...patch } = input;
-          await updateProject(data.db, project.id, patch);
+          // The move can fail (another tab deleted the parent): then nothing is saved.
           if (parentId !== project.parentId) {
             await moveProject(data.db, project.id, { parentId });
           }
+          await updateProject(data.db, project.id, patch);
           await shown(project.id);
           return;
         }
@@ -124,37 +125,32 @@ export function createProjectCommands({ data, reveal, onError }) {
 
   /**
    * Plain confirmation (if the setting asks for it) for an empty project; the cascade dialog,
-   * with counts from db/, as soon as anything would go with it.
+   * with counts from db/, as soon as anything would go with it. The cascade only deletes what
+   * the user confirmed: if another page changed the subtree meanwhile, db/ refuses and the
+   * dialog asks again with the new counts.
    * @param {Project} project
    */
   async function remove(project) {
     const hasContent =
       subtreeIds(data.projects, project.id).size > 1 ||
       [...data.tasks.values()].some((task) => task.projectId === project.id);
-    /** @type {{projects: number, tasks: number, entries: number}} */
-    let counts;
+    /** @type {import('../db/projects.js').CascadeCounts | undefined} */
+    let expected;
     if (!hasContent) {
       if (data.settings.confirmDelete && !(await confirmDelete(project, null))) return;
-      try {
-        await deleteProject(data.db, project.id);
-        return;
-      } catch (error) {
-        // Another page added something meanwhile.
-        if (!(error instanceof CascadeRequiredError)) throw error;
-        counts = /** @type {any} */ (error.details);
-      }
-    } else {
-      try {
-        // Without `cascade` nothing is deleted; the error carries the counts.
-        await deleteProject(data.db, project.id);
-        return;
-      } catch (error) {
-        if (!(error instanceof CascadeRequiredError)) throw error;
-        counts = /** @type {any} */ (error.details);
-      }
+      expected = { projects: 0, tasks: 0, entries: 0 };
     }
-    if (await confirmDelete(project, counts)) {
-      await deleteProject(data.db, project.id, { cascade: true });
+    for (;;) {
+      try {
+        // Without `expected`, nothing is deleted when there is content; the error has the counts.
+        await deleteProject(data.db, project.id, expected ? { cascade: true, expected } : {});
+        return;
+      } catch (error) {
+        if (!(error instanceof CascadeRequiredError)) throw error;
+        const counts = /** @type {import('../db/projects.js').CascadeCounts} */ (error.details);
+        if (!(await confirmDelete(project, counts))) return;
+        expected = counts;
+      }
     }
   }
 

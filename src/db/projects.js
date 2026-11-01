@@ -27,6 +27,8 @@ import {
  */
 
 /** Colour of a new project unless one is given (the first tree colour of the reference design). */
+/** @typedef {{projects: number, tasks: number, entries: number}} CascadeCounts */
+
 export const DEFAULT_PROJECT_COLOR = '#2493ef';
 
 /** @param {Project} a @param {Project} b */
@@ -279,15 +281,17 @@ export function unarchiveProject(db, id, options) {
 /**
  * Deletes a project. If it has subprojects or tasks, `{cascade: true}` is required and removes
  * the whole subtree (projects, tasks, entries, soft-deleted ones too) in one transaction; the
- * running pointer is cleared if its entry goes.
+ * running pointer is cleared if its entry goes. `expected` (the counts the user confirmed) makes
+ * the cascade refuse, in the same transaction, if the subtree changed meanwhile.
  * @param {IDBDatabase} db
  * @param {string} id
- * @param {{cascade?: boolean}} [options]
+ * @param {{cascade?: boolean, expected?: CascadeCounts}} [options]
  * @returns {Promise<{projects: string[], tasks: string[], entries: string[]}>} removed ids
  * @throws {NotFoundError} `project`
- * @throws {CascadeRequiredError} `cascade`; `details` counts subprojects, tasks and live entries
+ * @throws {CascadeRequiredError} `cascade`; `details` (CascadeCounts) counts subprojects, tasks
+ *   and live entries. Also when `expected` no longer matches.
  */
-export async function deleteProject(db, id, { cascade = false } = {}) {
+export async function deleteProject(db, id, { cascade = false, expected } = {}) {
   const removed = await tx(
     db,
     [STORES.projects, STORES.tasks, STORES.entries, STORES.meta],
@@ -309,18 +313,28 @@ export async function deleteProject(db, id, { cascade = false } = {}) {
         const keys = await req(stores.tasks.index(INDEXES.taskProject).getAllKeys(projectId));
         taskIds.push(...keys.map(String));
       }
-      if ((projectIds.length > 1 || taskIds.length > 0) && !cascade) {
+      const hasContent = projectIds.length > 1 || taskIds.length > 0;
+      if ((hasContent && !cascade) || expected) {
         let entries = 0;
         for (const taskId of taskIds) {
           /** @type {import('../lib/types.js').Entry[]} */
           const rows = await req(stores.entries.index(INDEXES.entryTask).getAll(taskId));
           entries += rows.filter((entry) => entry.deletedAt === null).length;
         }
-        throw new CascadeRequiredError('cascade', 'the project has subprojects or tasks', {
-          projects: projectIds.length - 1,
-          tasks: taskIds.length,
-          entries,
-        });
+        /** @type {CascadeCounts} */
+        const counts = { projects: projectIds.length - 1, tasks: taskIds.length, entries };
+        const changed =
+          expected &&
+          (expected.projects !== counts.projects ||
+            expected.tasks !== counts.tasks ||
+            expected.entries !== counts.entries);
+        if ((hasContent && !cascade) || changed) {
+          throw new CascadeRequiredError(
+            'cascade',
+            changed ? 'the project changed since it was confirmed' : 'the project has content',
+            counts,
+          );
+        }
       }
       const entries = await removeTasks(stores, taskIds);
       for (const projectId of projectIds) await req(stores.projects.delete(projectId));
