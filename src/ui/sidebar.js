@@ -9,6 +9,7 @@ import {
   buildProjectTree,
   canDrop,
   dropTarget,
+  showsTotal,
   viewTotals,
 } from '../lib/sidebar.js';
 import { t } from './i18n.js';
@@ -149,12 +150,16 @@ export function createSidebar({ data, run, drop, onSelect }) {
     content.append(folder, el('span', { class: 'name', text: node.label }));
     if (!project) return;
     const total = data.rollup.project(node.id).total;
-    if (total <= 0) return;
-    const badge = el('span', { class: 'count-badge num', text: duration(total) });
-    const style = badgeStyle(node.id, {
-      runningPath,
-      expanded: projectsTree.isExpanded(node.id),
+    const expanded = projectsTree.isExpanded(node.id);
+    const shown = showsTotal({
+      root: !archived && project.parentId === null,
+      expanded,
+      hasChildren: (node.children?.length ?? 0) > 0,
+      running: runningPath[0] === node.id,
     });
+    if (total <= 0 || !shown) return;
+    const badge = el('span', { class: 'count-badge num', text: duration(total) });
+    const style = badgeStyle(node.id, { runningPath, expanded });
     if (style) badge.classList.add(style);
     content.append(badge);
   };

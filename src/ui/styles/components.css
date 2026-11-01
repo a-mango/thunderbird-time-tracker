@@ -48,6 +48,10 @@ tt-splitter {
   &:not(:first-of-type) {
     border-block-start: 1px solid var(--sidebar-border);
   }
+  /* about3Pane.xhtml .mode-button is a `.button` (widgets.css margin): it sets the row height. */
+  & > .icon-button {
+    margin-block: var(--button-margin);
+  }
 }
 
 .mode-name {

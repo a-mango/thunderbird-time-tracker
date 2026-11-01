@@ -132,6 +132,16 @@ export function badgeStyle(id, { runningPath, expanded }) {
 }
 
 /**
+ * Whether a project row shows its total. Like Thunderbird's account rows, an expanded top-level
+ * project with subprojects shows none (its children carry the numbers); collapsed it shows the
+ * rolled-up total. The running project always keeps its badge.
+ * @param {{root: boolean, expanded: boolean, hasChildren: boolean, running: boolean}} row
+ */
+export function showsTotal({ root, expanded, hasChildren, running }) {
+  return running || !(root && expanded && hasChildren);
+}
+
+/**
  * Projects `id` can move under, in tree order with their depth: visible projects outside its own
  * subtree. The UI adds the top level (`null`) itself.
  * @param {Project[]} projects

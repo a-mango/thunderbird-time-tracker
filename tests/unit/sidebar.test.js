@@ -5,6 +5,7 @@ import {
   buildProjectTree,
   canDrop,
   dropTarget,
+  showsTotal,
   moveTargets,
   subtreeIds,
   viewTotals,
@@ -173,5 +174,18 @@ describe('viewTotals', () => {
       t3: { today: 0, week: 30, total: 300 },
     };
     expect(viewTotals(tasks, (id) => totals[id])).toEqual({ today: 3, week: 60, starred: 1 });
+  });
+});
+
+describe('showsTotal', () => {
+  const row = { root: true, expanded: true, hasChildren: true, running: false };
+  it('hides the total of an expanded top-level project with subprojects', () => {
+    expect(showsTotal(row)).toBe(false);
+  });
+  it('shows it when collapsed, without children, nested or running', () => {
+    expect(showsTotal({ ...row, expanded: false })).toBe(true);
+    expect(showsTotal({ ...row, hasChildren: false })).toBe(true);
+    expect(showsTotal({ ...row, root: false })).toBe(true);
+    expect(showsTotal({ ...row, running: true })).toBe(true);
   });
 });
