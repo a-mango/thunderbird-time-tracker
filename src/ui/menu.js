@@ -65,7 +65,8 @@ export function showMenu(anchor, items) {
     buttons[target]?.focus();
   });
 
-  document.body.append(menu);
+  // Next to its button, inside the button's landmark (the top layer draws it the same).
+  anchor.after(menu);
   const rect = anchor.getBoundingClientRect();
   menu.style.insetBlockStart = `${rect.bottom}px`;
   if (getComputedStyle(anchor).direction === 'rtl') menu.style.insetInlineEnd = `${rect.left}px`;
