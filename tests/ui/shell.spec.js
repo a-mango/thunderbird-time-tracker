@@ -88,3 +88,25 @@ test('empty database: the Projects mode says so', async ({ page }) => {
   await expect(page.getByRole('tree', { name: 'Projects' })).toBeHidden();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today');
 });
+
+test('running project styling and collapsed state survive a reload', async ({ page }) => {
+  await openTracker(page);
+  const tree = page.getByRole('tree', { name: 'Projects' });
+  const build = tree.getByRole('treeitem', { name: /^Build / });
+  const harbor = tree.getByRole('treeitem', { name: /^Harbor Coffee — website / });
+  // The fixtures' running entry is on a Build task: "new mail" style on Build.
+  await expect(tree.locator('li.running > [role="treeitem"]')).toHaveAccessibleName(/^Build /);
+  await expect(build.locator('.count-badge')).toHaveClass(/\bnew\b/);
+  await expect(harbor.locator('.count-badge')).not.toHaveClass(/outlined/);
+
+  // Collapsed, the parent of the running project gets the outlined badge.
+  await harbor.click();
+  await page.keyboard.press('ArrowLeft');
+  await expect(harbor).toHaveAttribute('aria-expanded', 'false');
+  await expect(harbor.locator('.count-badge')).toHaveClass(/\boutlined\b/);
+
+  await page.reload();
+  await page.locator('html[data-ready]').waitFor();
+  await expect(harbor).toHaveAttribute('aria-expanded', 'false');
+  await expect(build).toBeHidden();
+});
