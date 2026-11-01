@@ -1,9 +1,9 @@
 // Tasks repository (docs/SPEC.md, Data model). Status changes go through markTaskDone/reopenTask
 // and project changes through moveTask, so updateTask only edits plain fields.
-import { CascadeRequiredError, NotFoundError } from '../lib/errors.js';
+import { CascadeRequiredError, InvariantError, NotFoundError } from '../lib/errors.js';
 import { readRunning, removeEntriesOfTasks, stopRunningIn } from './entries.js';
 import { emit, req, tx } from './idb.js';
-import { INDEXES, STORES } from './schema.js';
+import { INDEXES, META, STORES } from './schema.js';
 import {
   LIMITS,
   checkBoolean,
@@ -271,31 +271,85 @@ export async function removeTasks(stores, taskIds) {
 }
 
 /**
+ * @typedef {{task: Task, entries: import('../lib/types.js').Entry[], deletedAt: number}}
+ *   TaskSnapshot what deleteTask removed, for restoreTask (undo)
+ */
+
+/**
  * Deletes a task. A task with live entries needs `{cascade: true}`, which removes them in the same
  * transaction (and stops tracking if one was running). Soft-deleted entries go with the task.
  * @param {IDBDatabase} db
  * @param {string} id
- * @param {{cascade?: boolean}} [options]
- * @returns {Promise<{tasks: string[], entries: string[]}>} removed ids
+ * @param {{cascade?: boolean, now?: number}} [options]
+ * @returns {Promise<{tasks: string[], entries: string[], snapshot: TaskSnapshot}>} removed ids
+ *   and the removed records
  * @throws {NotFoundError} `task`
  * @throws {CascadeRequiredError} `cascade`, `details.entries` = live entry count
  */
-export async function deleteTask(db, id, { cascade = false } = {}) {
+export async function deleteTask(db, id, { cascade = false, now = Date.now() } = {}) {
   const removed = await tx(
     db,
     [STORES.tasks, STORES.entries, STORES.meta],
     'readwrite',
     async (stores) => {
-      await requireTask(stores.tasks, id);
+      const task = await requireTask(stores.tasks, id);
       /** @type {import('../lib/types.js').Entry[]} */
       const entries = await req(stores.entries.index(INDEXES.entryTask).getAll(id));
       const live = entries.filter((entry) => entry.deletedAt === null).length;
       if (live > 0 && !cascade) {
         throw new CascadeRequiredError('cascade', 'the task has time entries', { entries: live });
       }
-      return { tasks: [id], entries: await removeTasks(stores, [id]) };
+      return {
+        tasks: [id],
+        entries: await removeTasks(stores, [id]),
+        snapshot: { task, entries, deletedAt: now },
+      };
     },
   );
   emit(db, { type: 'tasks', ids: removed.tasks }, { type: 'entries', ids: removed.entries });
   return removed;
+}
+
+/**
+ * Puts a deleted task and its entries back (undo of deleteTask). Its running entry runs again
+ * if nothing else started meanwhile; otherwise it ends at the deletion time.
+ * @param {IDBDatabase} db
+ * @param {TaskSnapshot} snapshot
+ * @returns {Promise<Task>}
+ * @throws {NotFoundError} `project` (deleted meanwhile)
+ * @throws {InvariantError} `exists` (the task id is in use again)
+ */
+export async function restoreTask(db, { task, entries, deletedAt }) {
+  const restored = await tx(
+    db,
+    [STORES.projects, STORES.tasks, STORES.entries, STORES.meta],
+    'readwrite',
+    async (stores) => {
+      await requireProject(stores.projects, task.projectId);
+      if (await req(stores.tasks.get(task.id))) {
+        throw new InvariantError('exists', 'the task exists', { id: task.id });
+      }
+      await req(stores.tasks.put(task));
+      const running = await readRunning(stores);
+      for (const entry of entries) {
+        if (entry.end === null && entry.deletedAt === null) {
+          if (running || deletedAt <= entry.start) {
+            if (deletedAt > entry.start) {
+              await req(stores.entries.put({ ...entry, end: deletedAt, updatedAt: deletedAt }));
+            }
+            continue;
+          }
+          await req(stores.meta.put(entry.id, META.running));
+        }
+        await req(stores.entries.put(entry));
+      }
+      return task;
+    },
+  );
+  emit(
+    db,
+    { type: 'tasks', ids: [task.id] },
+    { type: 'entries', ids: entries.map((entry) => entry.id) },
+  );
+  return restored;
 }

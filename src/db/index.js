@@ -23,6 +23,7 @@ export {
   markTaskDone,
   moveTask,
   reopenTask,
+  restoreTask,
   updateTask,
 } from './tasks.js';
 export {

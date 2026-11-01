@@ -8,11 +8,20 @@ import {
   markTaskDone,
   moveTask,
   reopenTask,
+  restoreTask,
   updateTask,
 } from '../../src/db/tasks.js';
-import { addEntry, getRunning, softDeleteEntry, startEntry } from '../../src/db/entries.js';
+import {
+  addEntry,
+  getRunning,
+  softDeleteEntry,
+  startEntry,
+  stopRunning,
+} from '../../src/db/entries.js';
+import { deleteProject } from '../../src/db/projects.js';
 import {
   CascadeRequiredError,
+  InvariantError,
   NotFoundError,
   TaskDoneError,
   ValidationError,
@@ -176,7 +185,7 @@ describe('tasks', () => {
   it('deletes a task without entries directly', async () => {
     const { db, notify } = await freshDB();
     const { pipeline } = await seed(db);
-    expect(await deleteTask(db, pipeline.id)).toEqual({ tasks: [pipeline.id], entries: [] });
+    expect(await deleteTask(db, pipeline.id)).toMatchObject({ tasks: [pipeline.id], entries: [] });
     expect(await getTask(db, pipeline.id)).toBeNull();
     expect(notify).toHaveBeenLastCalledWith({ type: 'tasks', ids: [pipeline.id] });
     await expect(deleteTask(db, pipeline.id)).rejects.toBeInstanceOf(NotFoundError);
@@ -215,10 +224,64 @@ describe('tasks', () => {
       end: T0 - 30 * MIN,
     });
     await softDeleteEntry(db, entry.id, { now: T0 });
-    expect(await deleteTask(db, checkout.id)).toEqual({
+    expect(await deleteTask(db, checkout.id)).toMatchObject({
       tasks: [checkout.id],
       entries: [entry.id],
     });
     expect(await allEntries(db)).toEqual([]);
+  });
+
+  it('restores a deleted task with its entries; the running entry runs again', async () => {
+    const { db, notify } = await freshDB();
+    const { checkout } = await seed(db);
+    const old = await addEntry(db, {
+      taskId: checkout.id,
+      start: T0 - 60 * MIN,
+      end: T0 - 30 * MIN,
+    });
+    const gone = await addEntry(db, {
+      taskId: checkout.id,
+      start: T0 - 25 * MIN,
+      end: T0 - 20 * MIN,
+    });
+    await softDeleteEntry(db, gone.id, { now: T0 - 15 * MIN });
+    const { entry: running } = await startEntry(db, checkout.id, { now: T0 - 10 * MIN });
+    const { snapshot } = await deleteTask(db, checkout.id, { cascade: true, now: T0 });
+    expect(snapshot).toMatchObject({ task: { id: checkout.id }, deletedAt: T0 });
+    notify.mockClear();
+
+    await restoreTask(db, snapshot);
+    expect(await getTask(db, checkout.id)).toEqual(checkout);
+    expect((await allEntries(db)).map((e) => e.id).sort()).toEqual(
+      [old.id, gone.id, running.id].sort(),
+    );
+    expect((await getRunning(db))?.id).toBe(running.id);
+    expect(notify.mock.calls.map(([change]) => change.type)).toEqual(['tasks', 'entries']);
+  });
+
+  it('ends the restored running entry at the deletion time if another timer started', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    const { entry: running } = await startEntry(db, checkout.id, { now: T0 - 10 * MIN });
+    const { snapshot } = await deleteTask(db, checkout.id, { cascade: true, now: T0 });
+    const { entry: other } = await startEntry(db, pipeline.id, { now: T0 + MIN });
+    await restoreTask(db, snapshot);
+    expect((await getRunning(db))?.id).toBe(other.id);
+    expect((await allEntries(db)).find((e) => e.id === running.id)).toMatchObject({ end: T0 });
+    await stopRunning(db, { now: T0 + 2 * MIN });
+  });
+
+  it('refuses to restore into a deleted project or over an existing id', async () => {
+    const { db } = await freshDB();
+    const { build, checkout, pipeline } = await seed(db);
+    const { snapshot } = await deleteTask(db, pipeline.id, { now: T0 });
+    await restoreTask(db, snapshot);
+    await expect(restoreTask(db, snapshot)).rejects.toBeInstanceOf(InvariantError);
+    const second = await deleteTask(db, checkout.id, { now: T0 });
+    await deleteProject(db, build.id, { cascade: true });
+    await expect(restoreTask(db, second.snapshot)).rejects.toMatchObject({
+      constructor: NotFoundError,
+      code: 'project',
+    });
   });
 });
