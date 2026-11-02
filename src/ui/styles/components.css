@@ -323,6 +323,17 @@ tt-table {
     border-radius: 0;
   }
 
+  /* Virtualization spacers (rows outside the rendered window). */
+  & tbody.spacer {
+    & tr,
+    & tr:hover {
+      background: none;
+    }
+    & td {
+      padding: 0;
+      border: none;
+    }
+  }
   & tbody tr {
     block-size: var(--tree-row-height);
 
@@ -490,6 +501,32 @@ tt-table {
     @media (forced-colors: active) {
       appearance: auto;
     }
+  }
+  & .dialog-hint {
+    margin: 0;
+    color: var(--tt-text-muted);
+    font-size: 0.9em;
+  }
+  & .dialog-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--space-step) * 6);
+    margin-block-end: calc(var(--space-step) * 4);
+  }
+  & .dialog-check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-base);
+
+    & > input {
+      margin: 0;
+    }
+  }
+  & textarea.field {
+    block-size: auto;
+    min-block-size: calc(var(--space-step) * 24);
+    padding-block: var(--space-step);
+    resize: vertical;
   }
   & .delete-counts {
     margin: 0 0 var(--space-base);

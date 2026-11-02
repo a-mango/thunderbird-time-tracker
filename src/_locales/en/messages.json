@@ -263,10 +263,6 @@
     "message": "Resize the task details pane",
     "description": "Accessible name of the splitter between the task list and the details pane."
   },
-  "listPlaceholder": {
-    "message": "Tasks will appear here.",
-    "description": "Placeholder in the task list until the task list exists."
-  },
   "detailEmpty": {
     "message": "No task selected.",
     "description": "Shown in the details pane when no task is selected."
@@ -450,5 +446,247 @@
   "projectNameRequired": {
     "message": "Enter a name for the project.",
     "description": "Validation message when the project name is empty or only spaces."
+  },
+  "taskNewName": {
+    "message": "New Task",
+    "description": "Name of a task created with New Task, selected for renaming."
+  },
+  "columnProject": {
+    "message": "Project",
+    "description": "Task table column header (views only)."
+  },
+  "timerStart": {
+    "message": "Start timer",
+    "description": "Accessible name of the start button in a task row."
+  },
+  "timerStop": {
+    "message": "Stop timer",
+    "description": "Accessible name of the stop button in the running task row."
+  },
+  "listCount": {
+    "message": "$COUNT$ open tasks",
+    "description": "Muted summary next to the Starred view title.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "emptyNoProject": {
+    "message": "Select a project to see its tasks.",
+    "description": "Task list when the Archive root is selected."
+  },
+  "emptyProject": {
+    "message": "No tasks in this project yet.",
+    "description": "Task list of a project without tasks."
+  },
+  "emptyProjectAllDone": {
+    "message": "All tasks are done.",
+    "description": "Task list when every task of the project is done and hidden."
+  },
+  "emptyToday": {
+    "message": "Nothing tracked today.",
+    "description": "Today view without tasks."
+  },
+  "emptyWeek": {
+    "message": "Nothing tracked this week.",
+    "description": "This Week view without tasks."
+  },
+  "emptyStarred": {
+    "message": "No starred tasks.",
+    "description": "Starred view without tasks."
+  },
+  "emptyFilter": {
+    "message": "No tasks match the filter.",
+    "description": "Task list when the quick filter hides every task."
+  },
+  "filterClear": {
+    "message": "Clear Filter",
+    "description": "Button that resets the quick filter."
+  },
+  "filterTagsLabel": {
+    "message": "Tags to show",
+    "description": "Accessible name of the row of tag toggles under the quick filter."
+  },
+  "displayShowDone": {
+    "message": "Show Done Tasks",
+    "description": "Display options menu item (checkbox)."
+  },
+  "taskDialogEdit": {
+    "message": "Task Properties",
+    "description": "Title of the task dialog."
+  },
+  "taskName": {
+    "message": "Name",
+    "description": "Task dialog field."
+  },
+  "taskProject": {
+    "message": "Project",
+    "description": "Task dialog field."
+  },
+  "taskEstimate": {
+    "message": "Estimate",
+    "description": "Task dialog field."
+  },
+  "taskEstimateHint": {
+    "message": "For example 90m, 1.5h or 1h30. Leave empty for none.",
+    "description": "Help text under the estimate field."
+  },
+  "taskEstimateInvalid": {
+    "message": "Enter a duration like 90m, 1.5h or 1h30.",
+    "description": "Validation message of the estimate field."
+  },
+  "taskBillable": {
+    "message": "Billable",
+    "description": "Task dialog checkbox."
+  },
+  "taskDone": {
+    "message": "Done",
+    "description": "Task dialog checkbox: the task is done."
+  },
+  "taskTags": {
+    "message": "Tags",
+    "description": "Task dialog field."
+  },
+  "taskTagsHint": {
+    "message": "Separate tags with commas.",
+    "description": "Help text under the tags field."
+  },
+  "taskNotes": {
+    "message": "Notes",
+    "description": "Task dialog field."
+  },
+  "taskNameRequired": {
+    "message": "Enter a name for the task.",
+    "description": "Validation message of the task name."
+  },
+  "taskMoveTitle": {
+    "message": "Move Task",
+    "description": "Title of the task Move To dialog."
+  },
+  "taskMoveText": {
+    "message": "Move “$NAME$” to:",
+    "description": "Label of the project picker in the task Move To dialog.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Performance pass"
+      }
+    }
+  },
+  "taskDeleted": {
+    "message": "Deleted “$NAME$”.",
+    "description": "Notification after deleting a task.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Performance pass"
+      }
+    }
+  },
+  "undo": {
+    "message": "Undo",
+    "description": "Notification button that undoes the last delete."
+  },
+  "reopenTitle": {
+    "message": "Reopen Task",
+    "description": "Title of the dialog shown when starting a done task."
+  },
+  "reopenText": {
+    "message": "“$NAME$” is done. Reopen it and start the timer?",
+    "description": "Text of the reopen dialog.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Form state refactor"
+      }
+    }
+  },
+  "reopenButton": {
+    "message": "Reopen and Start",
+    "description": "Primary button of the reopen dialog."
+  },
+  "timerStarted": {
+    "message": "Timer started: $NAME$",
+    "description": "Screen reader announcement after starting a timer.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "timerStopped": {
+    "message": "Timer stopped: $NAME$",
+    "description": "Screen reader announcement after stopping a timer.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "renameLabel": {
+    "message": "Task name",
+    "description": "Accessible name of the inline rename field in the task list."
+  },
+  "menuTaskStart": {
+    "message": "Start Timer",
+    "description": "Task context menu item."
+  },
+  "menuTaskStop": {
+    "message": "Stop Timer",
+    "description": "Task context menu item."
+  },
+  "menuTaskEdit": {
+    "message": "Edit Task…",
+    "description": "Task context menu item."
+  },
+  "menuTaskRename": {
+    "message": "Rename",
+    "description": "Task context menu item."
+  },
+  "menuTaskStar": {
+    "message": "Star",
+    "description": "Task context menu item."
+  },
+  "menuTaskUnstar": {
+    "message": "Remove Star",
+    "description": "Task context menu item."
+  },
+  "menuTaskDone": {
+    "message": "Mark as Done",
+    "description": "Task context menu item."
+  },
+  "menuTaskReopen": {
+    "message": "Reopen",
+    "description": "Task context menu item."
+  },
+  "menuTaskMove": {
+    "message": "Move To…",
+    "description": "Task context menu item."
+  },
+  "menuTaskDelete": {
+    "message": "Delete Task",
+    "description": "Task context menu item."
+  },
+  "listSummaryOne": {
+    "message": "1 open task · $TOTAL$",
+    "description": "listSummary when there is exactly one open task.",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "30h 45m"
+      }
+    }
+  },
+  "listCountOne": {
+    "message": "1 open task",
+    "description": "listCount when there is exactly one open task."
+  },
+  "doneHiddenOne": {
+    "message": "1 done task hidden",
+    "description": "doneHidden when exactly one done task is hidden."
   }
 }

@@ -78,9 +78,14 @@ export function createRandom(seed) {
 /**
  * @param {{seed?: number, now?: number, running?: boolean}} [options]
  *   `running` adds one open entry (end === null) on the first task, like the reference.
+ * @param {{bulkTasks?: number}} [extra] `bulkTasks` adds that many tasks (one entry each) to
+ *   Support retainer, reusing the reference's task names: the M4 performance fixture.
  * @returns {Fixtures}
  */
-export function generateFixtures({ seed = 42, now = Date.now(), running = true } = {}) {
+export function generateFixtures(
+  { seed = 42, now = Date.now(), running = true } = {},
+  { bulkTasks = 0 } = {},
+) {
   const random = createRandom(seed);
   const pick = (/** @type {number} */ min, /** @type {number} */ max) =>
     min + Math.floor(random() * (max - min + 1));
@@ -163,6 +168,40 @@ export function generateFixtures({ seed = 42, now = Date.now(), running = true }
       source: 'timer',
       createdAt: start,
       updatedAt: start,
+      deletedAt: null,
+    });
+  }
+
+  const supportId = /** @type {string} */ (projectIds.get('support'));
+  for (let n = 0; n < bulkTasks; n += 1) {
+    const [, name, , , estimateMin, tags] = TASKS[n % TASKS.length];
+    const id = `bulk${n + 1}`;
+    tasks.push({
+      id,
+      projectId: supportId,
+      name: `${name} ${n + 1}`,
+      status: n % 7 === 0 ? 'done' : 'open',
+      starred: n % 11 === 0,
+      estimateMin,
+      billable: n % 2 === 0,
+      tags: [...tags],
+      notes: '',
+      order: 1000 + n,
+      createdAt: created,
+      updatedAt: created,
+      doneAt: n % 7 === 0 ? created : null,
+    });
+    const start = today.getTime() - pick(1, 13) * DAY + pick(8 * 60, 15 * 60) * MINUTE;
+    const end = start + pick(15, 150) * MINUTE;
+    entries.push({
+      id: `e${entries.length + 1}`,
+      taskId: id,
+      start,
+      end,
+      note: '',
+      source: 'timer',
+      createdAt: end,
+      updatedAt: end,
       deletedAt: null,
     });
   }

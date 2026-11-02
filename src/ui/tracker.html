@@ -68,8 +68,58 @@
         <div class="list-header">
           <h1 id="list-title" class="list-title" data-ref="list-title"></h1>
           <span class="list-count num" data-ref="list-count"></span>
+          <span class="spacer"></span>
+          <button
+            class="button small"
+            type="button"
+            data-ref="quick-filter"
+            aria-pressed="false"
+            aria-controls="quick-filter-bar"
+          >
+            <span data-i18n="listQuickFilter"></span>
+          </button>
+          <button
+            class="icon-button"
+            type="button"
+            data-ref="display-options"
+            data-i18n-label="listDisplayOptions"
+            aria-haspopup="menu"
+          ></button>
         </div>
-        <p class="pane-placeholder" data-i18n="listPlaceholder"></p>
+        <div id="quick-filter-bar" class="quick-filter-bar" data-ref="qfb" hidden>
+          <div class="qfb-pills" data-ref="qfb-pills"></div>
+          <div class="search-field">
+            <input
+              class="field"
+              type="search"
+              data-ref="filter-text"
+              data-i18n-label="filterLabel"
+              autocomplete="off"
+            />
+            <kbd data-i18n="filterShortcut"></kbd>
+          </div>
+        </div>
+        <div
+          class="quick-filter-tags"
+          role="group"
+          data-ref="qfb-tags"
+          data-i18n-label="filterTagsLabel"
+          hidden
+        ></div>
+        <tt-table id="task-table" class="task-table" data-ref="task-table" hidden></tt-table>
+        <p class="list-footer" data-ref="list-footer" hidden>
+          <span data-ref="done-hidden"></span> ·
+          <button class="link-button" type="button" data-ref="show-done">
+            <span data-i18n="doneShow"></span>
+          </button>
+        </p>
+        <div class="pane-placeholder list-empty" data-ref="list-empty" hidden>
+          <p data-ref="list-empty-text"></p>
+          <button class="button" type="button" data-ref="clear-filter" hidden>
+            <span data-i18n="filterClear"></span>
+          </button>
+        </div>
+        <div class="visually-hidden" role="status" aria-live="polite" data-ref="live"></div>
       </main>
       <section id="detail" class="detail-pane" data-i18n-label="detailLabel">
         <tt-splitter

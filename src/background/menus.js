@@ -1,4 +1,4 @@
-// Native context menu items for the project tree (docs/DESIGN.md, Components). The background
+// Native context menu items for the project tree and the task table (docs/DESIGN.md, Components). The background
 // owns the items; the tracker page shows them with menus.overrideContext() on a right-click on a
 // project row and handles onShown/onClicked itself (ui/context-menu.js).
 import { PALETTE } from '../lib/palette.js';
@@ -14,6 +14,21 @@ export const MENU = Object.freeze({
   archive: 'tt-project-archive',
   unarchive: 'tt-project-unarchive',
   delete: 'tt-project-delete',
+});
+
+/** Task row items (task table in the tracker). */
+export const TASK_MENU = Object.freeze({
+  start: 'tt-task-start',
+  stop: 'tt-task-stop',
+  edit: 'tt-task-edit',
+  rename: 'tt-task-rename',
+  star: 'tt-task-star',
+  unstar: 'tt-task-unstar',
+  done: 'tt-task-done',
+  reopen: 'tt-task-reopen',
+  move: 'tt-task-move',
+  separator: 'tt-task-separator',
+  delete: 'tt-task-delete',
 });
 
 /** Prefix of the colour radio items: `tt-project-color:#rrggbb`. */
@@ -44,6 +59,17 @@ export async function registerMenus(api = messenger) {
     [MENU.archive, 'menuArchive'],
     [MENU.unarchive, 'menuUnarchive'],
     [MENU.delete, 'menuDelete'],
+    [TASK_MENU.start, 'menuTaskStart'],
+    [TASK_MENU.stop, 'menuTaskStop'],
+    [TASK_MENU.edit, 'menuTaskEdit'],
+    [TASK_MENU.rename, 'menuTaskRename'],
+    [TASK_MENU.star, 'menuTaskStar'],
+    [TASK_MENU.unstar, 'menuTaskUnstar'],
+    [TASK_MENU.done, 'menuTaskDone'],
+    [TASK_MENU.reopen, 'menuTaskReopen'],
+    [TASK_MENU.move, 'menuTaskMove'],
+    [TASK_MENU.separator, '', { type: 'separator' }],
+    [TASK_MENU.delete, 'menuTaskDelete'],
   ];
   for (const [id, title, extra] of items) {
     api.menus.create({ ...common, id, ...(title ? { title: t(title) } : {}), ...extra });

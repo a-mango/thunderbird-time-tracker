@@ -83,6 +83,125 @@
   }
 }
 
+/* quickFilterBar.css */
+.quick-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+  padding: var(--space-base);
+  border-block-end: 1px solid var(--sidebar-border);
+  background-color: var(--layout-background-1);
+
+  & .search-field {
+    flex: 1;
+  }
+}
+
+/* Tag toggles under the bar (quickFilterBar.css #quickFilterBarTagsContainer). */
+.quick-filter-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-base);
+  padding: 0 var(--space-base) var(--space-base);
+  border-block-end: 1px solid var(--sidebar-border);
+  background-color: var(--layout-background-1);
+}
+
+.qfb-pills {
+  display: flex;
+  gap: var(--space-base);
+}
+
+/* Task table cells (threadPane.css: star and status columns). */
+.task-table {
+  /* Grows with its rows; the footer sits right after the last row. */
+  flex: 0 1 auto;
+
+  & .cell-button {
+    display: inline-grid;
+    place-items: center;
+    inline-size: 100%;
+    block-size: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+  }
+  & tr.done td[data-column='name'] {
+    color: var(--tt-text-muted);
+  }
+  & tbody:focus-within tr[aria-selected='true'].done td[data-column='name'] {
+    color: inherit;
+  }
+  & .rename-field {
+    inline-size: 100%;
+    block-size: calc(var(--tree-row-height) - 4px);
+  }
+  & .star {
+    color: var(--tt-text-muted);
+    visibility: hidden;
+  }
+  & .star.starred {
+    color: var(--tt-starred);
+    --icon-fill-opacity: 1;
+    visibility: visible;
+  }
+  & tr:is(:hover, :focus-visible, [aria-selected='true']) .star {
+    visibility: visible;
+  }
+  & .timer {
+    color: var(--tt-text-muted);
+  }
+  & .timer:hover {
+    color: var(--tt-running);
+  }
+  & .timer.running {
+    color: var(--tt-running);
+  }
+  & tr.running td:is([data-column='name'], [data-column='last']) {
+    font-weight: bold;
+  }
+  & tbody:focus-within tr[aria-selected='true'] :is(.timer, .star) {
+    color: currentColor;
+  }
+}
+
+.estimate {
+  display: flex;
+  align-items: center;
+  gap: var(--space-base);
+
+  &.over {
+    color: var(--tt-over-estimate);
+  }
+}
+
+/* On a selected row (focused or not) the label takes the row colour; red text fails AA on
+ * --listbox-selected-bg. The red bar still marks the overrun. */
+.task-table tr[aria-selected='true'] .estimate.over {
+  color: currentColor;
+}
+
+.list-footer {
+  margin: 0;
+  padding: 9px 12px;
+  color: var(--tt-text-muted);
+  background-color: var(--tree-view-bg);
+}
+
+/* Empty task list: centred text, optional Clear Filter. */
+.list-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-base);
+
+  & > p {
+    margin: 0;
+  }
+}
+
 /* ---- Details pane (empty message pane) ---- */
 .detail-pane {
   display: flex;
