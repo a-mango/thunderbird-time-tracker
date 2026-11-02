@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   createTask,
   deleteTask,
+  editTask,
   getTask,
   listTasks,
   listTasksByProject,
@@ -282,6 +283,62 @@ describe('tasks', () => {
     await expect(restoreTask(db, second.snapshot)).rejects.toMatchObject({
       constructor: NotFoundError,
       code: 'project',
+    });
+  });
+
+  describe('editTask', () => {
+    it('saves fields, moves and marks done in one write, stopping its timer', async () => {
+      const { db, notify } = await freshDB();
+      const { internal, checkout, bookkeeping } = await seed(db);
+      const { entry } = await startEntry(db, checkout.id, { now: T0 });
+      notify.mockClear();
+      const { task, stopped } = await editTask(
+        db,
+        checkout.id,
+        { patch: { name: 'Checkout errors', estimateMin: 90 }, projectId: internal.id, done: true },
+        { now: T0 + 10 * MIN },
+      );
+      expect(task).toMatchObject({
+        name: 'Checkout errors',
+        estimateMin: 90,
+        projectId: internal.id,
+        order: bookkeeping.order + 1,
+        status: 'done',
+        doneAt: T0 + 10 * MIN,
+        updatedAt: T0 + 10 * MIN,
+      });
+      expect(stopped?.entry).toMatchObject({ id: entry.id, end: T0 + 10 * MIN });
+      expect(await getRunning(db)).toBeNull();
+      expect(notify.mock.calls.map(([c]) => c)).toEqual([
+        { type: 'tasks', ids: [checkout.id] },
+        { type: 'entries', ids: [entry.id] },
+      ]);
+    });
+
+    it('reopens a done task and keeps its place when the project is unchanged', async () => {
+      const { db } = await freshDB();
+      const { build, pipeline } = await seed(db);
+      await markTaskDone(db, pipeline.id, { now: T0 });
+      const { task } = await editTask(
+        db,
+        pipeline.id,
+        { projectId: build.id, done: false },
+        { now: T0 + MIN },
+      );
+      expect(task).toMatchObject({ status: 'open', doneAt: null, order: pipeline.order });
+    });
+
+    it('changes nothing when the target project is gone or a field is invalid', async () => {
+      const { db } = await freshDB();
+      const { checkout } = await seed(db);
+      const before = await getTask(db, checkout.id);
+      await expect(
+        editTask(db, checkout.id, { patch: { name: 'Renamed' }, projectId: 'missing', done: true }),
+      ).rejects.toMatchObject({ constructor: NotFoundError, code: 'project' });
+      await expect(
+        editTask(db, checkout.id, { patch: { name: '' }, done: true }),
+      ).rejects.toBeInstanceOf(ValidationError);
+      expect(await getTask(db, checkout.id)).toEqual(before);
     });
   });
 });

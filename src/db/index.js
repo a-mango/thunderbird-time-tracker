@@ -17,6 +17,7 @@ export {
 export {
   createTask,
   deleteTask,
+  editTask,
   getTask,
   listTasks,
   listTasksByProject,

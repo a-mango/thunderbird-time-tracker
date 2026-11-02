@@ -259,6 +259,54 @@ export async function moveTask(db, id, projectId, { now = Date.now() } = {}) {
 }
 
 /**
+ * The task dialog's save: field edits, a move and done/reopen in one transaction, so a failure
+ * (say the target project was deleted in another tab) leaves the task as it was.
+ * Marking done stops the task's running timer at `now`, like `markTaskDone`.
+ * @param {IDBDatabase} db
+ * @param {string} id
+ * @param {{patch?: TaskPatch, projectId?: string, done?: boolean}} edit
+ * @param {WriteOptions} [options]
+ * @returns {Promise<{task: Task, stopped: TimerStop | null}>}
+ * @throws {ValidationError}
+ * @throws {NotFoundError} `task`, `project`
+ */
+export async function editTask(db, id, { patch = {}, projectId, done }, { now = Date.now() } = {}) {
+  const clean = checkPatch(checkFields(patch, EDITABLE));
+  if (projectId !== undefined) checkId(projectId, 'projectId');
+  const result = await tx(
+    db,
+    [STORES.projects, STORES.tasks, STORES.entries, STORES.meta],
+    'readwrite',
+    async ({ projects, tasks, entries, meta }) => {
+      const task = await requireTask(tasks, id);
+      /** @type {Task} */
+      let next = { ...task, ...clean, updatedAt: now };
+      if (projectId !== undefined && projectId !== task.projectId) {
+        await requireProject(projects, projectId);
+        next = { ...next, projectId, order: await nextOrder(tasks, projectId) };
+      }
+      /** @type {TimerStop | null} */
+      let stopped = null;
+      if (done === true && task.status !== 'done') {
+        const running = await readRunning({ entries, meta });
+        if (running?.taskId === id) stopped = await stopRunningIn({ entries, meta }, running, now);
+        next = { ...next, status: 'done', doneAt: now };
+      } else if (done === false && task.status === 'done') {
+        next = { ...next, status: 'open', doneAt: null };
+      }
+      await req(tasks.put(next));
+      return { task: next, stopped };
+    },
+  );
+  emit(
+    db,
+    { type: 'tasks', ids: [id] },
+    { type: 'entries', ids: result.stopped ? [result.stopped.entry.id] : [] },
+  );
+  return result;
+}
+
+/**
  * Removes tasks and all their entries inside the caller's transaction (cascade helper).
  * @param {{tasks: IDBObjectStore, entries: IDBObjectStore, meta: IDBObjectStore}} stores
  * @param {string[]} taskIds
@@ -333,6 +381,9 @@ export async function restoreTask(db, { task, entries, deletedAt }) {
       const running = await readRunning(stores);
       for (const entry of entries) {
         if (entry.end === null && entry.deletedAt === null) {
+          // Another timer runs now (one running entry): close this one at the delete time.
+          // Closing at or before its start would make it empty, so it is dropped, like a
+          // zero-length entry on stop.
           if (running || deletedAt <= entry.start) {
             if (deletedAt > entry.start) {
               await req(stores.entries.put({ ...entry, end: deletedAt, updatedAt: deletedAt }));

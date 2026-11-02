@@ -3,6 +3,7 @@
 import {
   createTask,
   deleteTask,
+  editTask,
   markTaskDone,
   moveTask,
   reopenTask,
@@ -109,13 +110,8 @@ export function createTaskCommands({ data, onError, announce, offerUndo }) {
       const input = await taskDialog(task, { projects: data.projects, tasks: data.tasks.values() });
       if (!input) return;
       const { projectId, done, ...patch } = input;
-      // The move can fail (another tab deleted the project): then nothing is saved.
-      if (projectId !== task.projectId) await moveTask(data.db, id, projectId);
-      await updateTask(data.db, id, patch);
-      if (done !== (task.status === 'done')) {
-        if (done) await markTaskDone(data.db, id);
-        else await reopenTask(data.db, id);
-      }
+      // One transaction: if the move fails (another tab deleted the project), nothing is saved.
+      await editTask(data.db, id, { patch, projectId, done });
     });
   }
 
