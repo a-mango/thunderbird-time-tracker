@@ -74,9 +74,11 @@ test('Enter opens the properties dialog; estimate, billable and tags are saved',
   await dialog.getByLabel('Tags').fill('Ops, Implementation');
   await dialog.getByRole('button', { name: 'Save' }).click();
   await expect(dialog).toBeHidden();
-  await expect(row(page, 'Staging deploy script').locator('td[data-column="estimate"]')).toHaveText(
-    '1h 30m',
-  );
+  // 3h 53m tracked against 1h 30m: over, with a cue that isn't only colour.
+  const cell = row(page, 'Staging deploy script').locator('td[data-column="estimate"]');
+  await expect(cell.locator('.num')).toHaveText('1h 30m');
+  await expect(cell.locator('.estimate')).toHaveAttribute('title', 'Over estimate');
+  await expect(cell).toContainText('Over estimate');
 
   await page.keyboard.press('Enter');
   await expect(estimate).toHaveValue('1h 30m');
@@ -199,4 +201,49 @@ test('views add a Project column; empty states', async ({ page }) => {
   await project(page, 'Packaging').click();
   await expect(page.getByText('No tasks in this project yet.')).toBeVisible();
   await expectNoAxeViolations(page);
+});
+
+test('Billable and Tags pills combine; the tag bar lists the scope tags', async ({ page }) => {
+  await page.getByRole('button', { name: 'Quick Filter' }).click();
+  await page.getByRole('button', { name: 'Tags' }).click();
+  const tags = page.getByRole('group', { name: 'Tags to show' });
+  await tags.getByRole('button', { name: 'Implementation' }).click();
+  expect(await names(page)).toEqual([
+    'Checkout form validation',
+    'Product image pipeline',
+    'Staging deploy script',
+  ]);
+
+  // Make one of them non-billable, then filter on Billable too.
+  await row(page, 'Staging deploy script').click();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Task Properties' });
+  await dialog.getByLabel('Billable').uncheck();
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await page.getByRole('button', { name: 'Billable' }).click();
+  expect(await names(page)).toEqual(['Checkout form validation', 'Product image pipeline']);
+  await expectNoAxeViolations(page);
+});
+
+test('the dialog moves a task to another project', async ({ page }) => {
+  await row(page, 'Client call notes').click();
+  await page.keyboard.press('Enter');
+  const dialog = page.getByRole('dialog', { name: 'Task Properties' });
+  const select = dialog.getByLabel('Project');
+  const value = await select
+    .locator('option', { hasText: 'Support retainer' })
+    .getAttribute('value');
+  await select.selectOption(String(value));
+  await dialog.getByRole('button', { name: 'Save' }).click();
+  await expect(row(page, 'Client call notes')).toHaveCount(0);
+  await project(page, 'Support retainer').click();
+  expect(await names(page)).toEqual(['Weekly client sync', 'Client call notes']);
+});
+
+test('display options open the column picker', async ({ page }) => {
+  await page.getByRole('button', { name: 'Display options' }).click();
+  await page.getByRole('menuitem', { name: 'Columns…' }).click();
+  const picker = page.getByRole('menu', { name: 'Select columns to display' });
+  await expect(picker).toBeVisible();
+  await expect(picker.getByRole('menuitemcheckbox', { name: 'Starred' })).toBeFocused();
 });

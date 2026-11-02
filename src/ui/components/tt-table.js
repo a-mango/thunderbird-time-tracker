@@ -270,6 +270,11 @@ export class TtTable extends HTMLElement {
     if (key !== null) this.#focusRow(key);
   }
 
+  /** Opens the column picker (also offered from the list's display options). */
+  openColumnPicker() {
+    this.#openMenu();
+  }
+
   #saveLayout() {
     const persist = this.getAttribute('persist');
     if (persist) setLayout(persist, this.#layout);

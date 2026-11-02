@@ -211,6 +211,10 @@
       }
     }
   },
+  "listSeparator": {
+    "message": "·",
+    "description": "Separator between the done-tasks count and the Show button in the list footer."
+  },
   "doneShow": {
     "message": "Show",
     "description": "Link-style button in the task list footer that shows done tasks."
@@ -508,6 +512,14 @@
   "filterTagsLabel": {
     "message": "Tags to show",
     "description": "Accessible name of the row of tag toggles under the quick filter."
+  },
+  "estimateOver": {
+    "message": "Over estimate",
+    "description": "Tooltip and screen-reader text on an estimate cell whose tracked time exceeds the estimate."
+  },
+  "displayColumns": {
+    "message": "Columns…",
+    "description": "Display options menu item that opens the column picker of the task table."
   },
   "displayShowDone": {
     "message": "Show Done Tasks",

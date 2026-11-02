@@ -107,6 +107,7 @@ export function createTaskList({ data, commands }) {
   quickFilter.addEventListener('click', () => setQuickFilterOpen(qfb.hidden === true));
   ref('display-options').addEventListener('click', async () => {
     const value = await showMenu(ref('display-options'), [
+      { label: t('displayColumns'), value: 'columns', disabled: table.hidden === true },
       {
         label: t('displayShowDone'),
         value: 'done',
@@ -115,6 +116,7 @@ export function createTaskList({ data, commands }) {
       },
     ]);
     if (value === 'done') setFilter({ open: !filter.open });
+    else if (value === 'columns') table.openColumnPicker();
   });
   ref('show-done').addEventListener('click', () => setFilter({ open: false }));
   ref('clear-filter').addEventListener('click', () => {
@@ -311,9 +313,10 @@ export function createTaskList({ data, commands }) {
     cell.append(
       el(
         'span',
-        { class: over ? 'estimate over' : 'estimate' },
+        { class: over ? 'estimate over' : 'estimate', title: over ? t('estimateOver') : '' },
         meter,
         el('span', { class: 'num', text: formatEstimate(task.estimateMin) }),
+        ...(over ? [el('span', { class: 'visually-hidden', text: t('estimateOver') })] : []),
       ),
     );
   }

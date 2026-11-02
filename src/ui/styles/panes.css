@@ -89,7 +89,7 @@
   align-items: center;
   gap: var(--space-base);
   padding: var(--space-base);
-  border-block-end: 1px solid var(--sidebar-border);
+  border-block-end: 1px solid var(--layout-border-0);
   background-color: var(--layout-background-1);
 
   & .search-field {
@@ -103,7 +103,7 @@
   flex-wrap: wrap;
   gap: var(--space-base);
   padding: 0 var(--space-base) var(--space-base);
-  border-block-end: 1px solid var(--sidebar-border);
+  border-block-end: 1px solid var(--layout-border-0);
   background-color: var(--layout-background-1);
 }
 
@@ -136,7 +136,7 @@
   }
   & .rename-field {
     inline-size: 100%;
-    block-size: calc(var(--tree-row-height) - 4px);
+    block-size: calc(var(--tree-row-height) - 2 * var(--space-step));
   }
   & .star {
     color: var(--tt-text-muted);
@@ -156,8 +156,14 @@
   & .timer:hover {
     color: var(--tt-running);
   }
+  /* Running: a solid clock, the stop control (the Thunderbird set has no stop glyph). */
   & .timer.running {
     color: var(--tt-running);
+    --icon-fill-opacity: 1;
+  }
+  /* Hover shows the clock outline, so the dot reads as a control. */
+  & .timer.running:is(:hover, :focus-visible) {
+    --icon-fill-opacity: 0.2;
   }
   & tr.running td:is([data-column='name'], [data-column='last']) {
     font-weight: bold;
@@ -177,15 +183,15 @@
   }
 }
 
-/* On a selected row (focused or not) the label takes the row colour; red text fails AA on
- * --listbox-selected-bg. The red bar still marks the overrun. */
+/* On a selected row (focused or not) the label and bar take the row colour; red text fails AA
+ * on --listbox-selected-bg. The cell's tooltip and hidden "Over estimate" text keep the cue. */
 .task-table tr[aria-selected='true'] .estimate.over {
   color: currentColor;
 }
 
 .list-footer {
   margin: 0;
-  padding: 9px 12px;
+  padding: var(--space-base) calc(2 * var(--space-base));
   color: var(--tt-text-muted);
   background-color: var(--tree-view-bg);
 }
