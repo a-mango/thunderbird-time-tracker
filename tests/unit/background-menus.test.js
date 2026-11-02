@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { COLOR_ITEM_PREFIX, MENU, registerMenus } from '../../src/background/menus.js';
+import { COLOR_ITEM_PREFIX, MENU, TASK_MENU, registerMenus } from '../../src/background/menus.js';
 import { PALETTE } from '../../src/lib/palette.js';
 import { createMessenger } from '../../dev/mock-messenger.js';
 
@@ -11,12 +11,15 @@ const messages = JSON.parse(
 const mock = () => createMessenger({ messages, baseUrl: 'moz-extension://test/' });
 
 describe('registerMenus', () => {
-  it('creates hidden project items limited to the tracker tab, with localized titles', async () => {
+  it('creates hidden project and task items limited to the tracker tab, with localized titles', async () => {
     const api = mock();
     await registerMenus(api);
     const items = api.menus._items();
     const top = items.filter((/** @type {any} */ i) => !i.parentId);
-    expect(top.map((/** @type {any} */ i) => i.id)).toEqual(Object.values(MENU));
+    expect(top.map((/** @type {any} */ i) => i.id)).toEqual([
+      ...Object.values(MENU),
+      ...Object.values(TASK_MENU),
+    ]);
     for (const item of top) {
       expect(item).toMatchObject({
         contexts: ['all'],
@@ -42,6 +45,8 @@ describe('registerMenus', () => {
     const api = mock();
     await registerMenus(api);
     await registerMenus(api);
-    expect(api.menus._items()).toHaveLength(Object.keys(MENU).length + PALETTE.length);
+    expect(api.menus._items()).toHaveLength(
+      Object.keys(MENU).length + Object.keys(TASK_MENU).length + PALETTE.length,
+    );
   });
 });

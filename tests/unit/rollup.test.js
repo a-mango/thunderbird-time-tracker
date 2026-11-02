@@ -230,6 +230,32 @@ describe('createRollup', () => {
     expect(rollup.project('nope')).toEqual(ZERO);
   });
 
+  it('knows when each task was last tracked', () => {
+    const entries = [
+      entry('e1', 'checkout', NOW - 5 * HOUR, NOW - 4 * HOUR),
+      entry('e2', 'checkout', NOW - 3 * HOUR, NOW - 2 * HOUR),
+      entry('e3', 'deploy', NOW - 6 * HOUR, NOW - HOUR, { deletedAt: NOW }),
+    ];
+    const rollup = createRollup(
+      { projects: PROJECTS, tasks: TASKS, entries },
+      { now: NOW, weekStart: 1 },
+    );
+    expect(rollup.last('checkout')).toBe(NOW - 2 * HOUR);
+    expect(rollup.last('deploy')).toBeNull();
+    expect(rollup.last('nope')).toBeNull();
+
+    rollup.removeEntry('e2');
+    expect(rollup.last('checkout')).toBe(NOW - 4 * HOUR);
+    // A running entry counts as tracked now; moving it to another task moves its time.
+    rollup.upsertEntry(entry('e4', 'checkout', NOW - 10 * MINUTE, null));
+    expect(rollup.last('checkout')).toBe(NOW);
+    rollup.setNow(NOW + MINUTE);
+    expect(rollup.last('checkout')).toBe(NOW + MINUTE);
+    rollup.upsertEntry(entry('e4', 'sync', NOW - 10 * MINUTE, NOW - 5 * MINUTE));
+    expect(rollup.last('checkout')).toBe(NOW - 4 * HOUR);
+    expect(rollup.last('sync')).toBe(NOW - 5 * MINUTE);
+  });
+
   it('returns copies that callers cannot use to corrupt the state', () => {
     const rollup = createRollup(
       { projects: PROJECTS, tasks: TASKS, entries: [entry('e1', 'checkout', NOW - HOUR, NOW)] },

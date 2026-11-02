@@ -4,6 +4,10 @@ import { el, icon, renderList, setAttrs } from '../render.js';
 const MIN_WIDTH = 40;
 const MAX_WIDTH = 1000;
 const RESIZE_STEP = 10;
+/** Rows rendered above and below the visible ones. */
+const OVERSCAN = 10;
+/** A focused row this far outside the visible window is still kept rendered. */
+const KEEP_FOCUSED = 300;
 
 /**
  * @template [T=any]
@@ -34,6 +38,8 @@ const RESIZE_STEP = 10;
  * Renders a native `<table role="treegrid">` with sortable header buttons, a column picker
  * (`column-menu` icon, popover menu of checkboxes) and resizable fixed-width columns.
  * Single selection with a roving tabindex on rows; selection follows focus.
+ * Virtualized like Thunderbird's tree-view-table: only the visible rows (plus a margin) are in
+ * the DOM, between two spacer bodies; `aria-rowcount`/`aria-rowindex` give the real positions.
  *
  * Attributes: `label` (required, the grid's accessible name, localized by the page);
  * `persist` = layout-store key for widths, hidden columns and sort.
@@ -59,6 +65,27 @@ export class TtTable extends HTMLElement {
   #colgroup = el('colgroup');
   #headRow = el('tr');
   #body = el('tbody');
+  #before = el(
+    'tbody',
+    { class: 'spacer', attrs: { role: 'presentation' } },
+    el('tr', {}, el('td')),
+  );
+  #after = el(
+    'tbody',
+    { class: 'spacer', attrs: { role: 'presentation' } },
+    el('tr', {}, el('td')),
+  );
+  /** @type {T[]} rows in display order */
+  #sorted = [];
+  /** @type {Map<unknown, number>} row key → index in #sorted */
+  #index = new Map();
+  /** @type {Map<string, unknown>} `data-key` → row key */
+  #keys = new Map();
+  #window = { start: 0, end: 0 };
+  #rowHeight = 0;
+  #frame = 0;
+  /** @type {ResizeObserver | null} */
+  #resize = null;
   #pickerButton = el('button', {
     class: 'icon-button column-picker',
     type: 'button',
@@ -92,7 +119,13 @@ export class TtTable extends HTMLElement {
 
   connectedCallback() {
     if (!this.#table.isConnected) {
-      this.#table.append(this.#colgroup, el('thead', {}, this.#headRow), this.#body);
+      this.#table.append(
+        this.#colgroup,
+        el('thead', {}, this.#headRow),
+        this.#before,
+        this.#body,
+        this.#after,
+      );
       const label = messenger.i18n.getMessage('tableColumnPicker');
       this.#pickerButton.setAttribute('aria-label', label);
       this.#pickerButton.title = label;
@@ -110,6 +143,9 @@ export class TtTable extends HTMLElement {
     this.#pickerButton.addEventListener('click', this.#openMenu);
     this.#menu.addEventListener('keydown', this.#onMenuKeyDown);
     this.#menu.addEventListener('toggle', this.#onMenuToggle);
+    this.#scroller.addEventListener('scroll', this.#onScroll, { passive: true });
+    this.#resize = new ResizeObserver(this.#onScroll);
+    this.#resize.observe(this.#scroller);
   }
 
   disconnectedCallback() {
@@ -119,6 +155,14 @@ export class TtTable extends HTMLElement {
     this.#pickerButton.removeEventListener('click', this.#openMenu);
     this.#menu.removeEventListener('keydown', this.#onMenuKeyDown);
     this.#menu.removeEventListener('toggle', this.#onMenuToggle);
+    this.#scroller.removeEventListener('scroll', this.#onScroll);
+    this.#resize?.disconnect();
+    cancelAnimationFrame(this.#frame);
+  }
+
+  /** The scrolling box around the table. */
+  get #scroller() {
+    return /** @type {HTMLElement} */ (this.#table.parentElement);
   }
 
   /** @returns {TableColumn<T>[]} */
@@ -185,8 +229,21 @@ export class TtTable extends HTMLElement {
 
   set selectedKey(key) {
     // An unknown key would leave no row tabbable.
-    this.#selectedKey = this.#rows.some((r) => this.rowKey(r) === key) ? key : null;
-    this.#renderBody();
+    this.#selectedKey = this.#index.has(key) ? key : null;
+    this.#syncRowStates();
+  }
+
+  /** Updates tabindex and aria-selected of rendered rows (the cells stay as they are). */
+  #syncRowStates() {
+    const rows = [...this.#body.rows];
+    const selected = this.#selectedKey === null ? null : String(this.#selectedKey);
+    const tabbable = rows.some((tr) => tr.dataset.key === selected)
+      ? selected
+      : (rows[0]?.dataset.key ?? null);
+    for (const tr of rows) {
+      tr.tabIndex = tr.dataset.key === tabbable ? 0 : -1;
+      tr.setAttribute('aria-selected', String(tr.dataset.key === selected));
+    }
   }
 
   /** Columns currently shown, in order. */
@@ -208,9 +265,14 @@ export class TtTable extends HTMLElement {
 
   /** Focuses the selected row (or the first). */
   focusSelected() {
-    const rows = this.#sortedRows();
+    const rows = this.#sorted;
     const key = this.#selectedKey ?? (rows[0] ? this.rowKey(rows[0]) : null);
     if (key !== null) this.#focusRow(key);
+  }
+
+  /** Opens the column picker (also offered from the list's display options). */
+  openColumnPicker() {
+    this.#openMenu();
   }
 
   #saveLayout() {
@@ -371,20 +433,77 @@ export class TtTable extends HTMLElement {
 
   #renderBody() {
     const rows = this.#sortedRows();
+    this.#sorted = rows;
+    this.#index = new Map();
+    this.#keys = new Map();
+    rows.forEach((row, i) => {
+      const key = this.rowKey(row);
+      this.#index.set(key, i);
+      this.#keys.set(String(key), key);
+    });
+    this.#table.setAttribute('aria-rowcount', String(rows.length + 1));
+    this.#renderWindow(true);
+  }
+
+  /** Height of one body row (they all share `--tree-row-height`). */
+  #measureRowHeight() {
+    const row = this.#body.rows[0];
+    const height = row?.getBoundingClientRect().height ?? 0;
+    if (height > 0) this.#rowHeight = height;
+    return this.#rowHeight || 28;
+  }
+
+  /**
+   * Renders the rows that are visible (plus OVERSCAN on each side, plus the focused row if it is
+   * close). `refresh`: data changed, so kept rows are filled again; otherwise (scrolling) only
+   * rows entering the window are.
+   * @param {boolean} refresh
+   */
+  #renderWindow(refresh) {
+    const rows = this.#sorted;
+    const scroller = this.#scroller;
+    const height = this.#rowHeight || this.#measureRowHeight();
+    const viewport = scroller?.clientHeight || 1000;
+    let start = Math.max(0, Math.floor((scroller?.scrollTop ?? 0) / height) - OVERSCAN);
+    let end = Math.min(rows.length, start + Math.ceil(viewport / height) + 2 * OVERSCAN);
+    if (start >= end) start = Math.max(0, end - Math.ceil(viewport / height) - OVERSCAN);
+    const focused = this.#body.contains(document.activeElement)
+      ? this.#index.get(this.#selectedKey)
+      : undefined;
+    if (focused !== undefined && focused >= start - KEEP_FOCUSED && focused < end + KEEP_FOCUSED) {
+      start = Math.min(start, focused);
+      end = Math.max(end, focused + 1);
+    }
+    if (!refresh && start === this.#window.start && end === this.#window.end) return;
+    this.#window = { start, end };
+
     const columns = this.visibleColumns;
-    const tabbable = this.#selectedKey ?? (rows[0] ? this.rowKey(rows[0]) : null);
+    const visible = rows.slice(start, end);
+    const keys = visible.map(this.rowKey);
+    const tabbable =
+      this.#selectedKey !== null && keys.includes(this.#selectedKey)
+        ? this.#selectedKey
+        : (keys[0] ?? null);
+    /** @type {Set<Element>} */
+    const fresh = new Set();
     renderList(
       this.#body,
-      rows,
+      visible,
       this.rowKey,
-      () => el('tr', { attrs: { role: 'row' } }),
+      () => {
+        const tr = el('tr', { attrs: { role: 'row' } });
+        fresh.add(tr);
+        return tr;
+      },
       () => {},
     ).forEach((tr, i) => {
-      const row = rows[i];
-      const key = this.rowKey(row);
+      const row = visible[i];
+      const key = keys[i];
       tr.dataset.key = String(key);
       tr.tabIndex = key === tabbable ? 0 : -1;
       tr.setAttribute('aria-selected', String(key === this.#selectedKey));
+      tr.setAttribute('aria-rowindex', String(start + i + 2));
+      if (!refresh && !fresh.has(tr)) return;
       tr.replaceChildren(
         ...columns.map((column) => {
           const cell = el('td', { attrs: { role: 'gridcell' }, dataset: { column: column.id } });
@@ -397,7 +516,22 @@ export class TtTable extends HTMLElement {
       );
       this.renderRow(row, tr);
     });
+    const measured = this.#measureRowHeight();
+    for (const [spacer, count] of /** @type {const} */ ([
+      [this.#before, start],
+      [this.#after, rows.length - end],
+    ])) {
+      spacer.hidden = count === 0;
+      const tr = /** @type {HTMLTableRowElement} */ (spacer.firstElementChild);
+      tr.style.blockSize = `${count * measured}px`;
+      /** @type {HTMLTableCellElement} */ (tr.firstElementChild).colSpan = columns.length || 1;
+    }
   }
+
+  #onScroll = () => {
+    cancelAnimationFrame(this.#frame);
+    this.#frame = requestAnimationFrame(() => this.#renderWindow(false));
+  };
 
   /** @param {unknown} key */
   #rowElement(key) {
@@ -406,8 +540,20 @@ export class TtTable extends HTMLElement {
     );
   }
 
+  /** Renders the row of `key` if it is outside the window, scrolling it into view. @param {unknown} key */
+  #ensureRendered(key) {
+    if (this.#rowElement(key)) return;
+    const index = this.#index.get(key);
+    if (index === undefined) return;
+    const scroller = this.#scroller;
+    const height = this.#rowHeight || this.#measureRowHeight();
+    scroller.scrollTop = Math.max(0, index * height - scroller.clientHeight / 2);
+    this.#renderWindow(false);
+  }
+
   /** @param {unknown} key */
   #focusRow(key) {
+    this.#ensureRendered(key);
     if (this.#selectedKey !== key) {
       this.#selectedKey = key;
       // Only the selection changed: update row states without re-rendering cells.
@@ -429,7 +575,7 @@ export class TtTable extends HTMLElement {
       /** @type {Element} */ (event.target).closest('tr')
     );
     if (!tr || tr.parentElement !== this.#body) return undefined;
-    return this.#sortedRows().map(this.rowKey)[tr.sectionRowIndex];
+    return this.#keys.get(tr.dataset.key ?? '');
   }
 
   /** @param {MouseEvent} event */
@@ -451,10 +597,10 @@ export class TtTable extends HTMLElement {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     // Keys on controls inside a cell (star, start/stop buttons) are theirs.
     if (/** @type {Element} */ (event.target).localName !== 'tr') return;
-    const keys = this.#sortedRows().map(this.rowKey);
+    const keys = this.#sorted.map(this.rowKey);
     const current = this.#keyFromEvent(event);
     if (current === undefined || keys.length === 0) return;
-    const index = keys.indexOf(current);
+    const index = this.#index.get(current) ?? 0;
     const firstRow = this.#body.rows[0];
     const scroller = /** @type {HTMLElement} */ (this.#table.parentElement);
     const page = Math.max(

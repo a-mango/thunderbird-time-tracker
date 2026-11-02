@@ -6,7 +6,9 @@ test('tracker tab renders the three panes from the database', async ({ page }) =
   await openTracker(page);
   await expect(page).toHaveTitle('Time Tracker');
   await expect(page.getByRole('complementary', { name: 'Projects and views' })).toBeVisible();
-  await expect(page.getByRole('main')).toContainText('Tasks will appear here.');
+  await expect(page.getByRole('main').getByRole('treegrid', { name: 'Tasks' })).toContainText(
+    'Checkout form validation',
+  );
   await expect(page.getByRole('region', { name: 'Task details' })).toContainText(
     'No task selected.',
   );

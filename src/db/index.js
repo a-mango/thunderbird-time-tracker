@@ -17,12 +17,14 @@ export {
 export {
   createTask,
   deleteTask,
+  editTask,
   getTask,
   listTasks,
   listTasksByProject,
   markTaskDone,
   moveTask,
   reopenTask,
+  restoreTask,
   updateTask,
 } from './tasks.js';
 export {

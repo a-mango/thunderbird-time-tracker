@@ -1,9 +1,10 @@
 // Button menus (the project pane's More and Projects buttons): a popover `.tt-menu` panel, since
 // native menus only open from a contextmenu event. Same keyboard model as the column picker.
-import { el, setAttrs } from './render.js';
+import { el, icon, setAttrs } from './render.js';
 
 /**
- * @typedef {{label: string, value: string, disabled?: boolean} | 'separator'} MenuItem
+ * @typedef {{label: string, value: string, disabled?: boolean, checked?: boolean} | 'separator'}
+ *   MenuItem `checked` (true or false) makes it a checkbox item
  */
 
 /**
@@ -30,21 +31,29 @@ export function showMenu(anchor, items) {
       continue;
     }
     menu.append(
-      el('button', {
-        type: 'button',
-        class: 'menu-item',
-        tabIndex: -1,
-        text: item.label,
-        dataset: { value: item.value },
-        attrs: { role: 'menuitem', 'aria-disabled': item.disabled ? 'true' : null },
-        on: {
-          click: () => {
-            if (item.disabled) return;
-            chosen = item.value;
-            menu.hidePopover();
+      el(
+        'button',
+        {
+          type: 'button',
+          class: 'menu-item',
+          tabIndex: -1,
+          dataset: { value: item.value },
+          attrs: {
+            role: item.checked === undefined ? 'menuitem' : 'menuitemcheckbox',
+            'aria-checked': item.checked === undefined ? null : String(item.checked),
+            'aria-disabled': item.disabled ? 'true' : null,
+          },
+          on: {
+            click: () => {
+              if (item.disabled) return;
+              chosen = item.value;
+              menu.hidePopover();
+            },
           },
         },
-      }),
+        item.checked === undefined ? null : icon('check', { class: 'check' }),
+        el('span', { class: 'label', text: item.label }),
+      ),
     );
   }
   const buttons = /** @type {HTMLElement[]} */ ([...menu.querySelectorAll('.menu-item')]);

@@ -4,9 +4,10 @@ import { expectNoAxeViolations, openGallery, recordEvents } from './helpers.js';
 /** @param {import('@playwright/test').Page} page */
 const grid = (page) => page.getByRole('treegrid', { name: 'Tasks' });
 /** @param {import('@playwright/test').Page} page */
-const bodyRows = (page) => grid(page).locator('tbody tr');
+const bodyRows = (page) => grid(page).locator('tbody tr[data-key]');
 /** @param {import('@playwright/test').Page} page */
-const taskNames = (page) => grid(page).locator('tbody tr td:nth-child(3)').allTextContents();
+const taskNames = (page) =>
+  grid(page).locator('tbody tr[data-key] td:nth-child(3)').allTextContents();
 
 test.beforeEach(async ({ page }) => {
   await openGallery(page);

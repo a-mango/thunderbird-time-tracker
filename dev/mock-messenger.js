@@ -472,14 +472,17 @@ export function createMessenger({
  * Prepares the dev database from the page URL before the page script runs:
  * - default: seed fixtures (seed 42) only if the database doesn't exist yet, so changes survive
  *   reloads;
- * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything;
+ * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything; `?fixtures=bulk`:
+ *   re-seed with 2,000 extra tasks in Support retainer (performance fixture);
  * - `?density=` / `?accent=`: store those settings (for screenshots).
  * @param {URLSearchParams} params
  */
 export async function prepareDatabase(params) {
   const seed = params.get('seed');
   if (params.get('fixtures') === 'empty') await deleteDatabase();
-  else if (seed !== null || !(await databaseExists())) {
+  else if (params.get('fixtures') === 'bulk') {
+    await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }, { bulkTasks: 2000 }));
+  } else if (seed !== null || !(await databaseExists())) {
     await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }));
   }
   /** @type {Record<string, string>} */

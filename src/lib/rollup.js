@@ -125,6 +125,8 @@ export function visibleProjects(projects) {
  * @property {(id: string) => Totals} task totals of a task (zeros if unknown)
  * @property {(id: string) => Totals} project totals of a project and all its descendants
  * @property {() => RollupResult} snapshot same shape as `computeRollup`
+ * @property {(id: string) => number | null} last when the task was last tracked: the latest end
+ *   of its live entries (`now` while one runs), or null if it has none
  * @property {(entry: RollupEntry) => void} upsertEntry
  * @property {(id: string) => void} removeEntry
  * @property {(task: RollupTask) => void} upsertTask also moves a task between projects
@@ -154,6 +156,9 @@ export function createRollup(data, { now, weekStart }) {
   const entries = new Map();
   /** Ids of running, not deleted entries: the only ones whose totals depend on `now`. */
   const running = new Set();
+  /** Entry ids by task id, for `last`. */
+  /** @type {Map<string, Set<string>>} */
+  const byTask = new Map();
   /** Entry sums by task id, including tasks not (yet) known. */
   /** @type {Map<string, Totals>} */
   let sums = new Map();
@@ -214,6 +219,11 @@ export function createRollup(data, { now, weekStart }) {
   /** @param {RollupEntry} entry */
   function storeEntry(entry) {
     const { id, taskId, start, end, deletedAt = null } = entry;
+    const old = entries.get(id);
+    if (old && old.taskId !== taskId) byTask.get(old.taskId)?.delete(id);
+    let ids = byTask.get(taskId);
+    if (!ids) byTask.set(taskId, (ids = new Set()));
+    ids.add(id);
     entries.set(id, { id, taskId, start, end, deletedAt });
     if (end === null && deletedAt === null) running.add(id);
     else running.delete(id);
@@ -230,6 +240,16 @@ export function createRollup(data, { now, weekStart }) {
   return {
     task: (id) => (tasks.has(id) ? { ...sumOf(id) } : zero()),
     project: (id) => ({ ...(projectTotals.get(id) ?? zero()) }),
+    last(id) {
+      let latest = null;
+      for (const entryId of byTask.get(id) ?? []) {
+        const entry = /** @type {RollupEntry} */ (entries.get(entryId));
+        if (entry.deletedAt !== null && entry.deletedAt !== undefined) continue;
+        const end = entry.end ?? ranges.now;
+        if (latest === null || end > latest) latest = end;
+      }
+      return latest;
+    },
     snapshot() {
       return {
         tasks: new Map([...tasks.keys()].map((id) => [id, { ...sumOf(id) }])),
@@ -249,6 +269,7 @@ export function createRollup(data, { now, weekStart }) {
       applyEntry(old, -1);
       entries.delete(id);
       running.delete(id);
+      byTask.get(old.taskId)?.delete(id);
     },
 
     upsertTask({ id, projectId }) {

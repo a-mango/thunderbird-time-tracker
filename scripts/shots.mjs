@@ -19,6 +19,9 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-compact-dark', '/ui/tracker.html?density=compact', 'dark', TAB],
   ['tracker-relaxed-light', '/ui/tracker.html?density=relaxed', 'light', TAB],
   ['tracker-empty-light', '/ui/tracker.html?fixtures=empty', 'light', TAB],
+  // List states the default shots don't show: quick filter bar with tags, a focused selected row.
+  ['tracker-list-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-list-dark', '/ui/tracker.html', 'dark', TAB],
   ['popup-light', '/ui/popup.html', 'light', { width: 320, height: 200 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 320, height: 200 }],
   // Primitives gallery: light/dark × the three densities, full page.
@@ -59,9 +62,14 @@ try {
       const build = page.getByRole('treeitem', { name: /^Build( |$)/ });
       await page.bringToFront();
       if (await build.count()) await build.click();
+      if (name.startsWith('tracker-list')) {
+        await page.getByRole('button', { name: 'Quick Filter' }).click();
+        await page.getByRole('button', { name: 'Tags', exact: true }).click();
+        await page.getByRole('row', { name: /Performance pass/ }).click();
+      }
       await page.mouse.move(0, 0);
       await page.screenshot({ path: file });
-      if (!path.includes('fixtures=empty')) {
+      if (!path.includes('fixtures=empty') && !name.startsWith('tracker-list')) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });
         console.log(clip);
