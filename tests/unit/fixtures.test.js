@@ -51,4 +51,14 @@ describe('dev fixtures', () => {
     expect(parseBackup(JSON.stringify(backup)).projects).toHaveLength(fixtures.projects.length);
     expect(fixtures.projects.filter((p) => p.archived).map((p) => p.name)).toEqual(['Discovery']);
   });
+
+  it('add bulk tasks for the performance fixture, valid for the importer', () => {
+    const fixtures = generateFixtures({ now }, { bulkTasks: 50 });
+    const support = fixtures.projects.find((p) => p.name === 'Support retainer');
+    const bulk = fixtures.tasks.filter((t) => t.id.startsWith('bulk'));
+    expect(bulk).toHaveLength(50);
+    expect(bulk.every((t) => t.projectId === support?.id)).toBe(true);
+    const backup = { format: 'thunderbird-time-tracker', version: 1, exportedAt: now, ...fixtures };
+    expect(parseBackup(JSON.stringify(backup)).tasks).toHaveLength(fixtures.tasks.length);
+  });
 });

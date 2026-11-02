@@ -37,7 +37,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 | (none for IndexedDB) | data store | M2 |
 | `storage` | small settings and state mirror (`storage.local`) | Deferred from M2: settings live in IndexedDB `meta`; add it with the first feature that needs a `storage.local` mirror |
 | `alarms` | 1-minute tick while running (badge and label refresh) | M5 |
-| `menus`, `menus.overrideContext` | native context menus on project rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded) |
+| `menus`, `menus.overrideContext` | native context menus on project and task rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded); task rows in M4 |
 | `idle`, `notifications` | idle prompt | S2 |
 | `messagesRead` | read headers for linking | S1 |
 | `accountsRead` | folder → project mapping | S1+ |

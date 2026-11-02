@@ -1,11 +1,12 @@
-// Tracker tab (docs/DESIGN.md, Layout A): the three-pane shell. The project pane is live; the
-// task list (M4) and details (M5) panes are placeholders.
+// Tracker tab (docs/DESIGN.md, Layout A): the three-pane shell with the project pane and the task
+// list. The details pane (M5) is a placeholder.
 import './components/index.js';
-import { formatDuration } from '../lib/format.js';
 import { installContextMenu } from './context-menu.js';
 import { localize, t } from './i18n.js';
-import { createProjectCommands } from './project-commands.js';
+import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
 import { createSidebar } from './sidebar.js';
+import { createTaskCommands } from './task-commands.js';
+import { createTaskList } from './task-list.js';
 import { TrackerData } from './tracker-data.js';
 
 /**
@@ -36,35 +37,25 @@ function showError(error) {
 }
 
 /**
- * List pane header: the selected project (name, open tasks in it, total with subprojects) or view.
+ * What the task list shows for a sidebar selection: a view, a project, or nothing (Archive root).
  * @param {TrackerData} data
  * @param {Selection} selection
+ * @returns {import('../lib/task-list.js').TaskScope | null}
  */
-function renderListHeader(data, selection) {
-  const title = ref('list-title');
-  const count = ref('list-count');
-  const project = selection.tree === 'projects' ? data.project(selection.id) : undefined;
-  if (project) {
-    const open = [...data.tasks.values()].filter(
-      (task) => task.projectId === project.id && task.status === 'open',
-    ).length;
-    title.textContent = project.name;
-    count.textContent = t(
-      'listSummary',
-      String(open),
-      formatDuration(data.rollup.project(project.id).total, {
-        format: data.settings.durationFormat,
-      }),
-    );
-    return;
+function scopeOf(data, selection) {
+  if (selection.tree === 'views') {
+    return { type: 'view', id: /** @type {'today' | 'week' | 'starred'} */ (selection.id) };
   }
-  const VIEW_LABELS = /** @type {Record<string, string>} */ ({
-    today: 'viewToday',
-    week: 'viewThisWeek',
-    starred: 'viewStarred',
+  return data.project(selection.id) ? { type: 'project', id: selection.id } : null;
+}
+
+/** Polite live region (timer start and stop). @param {string} text */
+function announce(text) {
+  const live = ref('live');
+  live.textContent = '';
+  requestAnimationFrame(() => {
+    live.textContent = text;
   });
-  title.textContent = t(VIEW_LABELS[selection.id] ?? 'projectArchive');
-  count.textContent = '';
 }
 
 async function main() {
@@ -88,19 +79,73 @@ async function main() {
     reveal: (id) => sidebar.reveal(id),
     onError: showError,
   });
+  const taskCommands = createTaskCommands({
+    data,
+    onError: showError,
+    announce,
+    offerUndo: (message, undo) =>
+      notification.show({
+        type: 'info',
+        message,
+        actions: [
+          {
+            label: t('undo'),
+            onClick: () => {
+              notification.dismiss();
+              undo();
+            },
+          },
+        ],
+      }),
+  });
+  const taskList = createTaskList({ data, commands: taskCommands });
+  const newTaskButton = /** @type {HTMLButtonElement} */ (ref('new-task'));
+
+  /** The project New Task adds to: the selected project, if it is active. */
+  const newTaskProject = () => {
+    const selection = sidebar.selection;
+    if (selection.tree !== 'projects' || !data.project(selection.id)) return null;
+    return commandsFor(projectPlace(data.projects, selection.id)).includes('new-sub')
+      ? selection.id
+      : null;
+  };
+  const syncNewTask = () => {
+    newTaskButton.disabled = newTaskProject() === null;
+  };
+  const newTask = async () => {
+    const projectId = newTaskProject();
+    if (!projectId) return;
+    const task = await taskCommands.create(projectId);
+    if (task) taskList.startRename(task.id);
+  };
+  newTaskButton.addEventListener('click', newTask);
+
   sidebar = createSidebar({
     data,
     run: commands.run,
     drop: commands.drop,
-    onSelect: (selection) => renderListHeader(data, selection),
+    onSelect: (selection) => {
+      taskList.setScope(scopeOf(data, selection));
+      if (sidebar) syncNewTask();
+    },
   });
-  installContextMenu({ tree: sidebar.projectsTree, data, run: commands.run });
+  syncNewTask();
+  installContextMenu({
+    tree: sidebar.projectsTree,
+    table: taskList.table,
+    taskAt: (element) => taskList.taskAt(element),
+    data,
+    run: commands.run,
+    runTask: (command, id) => taskCommands.run(command, id, taskList),
+    focusTask: (id) => taskList.focusTask(id),
+  });
 
   data.addEventListener('change', (event) => {
     const { types } = /** @type {CustomEvent} */ (event).detail;
     if (types.has('settings')) applySettings(data.settings);
     sidebar.render();
-    renderListHeader(data, sidebar.selection);
+    taskList.render();
+    syncNewTask();
   });
   data.addEventListener('closed', () => {
     notification.setAttribute('persistent', '');
@@ -112,12 +157,14 @@ async function main() {
   });
 
   document.addEventListener('keydown', (event) => {
-    // Ctrl+Shift+N: new project (docs/SPEC.md, Keyboard).
-    if (event.ctrlKey && event.shiftKey && !event.altKey && event.code === 'KeyN') {
-      if (document.querySelector('dialog[open]')) return;
-      event.preventDefault();
-      commands.run('new', null);
-    }
+    if (document.querySelector('dialog[open]') || event.altKey || event.metaKey) return;
+    if (!event.ctrlKey) return;
+    // docs/SPEC.md, Keyboard: Ctrl+Shift+N new project, Ctrl+N new task, Ctrl+Shift+K filter.
+    if (event.shiftKey && event.code === 'KeyN') commands.run('new', null);
+    else if (!event.shiftKey && event.code === 'KeyN') newTask();
+    else if (event.shiftKey && event.code === 'KeyK') taskList.focusFilter();
+    else return;
+    event.preventDefault();
   });
 
   /** @type {ReturnType<typeof setInterval> | undefined} */
