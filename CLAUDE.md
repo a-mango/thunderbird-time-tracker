@@ -11,6 +11,8 @@ Read only the sections the current task needs.
 - `npm run shots`: screenshots of the dev harness into `artifacts/shots/` (compare with `design/reference/`)
 - `npm run tb`: Thunderbird with the isolated dev profile `.tb-profile/`, extension loaded
 - `npm run build`: XPI into `dist/` (copy-only zip of `src/`)
+- `npm run tb:rc`: fresh profile `.tb-rc/<version>/` with the built XPI installed (`TB_BIN=` for another Thunderbird, `-- --keep` to reuse, `-- --headless`)
+- `npm run icon:png`: render `src/icons/time-tracker.svg` to `design/icon/*.png` (ATN listing)
 - `npm run tb:spike`: Thunderbird via Marionette on a stage copy (`.tb-stage/`): mail tab vs. gallery metrics, context menus → `artifacts/tb/`
 - Primitives gallery: `/dev/gallery.html` (`?density=compact|relaxed`, `?accent=…`); components in `src/ui/components/`, icons via `icon()` in `src/ui/render.js`
 <!-- M0: keep this list in sync with package.json -->
@@ -39,7 +41,8 @@ Read only the sections the current task needs.
 - `.ref/comm-central` is really `thunderbird/thunderbird-desktop` at tag `THUNDERBIRD_157_0_RELEASE` (sparse); the name is kept for stable paths.
 - `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
 - Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
-- Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?density=`/`?accent=` write settings.
+- Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?fixtures=large` = 50k entries; `?density=`/`?accent=` write settings; `?locale=fr`; `?fail=newer|quota` fakes storage errors.
+- `page.clock.setFixedTime()` also freezes `performance.now()`: perf tests run on the real clock.
 - `scripts/serve.mjs` serves `/src/`; `<html data-dev-ready>` is set after seeding, `data-ready` once the page rendered.
 - Playwright `page.clock.pauseAt()` freezes timers too: `clock.resume()` before `expectNoAxeViolations` (axe waits on timers).
 - Colour tokens in tests: assert the inline style (`--icon-color: var(--color-accent-teal)`); computed style resolves `var()`.

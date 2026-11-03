@@ -10,3 +10,12 @@
   `context-stroke`) to `currentColor`, removes inner comments, and adds an `id` for `<use>`.
   Each icon records its source path and these changes in a comment after the MPL header.
   `ICONS.txt` lists the imported files.
+
+## Not third-party
+
+- **Extension icon** (`src/icons/*.svg`, `design/icon/*.png`): original artwork for this add-on.
+- **Runtime code**: none. Everything in `src/` is this project's own code; there are no bundled
+  or vendored libraries (a future one would be listed in `VENDOR.md`).
+- **Development tools** (`devDependencies` in `package.json`: ESLint, Prettier, TypeScript,
+  Vitest, Playwright, axe-core, web-ext, fake-indexeddb, jsdom) are used to check and build the
+  add-on and are not included in the XPI.

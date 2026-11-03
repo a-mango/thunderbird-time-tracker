@@ -1,0 +1,60 @@
+name: release
+# Pushing a tag vX.Y.Z checks, tests and builds the add-on, then publishes a GitHub Release with
+# the XPI and the CHANGELOG section of that version.
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write # create the release
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Tag matches the manifest version
+        run: |
+          version="$(node -p "require('./src/manifest.json').version")"
+          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} but manifest.json says ${version}"
+            exit 1
+          fi
+          echo "VERSION=${version}" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps firefox
+      - run: npm run test:ui
+      - run: npm run build
+      - name: Release notes from CHANGELOG.md
+        run: |
+          awk -v v="$VERSION" '
+            $0 ~ "^## " v "( |$)" { found = 1; next }
+            found && /^## / { exit }
+            found { print }
+          ' CHANGELOG.md > notes.md
+          if [ ! -s notes.md ]; then
+            echo "::error::CHANGELOG.md has no section for ${VERSION}"
+            exit 1
+          fi
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" "dist/time-tracker-${VERSION}.xpi" \
+            --title "Time Tracker ${VERSION}" --notes-file notes.md --verify-tag
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: release-reports
+          path: |
+            artifacts/
+            playwright-report/
+          if-no-files-found: ignore
