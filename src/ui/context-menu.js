@@ -3,8 +3,15 @@
 // Thunderbird's menu, and onShown makes the items for that row visible. onShown/onClicked fire in
 // every extension page, so each page acts only when the menu's target element is in its own
 // document.
-import { COLOR_ITEM_PREFIX, ENTRY_MENU, MENU, TASK_MENU } from '../background/menus.js';
+import {
+  COLOR_ITEM_PREFIX,
+  ENTRY_MENU,
+  MENU,
+  TASK_MENU,
+  colorIconPath,
+} from '../background/menus.js';
 import { PALETTE } from '../lib/palette.js';
+import { t } from './i18n.js';
 import { commandsFor, projectPlace } from './project-commands.js';
 
 /**
@@ -142,9 +149,14 @@ export function installContextMenu({
       ...Object.values(ENTRY_MENU).map((item) =>
         menus.update(item, { visible: target?.kind === 'entry' }),
       ),
-      ...PALETTE.map((p) =>
-        menus.update(`${COLOR_ITEM_PREFIX}${p.color}`, { checked: p.color === color }),
-      ),
+      ...PALETTE.map((p) => {
+        const current = p.color === color;
+        return menus.update(`${COLOR_ITEM_PREFIX}${p.color}`, {
+          // The title says it too: screen readers don't see the icon.
+          title: current ? t('menuColorCurrent', t(p.label)) : t(p.label),
+          icons: { 16: messenger.runtime.getURL(colorIconPath(p.color, { current })) },
+        });
+      }),
     ]);
   };
 

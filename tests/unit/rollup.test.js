@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import { computeAggregates } from '../../src/db/aggregates.js';
 import { computeRollup, createRollup, visibleProjects } from '../../src/lib/rollup.js';
+import { startOfDay } from '../../src/lib/time.js';
 
 const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
@@ -466,5 +468,90 @@ describe('createRollup matches computeRollup after random updates', () => {
     }
     // The run went through the fall-back night and past both week boundaries.
     expect(now).toBeGreaterThan(at(2026, 10, 26));
+  });
+});
+
+// M7: pages keep only a recent window of entries and take older time from `meta.aggregates`.
+describe('createRollup with aggregates and a recent window', () => {
+  const TASK_IDS = ['checkout', 'deploy', 'sync', 'books', 't5'];
+  const ENTRY_IDS = Array.from({ length: 60 }, (_, i) => `e${i}`);
+
+  it.each([
+    [11, 1],
+    [12, 0],
+    [13, 1],
+  ])('matches computeRollup over all entries (seed %i, weekStart %i)', (seed, weekStart) => {
+    const random = mulberry32(seed);
+    const pick = (list) => list[Math.floor(random() * list.length)];
+    /** @type {0|1} */
+    const ws = /** @type {0|1} */ (weekStart);
+    let now = at(2026, 10, 20, 9);
+    const since = startOfDay(now, -7);
+    const all = new Map();
+    const inWindow = (e) => e.end === null || e.end > since;
+    const aggregates = () => computeAggregates(all.values()).tasks;
+    for (let i = 0; i < 40; i += 1) {
+      const start = now - Math.floor(random() * 40 * 24 * HOUR) - HOUR;
+      const e = entry(`e${i}`, pick(TASK_IDS), start, start + Math.floor(random() * 5 * HOUR) + 1);
+      all.set(e.id, e);
+    }
+    const window = new Set([...all.values()].filter(inWindow).map((e) => e.id));
+    const rollup = createRollup(
+      {
+        projects: PROJECTS,
+        tasks: TASKS,
+        entries: [...all.values()].filter(inWindow),
+        aggregates: aggregates(),
+      },
+      { now, weekStart: ws },
+    );
+    const check = () => {
+      const expected = computeRollup(
+        { projects: PROJECTS, tasks: TASKS, entries: [...all.values()] },
+        { now, weekStart: ws },
+      );
+      expect(rollup.snapshot()).toEqual(expected);
+      const full = createRollup(
+        { projects: PROJECTS, tasks: TASKS, entries: [...all.values()] },
+        { now, weekStart: ws },
+      );
+      for (const id of TASK_IDS) expect(rollup.last(id)).toBe(full.last(id));
+    };
+    check();
+    for (let step = 0; step < 150; step += 1) {
+      const id = pick(ENTRY_IDS);
+      if (random() < 0.25) {
+        all.delete(id);
+      } else {
+        const start = now - Math.floor(random() * 30 * 24 * HOUR) - HOUR;
+        const end = random() < 0.1 ? null : start + Math.floor(random() * 5 * HOUR) + 1;
+        // One running entry at most, like the database.
+        if (end === null) for (const e of all.values()) if (e.end === null) all.delete(e.id);
+        all.set(
+          id,
+          entry(id, pick(TASK_IDS), start, end, { deletedAt: random() < 0.1 ? now : null }),
+        );
+      }
+      // What TrackerData does with a change: the window first, then the new aggregates.
+      const next = all.get(id);
+      if (next && next.deletedAt === null && inWindow(next)) {
+        rollup.upsertEntry(next);
+        window.add(id);
+      } else if (window.delete(id)) {
+        rollup.removeEntry(id);
+      }
+      for (const other of [...window]) {
+        if (!all.has(other)) {
+          window.delete(other);
+          rollup.removeEntry(other);
+        }
+      }
+      rollup.setAggregates(aggregates());
+      if (random() < 0.1) {
+        now += Math.floor(random() * 3 * HOUR);
+        rollup.setNow(now);
+      }
+      check();
+    }
   });
 });

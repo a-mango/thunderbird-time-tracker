@@ -41,12 +41,14 @@ const siblingOrder = (a, b) =>
  * @returns {ProjectNode[]}
  */
 export function projectTree(projects) {
+  const byId = new Map(projects.map((project) => [project.id, project]));
   /** @type {Map<string | null, Project[]>} */
   const children = new Map();
   for (const project of projects) {
-    const siblings = children.get(project.parentId) ?? [];
+    const parentId = effectiveParentId(project, byId);
+    const siblings = children.get(parentId) ?? [];
     siblings.push(project);
-    children.set(project.parentId, siblings);
+    children.set(parentId, siblings);
   }
   /** @type {ProjectNode[]} */
   const nodes = [];
@@ -59,6 +61,17 @@ export function projectTree(projects) {
   };
   walk(null, 0);
   return nodes;
+}
+
+/**
+ * The parent a project behaves as having: its `parentId`, or `null` when that project doesn't
+ * exist (an orphan from corrupt or hand-edited data counts as top level everywhere, #18).
+ * @param {Project} project
+ * @param {Map<string, Project>} byId
+ * @returns {string | null}
+ */
+export function effectiveParentId(project, byId) {
+  return project.parentId !== null && byId.has(project.parentId) ? project.parentId : null;
 }
 
 /**
@@ -99,13 +112,15 @@ async function requireProject(projects, id) {
 async function nextOrder(projects, parentId) {
   /** @type {Project[]} */
   const all = await req(projects.getAll());
+  const byId = new Map(all.map((project) => [project.id, project]));
   return all
-    .filter((project) => project.parentId === parentId)
+    .filter((project) => effectiveParentId(project, byId) === parentId)
     .reduce((max, project) => Math.max(max, project.order + 1), 0);
 }
 
 /**
- * Refuses `parentId` when it is `id` or one of its descendants. Every ancestor must exist.
+ * Refuses `parentId` when it is `id` or one of its descendants. `parentId` must exist; above it,
+ * a missing ancestor ends the walk (that project is an orphan and counts as top level).
  * @param {IDBObjectStore} projects
  * @param {string} id
  * @param {string | null} parentId
@@ -115,12 +130,15 @@ async function nextOrder(projects, parentId) {
 async function checkNoCycle(projects, id, parentId) {
   // `seen` stops the walk on a stored cycle (corrupt data) instead of looping forever.
   const seen = new Set();
+  if (parentId !== null) await requireProject(projects, parentId);
   for (let cursor = parentId; cursor !== null;) {
     if (cursor === id || seen.has(cursor)) {
       throw new InvariantError('cycle', 'a project cannot move into its own subtree', { id });
     }
     seen.add(cursor);
-    cursor = (await requireProject(projects, cursor)).parentId;
+    /** @type {Project | undefined} */
+    const ancestor = await req(projects.get(cursor));
+    cursor = ancestor ? ancestor.parentId : null;
   }
 }
 
@@ -170,7 +188,8 @@ export async function getProject(db, id) {
 
 /**
  * Every project in tree order (depth-first, siblings by `order`), archived ones included.
- * Projects whose parent is missing come last.
+ * Orphans (parent missing) are roots; projects in a stored cycle, unreachable from a root, come
+ * last.
  * @param {IDBDatabase} db
  * @returns {Promise<Project[]>}
  */
@@ -235,8 +254,10 @@ export async function moveProject(db, id, target, { now = Date.now() } = {}) {
     await checkNoCycle(projects, id, parentId);
     /** @type {Project[]} */
     const all = await req(projects.getAll());
+    const byId = new Map(all.map((project) => [project.id, project]));
+    // Orphans are top-level siblings (#18); renumbering stores their parent as `null`.
     const siblings = all
-      .filter((project) => project.parentId === parentId && project.id !== id)
+      .filter((project) => effectiveParentId(project, byId) === parentId && project.id !== id)
       .sort(siblingOrder);
     const index =
       beforeId === null ? siblings.length : siblings.findIndex((p) => p.id === beforeId);
@@ -248,8 +269,8 @@ export async function moveProject(db, id, target, { now = Date.now() } = {}) {
     const updated = [];
     for (const [order, project] of siblings.entries()) {
       const moved = project.id === id;
-      if (!moved && project.order === order) continue;
-      const next = { ...project, order, updatedAt: moved ? now : project.updatedAt };
+      if (!moved && project.order === order && project.parentId === parentId) continue;
+      const next = { ...project, parentId, order, updatedAt: moved ? now : project.updatedAt };
       await req(projects.put(next));
       updated.push(next);
     }

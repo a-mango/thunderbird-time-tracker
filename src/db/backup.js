@@ -2,6 +2,7 @@
 // one transaction over every store, so a page never sees half a restore. Afterwards open pages
 // get a `reset` change and reload everything.
 import { BACKUP_FORMAT, BACKUP_VERSION, validateBackup } from '../lib/importer.js';
+import { storeAggregates } from './aggregates.js';
 import { emit, req, tx } from './idb.js';
 import { META, STORES } from './schema.js';
 import { knownSettings } from './settings.js';
@@ -73,6 +74,7 @@ export async function restoreBackup(db, backup, { mode, now = Date.now() }) {
       if (backup.settings) s.meta.put(backup.settings, META.settings);
       else s.meta.delete(META.settings);
       await req(s.meta.put(runningId(backup.entries), META.running));
+      await storeAggregates(s, backup.entries);
       return {
         projects: backup.projects.length,
         tasks: backup.tasks.length,
@@ -102,6 +104,7 @@ export async function restoreBackup(db, backup, { mode, now = Date.now() }) {
     for (const task of backup.tasks) s.tasks.put(task);
     for (const entry of backup.entries) s.entries.put(entry);
     await req(s.meta.put(runningId(merged.entries), META.running));
+    await storeAggregates(s, merged.entries);
     return {
       projects: merged.projects.length,
       tasks: merged.tasks.length,
@@ -126,6 +129,7 @@ export async function wipeAll(db) {
     s.links.clear();
     s.meta.delete(META.settings);
     await req(s.meta.put(null, META.running));
+    await storeAggregates(s, []);
   });
   emit(db, { type: 'reset', ids: ['*'] });
 }

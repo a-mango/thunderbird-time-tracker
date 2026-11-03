@@ -41,11 +41,17 @@ const MODULE_SCRIPT = /<script type="module" src="([^"]+)"><\/script>/g;
  * by an inline module that awaits the mock's `ready` (globals installed, database seeded) and then
  * imports them: a top-level await in a separate module script would not hold back the next one.
  * @param {string} html
+ * @param {string} [locale] `_locales` folder (`?locale=fr`); unknown ones fall back to `en`
  */
-export async function injectMock(html) {
-  const messages = await readFile(join(srcDir, '_locales', 'en', 'messages.json'), 'utf8');
+export async function injectMock(html, locale = 'en') {
+  const folder = /^[a-z]{2}(_[A-Z]{2})?$/.test(locale) ? locale : 'en';
+  const messages = await readFile(join(srcDir, '_locales', folder, 'messages.json'), 'utf8').catch(
+    () => readFile(join(srcDir, '_locales', 'en', 'messages.json'), 'utf8'),
+  );
   const json = JSON.stringify(JSON.parse(messages)).replaceAll('<', '\\u003c');
-  const tag = `<script type="application/json" id="tt-dev-messages">${json}</script>\n    `;
+  const tag =
+    `<script type="application/json" id="tt-dev-messages" data-locale="${folder}">` +
+    `${json}</script>\n    `;
   const anchor = /<meta charset=[^>]*>\s*/i.test(html) ? /<meta charset=[^>]*>\s*/i : /<head>\s*/i;
   const withMessages = html.replace(anchor, (match) => `${match}${tag}`);
   return withMessages.replace(
@@ -61,7 +67,7 @@ export async function injectMock(html) {
 
 export function createDevServer() {
   return createServer(async (req, res) => {
-    const { pathname } = new URL(req.url ?? '/', 'http://localhost');
+    const { pathname, searchParams } = new URL(req.url ?? '/', 'http://localhost');
     if (pathname === '/') {
       res.writeHead(302, { location: '/ui/tracker.html' });
       res.end();
@@ -73,7 +79,10 @@ export function createDevServer() {
       const type =
         TYPES[/** @type {keyof typeof TYPES} */ (extname(path))] ?? 'application/octet-stream';
       let body = await readFile(path);
-      if (extname(path) === '.html') body = Buffer.from(await injectMock(body.toString('utf8')));
+      if (extname(path) === '.html')
+        body = Buffer.from(
+          await injectMock(body.toString('utf8'), searchParams.get('locale') ?? 'en'),
+        );
       res.writeHead(200, { 'content-type': type, 'cache-control': 'no-store' });
       res.end(body);
     } catch {

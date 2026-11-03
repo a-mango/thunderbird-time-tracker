@@ -18,6 +18,11 @@ body {
   block-size: 100%;
 }
 
+/* The database couldn't be opened: only the list pane (title + error bar) is shown. */
+.tracker:has(> #sidebar[hidden]) > #list {
+  grid-column: 1 / -1;
+}
+
 #sidebar {
   inline-size: 18em;
   min-inline-size: 100px;

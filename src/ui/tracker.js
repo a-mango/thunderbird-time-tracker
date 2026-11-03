@@ -10,10 +10,12 @@ import { showMenu } from './menu.js';
 import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
 import { settingsDialog } from './settings-dialog.js';
+import { storageMessage } from './storage-errors.js';
 import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
 import { TrackerData } from './tracker-data.js';
+import { timerTransition } from '../lib/timer.js';
 
 /**
  * @typedef {import('./components/tt-notification-bar.js').TtNotificationBar} TtNotificationBar
@@ -29,10 +31,24 @@ const SECOND_MS = 1000;
 const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
 const notification = /** @type {TtNotificationBar} */ (ref('notification'));
 
+/**
+ * A storage failure as an error bar with its recovery hint (and Reload where that helps).
+ * @param {unknown} error
+ * @param {'open' | 'write'} phase
+ */
+function showStorageError(error, phase) {
+  const { message, reload } = storageMessage(error, phase);
+  notification.show({
+    type: 'error',
+    message,
+    actions: reload ? [{ label: t('notificationReload'), onClick: () => location.reload() }] : [],
+  });
+}
+
 /** @param {unknown} error */
 function showError(error) {
   console.error('time tracker: write failed', error);
-  notification.show({ type: 'error', message: t('errorSave') });
+  showStorageError(error, 'write');
 }
 
 /**
@@ -58,6 +74,8 @@ function announce(text) {
 }
 
 async function main() {
+  // Cold-open timing (tests/ui/perf-large.spec.js): tt-start → tt-ready.
+  performance.mark('tt-start');
   localize();
   /** @type {TrackerData} */
   let data;
@@ -65,8 +83,21 @@ async function main() {
     data = await TrackerData.open();
   } catch (error) {
     console.error('time tracker: opening the database failed', error);
-    notification.show({ type: 'error', message: t('trackerLoadError') });
+    showStorageError(error, 'open');
     notification.setAttribute('persistent', '');
+    // Only the error bar and the tab's name: the empty panes would offer nothing that works.
+    ref('list-title').textContent = t('extensionName');
+    const list = /** @type {HTMLElement} */ (document.getElementById('list'));
+    for (const pane of document.querySelectorAll('.tracker > *')) {
+      if (pane !== list) /** @type {HTMLElement} */ (pane).hidden = true;
+    }
+    const title = ref('list-title');
+    for (const part of [...list.children, ...(title.parentElement?.children ?? [])]) {
+      if (part !== notification && part !== title && !part.contains(title)) {
+        /** @type {HTMLElement} */ (part).hidden = true;
+      }
+    }
+    document.documentElement.dataset.ready = '';
     return;
   }
   applySettings(data.settings);
@@ -93,8 +124,8 @@ async function main() {
         },
       ],
     });
-  const taskCommands = createTaskCommands({ data, onError: showError, announce, offerUndo });
-  const entryCommands = createEntryCommands({ data, onError: showError, announce, offerUndo });
+  const taskCommands = createTaskCommands({ data, onError: showError, offerUndo });
+  const entryCommands = createEntryCommands({ data, onError: showError, offerUndo });
   const taskList = createTaskList({ data, commands: taskCommands });
   const addEntryButton = /** @type {HTMLButtonElement} */ (ref('add-entry'));
   const detail = createDetail({
@@ -132,6 +163,7 @@ async function main() {
   };
   addEntryButton.addEventListener('click', addEntry);
   const newTaskButton = /** @type {HTMLButtonElement} */ (ref('new-task'));
+  newTaskButton.title = t('sidebarNewTask');
 
   /** The project New Task adds to: the selected project, if it is active. */
   const newTaskProject = () => {
@@ -185,8 +217,20 @@ async function main() {
   });
 
   let showDone = data.settings.showDone;
+  // Timer start and stop are announced whatever started them: this tab, the popup, the shortcut.
+  let running = data.running;
+  /** The running task's name, kept for "stopped" when the task was deleted with its timer. */
+  let runningName = running ? (data.tasks.get(running.taskId)?.name ?? '') : '';
   data.addEventListener('change', (event) => {
     const { types } = /** @type {CustomEvent} */ (event).detail;
+    const transition = timerTransition(running, data.running);
+    if (transition?.type === 'started') {
+      announce(t('timerStarted', data.tasks.get(transition.taskId)?.name ?? ''));
+    } else if (transition) {
+      announce(t('timerStopped', data.tasks.get(transition.taskId)?.name ?? runningName));
+    }
+    running = data.running;
+    runningName = running ? (data.tasks.get(running.taskId)?.name ?? '') : '';
     if (types.has('settings')) {
       applySettings(data.settings);
       if (data.settings.showDone !== showDone) {
@@ -236,6 +280,7 @@ async function main() {
   };
   document.addEventListener('visibilitychange', syncTicker);
   syncTicker();
+  performance.mark('tt-ready');
   document.documentElement.dataset.ready = '';
 }
 

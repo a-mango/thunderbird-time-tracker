@@ -273,6 +273,28 @@
   &.over > span {
     background-color: var(--tt-over-estimate);
   }
+  /* Forced colours drop backgrounds: outline the track, fill in the text colour, and mark an
+   * overrun with the system Mark colour (the cell's text still says "Over estimate"). */
+  @media (forced-colors: active) {
+    forced-color-adjust: none;
+    border: 1px solid CanvasText;
+    background-color: Canvas;
+
+    & > span {
+      background-color: CanvasText;
+    }
+    &.over > span {
+      background-color: Mark;
+    }
+    tr[aria-selected='true'] & {
+      border-color: SelectedItemText;
+      background-color: SelectedItem;
+
+      & > span {
+        background-color: SelectedItemText;
+      }
+    }
+  }
 }
 
 /* ---- Link button (widgets.css .link-button) ---- */

@@ -4,6 +4,7 @@ import {
   archiveProject,
   createProject,
   deleteProject,
+  effectiveParentId,
   moveProject,
   unarchiveProject,
   updateProject,
@@ -52,6 +53,9 @@ export function commandsFor(place) {
  * }} options `reveal` selects and focuses a project row once the sidebar shows it
  */
 export function createProjectCommands({ data, reveal, onError }) {
+  /** The parent the tree shows: `null` for an orphan whose parent is missing. @param {Project} project */
+  const parentOf = (project) =>
+    effectiveParentId(project, new Map(data.projects.map((p) => [p.id, p])));
   /** @param {string} id */
   const projectOf = (id) => data.project(id);
 
@@ -83,8 +87,9 @@ export function createProjectCommands({ data, reveal, onError }) {
           });
           if (!input) return;
           const { parentId, ...patch } = input;
-          // The move can fail (another tab deleted the parent): then nothing is saved.
-          if (parentId !== project.parentId) {
+          // The move can fail (another tab deleted the parent): then nothing is saved. An
+          // orphan shows as top level, so keeping "top level" is no move (#18).
+          if (parentId !== parentOf(project)) {
             await moveProject(data.db, project.id, { parentId });
           }
           await updateProject(data.db, project.id, patch);
@@ -96,7 +101,7 @@ export function createProjectCommands({ data, reveal, onError }) {
           return;
         case 'move': {
           const target = await moveDialog(data.projects, project);
-          if (!target || target.parentId === project.parentId) return;
+          if (!target || target.parentId === parentOf(project)) return;
           await moveProject(data.db, project.id, target);
           await shown(project.id);
           return;

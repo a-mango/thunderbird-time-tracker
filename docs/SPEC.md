@@ -82,7 +82,7 @@ tests/ui           Playwright (Firefox engine) against the dev harness
 /** @typedef {{id:string, taskId:string, headerMessageId:string, subject:string,
  *             date:number}} MessageLink  (S1) */
 ```
-- Stores: `projects` (index `parentId`), `tasks` (index `projectId`), `entries` (indexes `taskId`, `start`, `end`, `deletedAt`), `links` (S1), `meta` (`schemaVersion`, `settings`, `running`).
+- Stores: `projects` (index `parentId`), `tasks` (index `projectId`), `entries` (indexes `taskId`, `start`, `end`, `deletedAt`), `links` (S1), `meta` (`schemaVersion`, `settings`, `running`, `aggregates`).
 - IndexedDB can't index `null`, so the running entry never appears in the `end` index. `meta.running` points at it and is read and written in the same transaction as every write that starts, stops or removes the running entry.
 - Deleting an entry is a soft delete (`deletedAt` set; a running entry is stopped first). It stays restorable (undo) until the next Thunderbird start: `runtime.onStartup` purges soft-deleted entries.
 - Times are epoch ms (UTC). Day and week boundaries are computed in local time at read time. An entry that crosses midnight counts toward each day it overlaps.
@@ -92,6 +92,7 @@ tests/ui           Playwright (Firefox engine) against the dev harness
   - A done task can't be started; starting it asks to reopen.
   - Deleting a project that has tasks or subprojects, or a task that has entries, requires an explicit cascade.
   - A project can't be moved under itself or one of its descendants.
+- `meta.aggregates` caches per-task `{count, ms, last}` (M7). Every write that touches entries updates the touched tasks in the same transaction; readers rebuild it when its counts don't add up to the number of stored entries. Pages read it plus the entries of the last 7 days instead of every entry.
 - Migrations live in `db/migrations.js`, are versioned, and each has a test.
 
 ## Settings

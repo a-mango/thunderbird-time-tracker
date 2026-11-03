@@ -31,11 +31,10 @@ const HOUR = 3_600_000;
  * @param {{
  *   data: TrackerData,
  *   onError: (error: unknown) => void,
- *   announce: (text: string) => void,
  *   offerUndo: (message: string, undo: () => Promise<void>) => void,
  * }} options
  */
-export function createEntryCommands({ data, onError, announce, offerUndo }) {
+export function createEntryCommands({ data, onError, offerUndo }) {
   const locale = messenger.i18n.getUILanguage();
   const now = () => data.now();
   const context = () => ({ projects: data.projects, tasks: data.tasks });
@@ -107,10 +106,7 @@ export function createEntryCommands({ data, onError, announce, offerUndo }) {
       }
       // The running entry: edit it, then stop it at the chosen end (never in the future).
       await updateEntry(data.db, id, patch, { now: now() });
-      if (end !== null) {
-        await stopAt(data.db, end, { now: now(), id });
-        announce(t('timerStopped', data.tasks.get(draft.taskId)?.name ?? ''));
-      }
+      if (end !== null) await stopAt(data.db, end, { now: now(), id });
     });
   }
 
@@ -152,8 +148,7 @@ export function createEntryCommands({ data, onError, announce, offerUndo }) {
   /** Timer box: Stop. */
   function stopTimer() {
     return guarded(async () => {
-      const stopped = await stop(data.db, { now: now() });
-      if (stopped) announce(t('timerStopped', data.tasks.get(stopped.entry.taskId)?.name ?? ''));
+      await stop(data.db, { now: now() });
     });
   }
 
@@ -175,7 +170,6 @@ export function createEntryCommands({ data, onError, announce, offerUndo }) {
         await reopenTask(data.db, taskId);
         await resume(data.db, taskId, { now: now() });
       }
-      announce(t('timerStarted', task.name));
     });
   }
 

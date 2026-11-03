@@ -34,4 +34,6 @@ export const META = Object.freeze({
   settings: 'settings',
   /** Id of the running entry or `null`. Written in the same transaction as the entry. */
   running: 'running',
+  /** Per-task entry aggregates (db/aggregates.js). A cache: rebuilt when it doesn't match. */
+  aggregates: 'aggregates',
 });

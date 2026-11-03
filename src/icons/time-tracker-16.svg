@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+  <!-- Time Tracker extension icon, 16 px: fewer details than time-tracker.svg. -->
+  <rect x="6" y="0.5" width="4" height="2.5" rx="1" fill="#0b4fa3"/>
+  <circle cx="8" cy="9.5" r="6.5" fill="#1373d9"/>
+  <circle cx="8" cy="9.5" r="4.75" fill="#ffffff"/>
+  <path d="M8 9.5 11 7.5" stroke="#0b4fa3" stroke-width="2" stroke-linecap="round"/>
+  <circle cx="8" cy="9.5" r="1.25" fill="#0b4fa3"/>
+</svg>

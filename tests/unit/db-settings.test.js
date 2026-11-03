@@ -47,4 +47,29 @@ describe('db settings', () => {
     );
     expect(await getSettings(db)).toEqual({ ...DEFAULT_SETTINGS, weekStart: 0 });
   });
+
+  // M7: a corrupt `meta.settings` (hand-edited, damaged) falls back to the defaults, and the next
+  // change replaces it with a valid object.
+  it.each([
+    ['a string', 'compact'],
+    ['a number', 42],
+    ['an array', ['compact', 0]],
+    ['wrong types', { density: 3, weekStart: '1', accent: null, showDone: 'yes' }],
+    ['a prototype key', JSON.parse('{"__proto__": {"density": "compact"}, "weekStart": 0}')],
+  ])('falls back to the defaults for %s', async (_name, stored) => {
+    const { db } = await freshDB();
+    await tx(db, ['meta'], 'readwrite', ({ meta }) => req(meta.put(stored, 'settings')));
+    const settings = await getSettings(db);
+    expect(Object.keys(settings).sort()).toEqual(Object.keys(DEFAULT_SETTINGS).sort());
+    for (const [key, value] of Object.entries(settings)) {
+      if (!(key === 'weekStart' && value === 0)) {
+        expect(value).toEqual(DEFAULT_SETTINGS[/** @type {keyof typeof DEFAULT_SETTINGS} */ (key)]);
+      }
+    }
+    expect(Object.getPrototypeOf(settings)).toBe(Object.prototype);
+    await updateSettings(db, { density: 'relaxed' });
+    const repaired = await tx(db, ['meta'], 'readonly', ({ meta }) => req(meta.get('settings')));
+    expect(repaired).toMatchObject({ density: 'relaxed' });
+    expect(Array.isArray(repaired)).toBe(false);
+  });
 });

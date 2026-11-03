@@ -1,6 +1,7 @@
 // Tasks repository (docs/SPEC.md, Data model). Status changes go through markTaskDone/reopenTask
 // and project changes through moveTask, so updateTask only edits plain fields.
 import { CascadeRequiredError, InvariantError, NotFoundError } from '../lib/errors.js';
+import { touchTasks } from './aggregates.js';
 import { readRunning, removeEntriesOfTasks, stopRunningIn } from './entries.js';
 import { emit, req, tx } from './idb.js';
 import { INDEXES, META, STORES } from './schema.js';
@@ -394,6 +395,7 @@ export async function restoreTask(db, { task, entries, deletedAt }) {
         }
         await req(stores.entries.put(entry));
       }
+      await touchTasks(stores, [task.id]);
       return task;
     },
   );

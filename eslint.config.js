@@ -12,6 +12,7 @@ export default [
       '.ref/',
       'node_modules/',
       'dist/',
+      '.tb-rc/',
       'artifacts/',
       'coverage/',
       'playwright-report/',

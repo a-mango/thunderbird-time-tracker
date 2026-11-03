@@ -1,18 +1,17 @@
 // The tracker page's view of the database: projects, tasks, settings and an incremental rollup,
 // kept current from this page's own writes and from other pages (BroadcastChannel 'tt').
+import { loadRollupState, readEntryChanges } from '../db/aggregates.js';
 import {
   CHANNEL_NAME,
-  getEntry,
-  getRunning,
   getSettings,
   getTask,
-  listEntries,
   listProjects,
   listTasks,
   notifyChanged,
   openDB,
 } from '../db/index.js';
 import { createRollup } from '../lib/rollup.js';
+import { startOfDay } from '../lib/time.js';
 
 /**
  * @typedef {import('../lib/types.js').Project} Project
@@ -22,6 +21,13 @@ import { createRollup } from '../lib/rollup.js';
  * @typedef {import('../db/changes.js').Change} Change
  * @typedef {import('../db/changes.js').ChangeType} ChangeType
  */
+
+/**
+ * Lower bound of the entry window: entries that ended before it can't count toward today or this
+ * week for any week start (7 days back from today's midnight), so `meta.aggregates` covers them.
+ * @param {number} now
+ */
+export const windowStart = (now) => startOfDay(now, -7);
 
 /**
  * Fires `change` (detail: {types: Set<ChangeType | 'time'>}) after the state changed, and
@@ -49,6 +55,11 @@ export class TrackerData extends EventTarget {
   #scheduled = false;
   /** @type {BroadcastChannel | null} */
   #channel = null;
+  /** Window lower bound (`windowStart` at the last load). */
+  #since = 0;
+  /** Ids of the entries in the rollup. */
+  /** @type {Set<string>} */
+  #windowIds = new Set();
 
   /**
    * Opens the database and loads everything the sidebar needs.
@@ -82,23 +93,36 @@ export class TrackerData extends EventTarget {
     this.db = /** @type {any} */ (null);
   }
 
-  /** Reads everything and rebuilds the rollup (opening, and after a restore or wipe). */
+  /**
+   * Reads projects, tasks, settings, the aggregates and the recent entries, and rebuilds the
+   * rollup (opening, after a restore or wipe, and when the aggregates stopped matching).
+   */
   async #load() {
-    const [projects, tasks, entries, settings, running] = await Promise.all([
+    const now = this.now();
+    this.#since = windowStart(now);
+    const [projects, tasks, settings, state] = await Promise.all([
       listProjects(this.db),
       listTasks(this.db),
-      listEntries(this.db),
       getSettings(this.db),
-      getRunning(this.db),
+      loadRollupState(this.db, this.#since),
     ]);
     this.projects = projects;
     this.tasks = new Map(tasks.map((task) => [task.id, task]));
     this.settings = settings;
-    this.running = running;
+    this.running = state.running;
+    this.#windowIds = new Set(state.recent.map((entry) => entry.id));
     this.rollup = createRollup(
-      { projects, tasks, entries },
-      { now: this.now(), weekStart: settings.weekStart },
+      { projects, tasks, entries: state.recent, aggregates: state.aggregates.tasks },
+      { now, weekStart: settings.weekStart },
     );
+  }
+
+  /**
+   * Whether an entry belongs in the rollup's window.
+   * @param {Entry} entry
+   */
+  #inWindow(entry) {
+    return entry.end === null || entry.end > this.#since;
   }
 
   /** @param {string} id */
@@ -181,12 +205,23 @@ export class TrackerData extends EventTarget {
       }
     }
     if (pending.has('entries')) {
-      for (const id of pending.get('entries') ?? []) {
-        const entry = await getEntry(db, id);
-        if (entry) rollup.upsertEntry(entry);
-        else rollup.removeEntry(id);
+      const changes = await readEntryChanges(db, pending.get('entries') ?? []);
+      if (!changes.aggregates) {
+        // Written behind the cache's back: reload, which rebuilds it.
+        await this.#load();
+        this.#emit(new Set(pending.keys()));
+        return;
       }
-      this.running = await getRunning(db);
+      for (const [id, entry] of changes.entries) {
+        if (entry && this.#inWindow(entry)) {
+          rollup.upsertEntry(entry);
+          this.#windowIds.add(id);
+        } else if (this.#windowIds.delete(id)) {
+          rollup.removeEntry(id);
+        }
+      }
+      rollup.setAggregates(changes.aggregates.tasks);
+      this.running = changes.running;
     }
     rollup.setNow(this.now());
     this.#emit(new Set(pending.keys()));

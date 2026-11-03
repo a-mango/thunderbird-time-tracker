@@ -377,3 +377,78 @@ describe('corrupt project trees', () => {
     expect(await getProject(db, build.id)).toBeNull();
   });
 });
+
+// #18: a project whose parent is missing (corrupt or hand-edited data) is top level everywhere.
+describe('orphan projects', () => {
+  /**
+   * Seeds the tree, then stores "Field notes" under a parent that doesn't exist and "Sketches"
+   * under it, bypassing the repository.
+   * @param {IDBDatabase} db
+   */
+  async function withOrphan(db) {
+    const tree = await seed(db);
+    const orphan = {
+      ...tree.internal,
+      id: 'orphan',
+      name: 'Field notes',
+      parentId: 'gone',
+      order: 5,
+    };
+    const child = {
+      ...tree.internal,
+      id: 'orphan-child',
+      name: 'Sketches',
+      parentId: 'orphan',
+      order: 0,
+    };
+    await tx(db, ['projects'], 'readwrite', async ({ projects }) => {
+      await req(projects.put(orphan));
+      await req(projects.put(child));
+    });
+    return { ...tree, orphan, child };
+  }
+
+  /** @param {IDBDatabase} db */
+  const roots = async (db) =>
+    (await listProjects(db))
+      .filter((p) => p.parentId === null || p.parentId === 'gone')
+      .map((p) => p.name);
+
+  it('lists the orphan among the top-level projects, with its subtree under it', async () => {
+    const { db } = await freshDB();
+    await withOrphan(db);
+    const names = (await listProjects(db)).map((p) => p.name);
+    expect(await roots(db)).toEqual(['Client work', 'Internal', 'Field notes']);
+    expect(names.indexOf('Sketches')).toBe(names.indexOf('Field notes') + 1);
+  });
+
+  it('accepts a drop before the orphan and stores it as top level', async () => {
+    const { db, build } = await freshDB().then(async (ctx) => ({
+      ...ctx,
+      ...(await withOrphan(ctx.db)),
+    }));
+    await moveProject(db, build.id, { parentId: null, beforeId: 'orphan' });
+    expect(await roots(db)).toEqual(['Client work', 'Internal', 'Build', 'Field notes']);
+    expect((await getProject(db, 'orphan'))?.parentId).toBeNull();
+  });
+
+  it('moves projects into the orphan subtree (the ancestor walk stops at the missing parent)', async () => {
+    const { db, internal, build } = await freshDB().then(async (ctx) => ({
+      ...ctx,
+      ...(await withOrphan(ctx.db)),
+    }));
+    await moveProject(db, internal.id, { parentId: 'orphan-child' });
+    expect((await getProject(db, internal.id))?.parentId).toBe('orphan-child');
+    await updateProject(db, build.id, { parentId: 'orphan' });
+    expect((await getProject(db, build.id))?.parentId).toBe('orphan');
+  });
+
+  it('still refuses to move the orphan into its own subtree', async () => {
+    const { db } = await freshDB();
+    await withOrphan(db);
+    await expect(moveProject(db, 'orphan', { parentId: 'orphan-child' })).rejects.toMatchObject({
+      constructor: InvariantError,
+      code: 'cycle',
+    });
+  });
+});

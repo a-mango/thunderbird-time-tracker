@@ -19,6 +19,15 @@ messenger.menus.onClicked.addListener((info) => {
 while (!document.documentElement.hasAttribute('data-ready')) {
   await new Promise((resolve) => setTimeout(resolve, 50));
 }
+// M7: the tab's load timings in Thunderbird (navigation start → script start → first render).
+const mark = (/** @type {string} */ name) => performance.getEntriesByName(name)[0]?.startTime;
+state.timing = {
+  scriptStart: mark('tt-start'),
+  ready: mark('tt-ready'),
+  domContentLoaded: /** @type {PerformanceNavigationTiming | undefined} */ (
+    performance.getEntriesByType('navigation')[0]
+  )?.domContentLoadedEventEnd,
+};
 const rowSelector = '#projects-tree [role="treeitem"]';
 if (!document.querySelector(rowSelector)) {
   // Empty dev profile: one fictional project to right-click (a fixture name).

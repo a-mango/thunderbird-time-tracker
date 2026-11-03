@@ -14,6 +14,21 @@ const MINUTE = 60_000;
  */
 
 /**
+ * Runs Thunderbird side effects independently: one that fails (or whose API is missing, e.g. a
+ * permission the profile refused) is logged and doesn't stop the others.
+ * @param {string} what
+ * @param {(() => unknown)[]} effects
+ */
+async function sideEffects(what, effects) {
+  const results = await Promise.allSettled(effects.map(async (effect) => effect()));
+  for (const result of results) {
+    if (result.status === 'rejected') {
+      console.error(`time tracker: ${what} failed`, result.reason);
+    }
+  }
+}
+
+/**
  * Sets or clears the action label and the tick alarm from the running entry. The alarm fires on
  * whole running minutes (start + n min), so `h:mm` changes on time. No badges: the label already
  * shows the time (maintainer's call after the M5 check in Thunderbird).
@@ -27,13 +42,16 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
   if (running && task) {
     const elapsed = Math.max(0, now - running.start);
     const nextMinute = running.start + (Math.floor(elapsed / MINUTE) + 1) * MINUTE;
-    await Promise.all([
-      api.alarms.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 }),
-      api.action.setLabel({ label: formatTimerLabel(elapsed, task.name) }),
+    await sideEffects('timer status', [
+      () => api.alarms?.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 }),
+      () => api.action.setLabel({ label: formatTimerLabel(elapsed, task.name) }),
     ]);
     return 'running';
   }
-  await Promise.all([api.alarms.clear(TICK_ALARM), api.action.setLabel({ label: null })]);
+  await sideEffects('timer status', [
+    () => api.alarms?.clear(TICK_ALARM),
+    () => api.action.setLabel({ label: null }),
+  ]);
   return 'stopped';
 }
 
@@ -47,11 +65,14 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
 export async function toggleTimer(db, { api = messenger, now = Date.now() } = {}) {
   const result = await toggle(db, { now });
   if (result.action === 'none') {
-    await api.notifications.create(NOTIFICATION_ID, {
-      type: 'basic',
-      title: api.i18n.getMessage('extensionName'),
-      message: api.i18n.getMessage('notificationNoLastTask'),
-    });
+    await sideEffects('notification', [
+      () =>
+        api.notifications?.create(NOTIFICATION_ID, {
+          type: 'basic',
+          title: api.i18n.getMessage('extensionName'),
+          message: api.i18n.getMessage('notificationNoLastTask'),
+        }),
+    ]);
   }
   await syncTimerStatus(db, { api, now });
   return result;

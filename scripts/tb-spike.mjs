@@ -459,6 +459,7 @@ async function main() {
         onClickedInPage: clicked?.clicked ?? null,
         dialogOpened: clicked?.dialog ?? null,
         header: clicked?.header ?? null,
+        timing: probe.timing ?? null,
       },
       download: { ...downloadResult, saved: await readdir(downloadDir) },
       shots: [
