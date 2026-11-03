@@ -6,12 +6,14 @@ import {
   discardRunning,
   getEntry,
   getRunning,
+  lastTrackedTask,
   listEntries,
   listEntriesByTask,
   listEntriesInRange,
   purgeDeleted,
   restoreEntry,
   softDeleteEntry,
+  splitEntry,
   splitRunning,
   startEntry,
   stopRunning,
@@ -398,6 +400,115 @@ describe('timer primitives', () => {
     expect(await discardRunning(db)).toMatchObject({ id: second.id });
     expect(await runningPointer(db)).toBeNull();
     expect((await allEntries(db)).map((e) => e.id)).toEqual([entry.id]);
+  });
+});
+
+describe('stop at, split to another task, split a stopped entry', () => {
+  it('stops the running entry at an earlier time, never in the future', async () => {
+    const { db, notify } = await freshDB();
+    const { checkout } = await seed(db);
+    const { entry } = await startEntry(db, checkout.id, { now: T0 });
+    for (const at of [T0, T0 - MIN, T0 + 31 * MIN]) {
+      await expect(stopRunning(db, { now: T0 + 30 * MIN, at })).rejects.toMatchObject({
+        constructor: ValidationError,
+        code: 'end',
+      });
+    }
+    expect((await getRunning(db))?.id).toBe(entry.id);
+    notify.mockClear();
+    const stop = await stopRunning(db, { now: T0 + 30 * MIN, at: T0 + 20 * MIN });
+    expect(stop).toEqual({
+      entry: { ...entry, end: T0 + 20 * MIN, updatedAt: T0 + 30 * MIN },
+      discarded: false,
+    });
+    expect(await runningPointer(db)).toBeNull();
+    expect(notify).toHaveBeenCalledWith({ type: 'entries', ids: [entry.id] });
+    expect(await stopRunning(db, { now: T0 + 40 * MIN, at: T0 + 35 * MIN })).toBeNull();
+  });
+
+  it('splits the running entry to another open task', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline, bookkeeping } = await seed(db);
+    await startEntry(db, checkout.id, { now: T0 });
+    const { stopped, entry } = await splitRunning(db, T0 + 10 * MIN, {
+      now: T0 + 20 * MIN,
+      taskId: pipeline.id,
+    });
+    expect(stopped).toMatchObject({ taskId: checkout.id, end: T0 + 10 * MIN });
+    expect(entry).toMatchObject({ taskId: pipeline.id, start: T0 + 10 * MIN, end: null });
+    expect((await getRunning(db))?.id).toBe(entry.id);
+
+    await markTaskDone(db, bookkeeping.id, { now: T0 });
+    await expect(
+      splitRunning(db, T0 + 15 * MIN, { now: T0 + 20 * MIN, taskId: bookkeeping.id }),
+    ).rejects.toMatchObject({ constructor: TaskDoneError, code: 'task-done' });
+    await expect(
+      splitRunning(db, T0 + 15 * MIN, { now: T0 + 20 * MIN, taskId: 'nope' }),
+    ).rejects.toMatchObject({ constructor: NotFoundError, code: 'task' });
+    expect((await getRunning(db))?.id).toBe(entry.id);
+  });
+
+  it('splits a stopped entry inside its range, optionally to another task', async () => {
+    const { db, notify } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    const added = await addEntry(
+      db,
+      { taskId: checkout.id, start: T0, end: T0 + H, note: 'Card fields' },
+      { now: T0 },
+    );
+    notify.mockClear();
+    const { stopped, entry } = await splitEntry(db, added.id, T0 + 20 * MIN, {
+      now: T0 + 2 * H,
+      taskId: pipeline.id,
+    });
+    expect(stopped).toEqual({ ...added, end: T0 + 20 * MIN, updatedAt: T0 + 2 * H });
+    expect(entry).toMatchObject({
+      taskId: pipeline.id,
+      start: T0 + 20 * MIN,
+      end: T0 + H,
+      note: 'Card fields',
+      source: 'split',
+    });
+    expect(notify).toHaveBeenCalledWith({ type: 'entries', ids: [added.id, entry.id] });
+    const same = await splitEntry(db, entry.id, T0 + 30 * MIN, { now: T0 + 2 * H });
+    expect(same.entry.taskId).toBe(pipeline.id);
+  });
+
+  it('rejects bad split points, the running entry and unknown ids', async () => {
+    const { db } = await freshDB();
+    const { checkout } = await seed(db);
+    const added = await addEntry(db, { taskId: checkout.id, start: T0, end: T0 + H });
+    for (const at of [T0, T0 + H, T0 - MIN, T0 + 2 * H]) {
+      await expect(splitEntry(db, added.id, at)).rejects.toMatchObject({ code: 'split-at' });
+    }
+    await expect(splitEntry(db, added.id, T0 + MIN, { taskId: 'nope' })).rejects.toMatchObject({
+      code: 'task',
+    });
+    const { entry } = await startEntry(db, checkout.id, { now: T0 + 2 * H });
+    await expect(splitEntry(db, entry.id, T0 + 2 * H + 1)).rejects.toMatchObject({
+      constructor: InvariantError,
+      code: 'running',
+    });
+    await softDeleteEntry(db, added.id);
+    await expect(splitEntry(db, added.id, T0 + MIN)).rejects.toMatchObject({ code: 'entry' });
+    expect(await allEntries(db)).toHaveLength(2);
+  });
+
+  it('finds the open task tracked last, skipping deleted entries and done tasks', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline, bookkeeping } = await seed(db);
+    expect(await lastTrackedTask(db)).toBeNull();
+    await addEntry(db, { taskId: checkout.id, start: T0, end: T0 + H });
+    await addEntry(db, { taskId: pipeline.id, start: T0 - 3 * H, end: T0 + 2 * H });
+    const latest = await addEntry(db, { taskId: bookkeeping.id, start: T0, end: T0 + 3 * H });
+    expect((await lastTrackedTask(db))?.id).toBe(bookkeeping.id);
+    await softDeleteEntry(db, latest.id);
+    expect((await lastTrackedTask(db))?.id).toBe(pipeline.id);
+    await markTaskDone(db, pipeline.id);
+    expect((await lastTrackedTask(db))?.id).toBe(checkout.id);
+    // The running entry has no end, so it is not "tracked last" yet.
+    await startEntry(db, bookkeeping.id, { now: T0 + 4 * H });
+    expect((await lastTrackedTask(db))?.id).toBe(checkout.id);
   });
 });
 

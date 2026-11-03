@@ -451,58 +451,171 @@ export async function startEntry(
 }
 
 /**
- * Stops the running entry at `now`.
+ * Stops the running entry at `now`, or at an earlier `at` ("I stopped working at 17:30").
+ * Without `at`, an entry that would be zero-length is discarded; an explicit `at` must be in
+ * `(running.start, now]`, so a running entry never gets an end in the future.
  * @param {IDBDatabase} db
- * @param {WriteOptions} [options]
+ * @param {WriteOptions & {at?: number}} [options]
  * @returns {Promise<TimerStop | null>} `null` when nothing was running
+ * @throws {ValidationError} `end` when `at` is outside `(running.start, now]`
  */
-export async function stopRunning(db, { now = Date.now() } = {}) {
+export async function stopRunning(db, { now = Date.now(), at } = {}) {
+  if (at !== undefined) checkTime(at, 'end');
   const stop = await tx(db, [STORES.entries, STORES.meta], 'readwrite', async (stores) => {
     const running = await readRunning(stores);
-    return running ? stopRunningIn(stores, running, now) : null;
+    if (!running) return null;
+    if (at === undefined) return stopRunningIn(stores, running, now);
+    if (at <= running.start || at > now) {
+      throw new ValidationError('end', 'the end must be after the start and not later than now', { at }); // prettier-ignore
+    }
+    await req(stores.meta.put(null, META.running));
+    const stopped = { ...running, end: at, updatedAt: now };
+    await req(stores.entries.put(stopped));
+    return { entry: stopped, discarded: false };
   });
   if (stop) emit(db, { type: 'entries', ids: [stop.entry.id] });
   return stop;
 }
 
 /**
- * Ends the running entry at `at` and starts a new running entry (source `split`) for the same
- * task at `at`.
+ * Ends the running entry at `at` and starts a new running entry (source `split`) at `at`, for
+ * the same task or for `taskId` (which must be open).
  * @param {IDBDatabase} db
  * @param {number} at must be in `(running.start, now]`
- * @param {WriteOptions} [options]
+ * @param {WriteOptions & {taskId?: string}} [options]
  * @returns {Promise<SplitResult>}
- * @throws {NotFoundError} `running`
+ * @throws {NotFoundError} `running`, `task`
  * @throws {ValidationError} `split-at`
+ * @throws {TaskDoneError} `task-done` when `taskId` is done
  */
-export async function splitRunning(db, at, { now = Date.now() } = {}) {
+export async function splitRunning(db, at, { now = Date.now(), taskId } = {}) {
   checkTime(at, 'split-at');
-  const result = await tx(db, [STORES.entries, STORES.meta], 'readwrite', async (stores) => {
-    const running = await readRunning(stores);
-    if (!running) throw new NotFoundError('running', 'no timer is running');
-    if (at <= running.start || at > now) {
-      throw new ValidationError('split-at', 'split point must be after the start and not later than now', { at }); // prettier-ignore
-    }
-    const stopped = { ...running, end: at, updatedAt: now };
-    /** @type {Entry} */
-    const entry = {
-      id: newId(),
-      taskId: running.taskId,
-      start: at,
-      end: null,
-      note: '',
-      source: 'split',
-      createdAt: now,
-      updatedAt: now,
-      deletedAt: null,
-    };
-    await req(stores.entries.put(stopped));
-    await req(stores.entries.add(entry));
-    await req(stores.meta.put(entry.id, META.running));
-    return { stopped, entry };
-  });
+  if (taskId !== undefined) checkId(taskId, 'taskId');
+  const result = await tx(
+    db,
+    [STORES.tasks, STORES.entries, STORES.meta],
+    'readwrite',
+    async (stores) => {
+      const running = await readRunning(stores);
+      if (!running) throw new NotFoundError('running', 'no timer is running');
+      if (at <= running.start || at > now) {
+        throw new ValidationError('split-at', 'split point must be after the start and not later than now', { at }); // prettier-ignore
+      }
+      const target = taskId ?? running.taskId;
+      if (target !== running.taskId) {
+        const task = await requireTask(stores.tasks, target);
+        if (task.status === 'done') {
+          throw new TaskDoneError('task-done', 'reopen the task to track it', { id: target });
+        }
+      }
+      const stopped = { ...running, end: at, updatedAt: now };
+      /** @type {Entry} */
+      const entry = {
+        id: newId(),
+        taskId: target,
+        start: at,
+        end: null,
+        note: '',
+        source: 'split',
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      };
+      await req(stores.entries.put(stopped));
+      await req(stores.entries.add(entry));
+      await req(stores.meta.put(entry.id, META.running));
+      return { stopped, entry };
+    },
+  );
   emit(db, { type: 'entries', ids: [result.stopped.id, result.entry.id] });
   return result;
+}
+
+/**
+ * Splits a stopped entry at `at`: it keeps its id and ends at `at`; a new entry (source `split`,
+ * same note) covers `[at, end)`, for the same task or for `taskId`. Done tasks accept it, like
+ * manual entries.
+ * @param {IDBDatabase} db
+ * @param {string} id
+ * @param {number} at must be in `(entry.start, entry.end)`
+ * @param {WriteOptions & {taskId?: string}} [options]
+ * @returns {Promise<SplitResult>}
+ * @throws {NotFoundError} `entry`, `task`
+ * @throws {InvariantError} `running` for the running entry (use `splitRunning`)
+ * @throws {ValidationError} `split-at`
+ */
+export async function splitEntry(db, id, at, { now = Date.now(), taskId } = {}) {
+  checkTime(at, 'split-at');
+  if (taskId !== undefined) checkId(taskId, 'taskId');
+  const result = await tx(
+    db,
+    [STORES.tasks, STORES.entries],
+    'readwrite',
+    async ({ tasks, entries }) => {
+      /** @type {Entry | undefined} */
+      const entry = await req(entries.get(id));
+      if (!entry || !isLive(entry)) throw new NotFoundError('entry', 'entry not found', { id });
+      if (entry.end === null) {
+        throw new InvariantError('running', 'split the running entry with splitRunning', { id });
+      }
+      if (at <= entry.start || at >= entry.end) {
+        throw new ValidationError('split-at', 'split point must be inside the entry', { at });
+      }
+      const target = taskId ?? entry.taskId;
+      if (target !== entry.taskId) await requireTask(tasks, target);
+      const stopped = { ...entry, end: at, updatedAt: now };
+      /** @type {Entry} */
+      const second = {
+        id: newId(),
+        taskId: target,
+        start: at,
+        end: entry.end,
+        note: entry.note,
+        source: 'split',
+        createdAt: now,
+        updatedAt: now,
+        deletedAt: null,
+      };
+      await req(entries.put(stopped));
+      await req(entries.add(second));
+      return { stopped, entry: second };
+    },
+  );
+  emit(db, { type: 'entries', ids: [result.stopped.id, result.entry.id] });
+  return result;
+}
+
+/**
+ * The open task with the most recently ended live entry (what `toggle-timer` starts), or `null`.
+ * Walks the `end` index backwards, so it reads only as far as the first open task.
+ * @param {IDBDatabase} db
+ * @returns {Promise<Task | null>}
+ */
+export function lastTrackedTask(db) {
+  return tx(db, [STORES.tasks, STORES.entries], 'readonly', ({ tasks, entries }) => {
+    const seen = new Set();
+    return new Promise((resolve, reject) => {
+      const cursorRequest = entries.index(INDEXES.entryEnd).openCursor(null, 'prev');
+      cursorRequest.onerror = () => reject(cursorRequest.error);
+      cursorRequest.onsuccess = async () => {
+        const cursor = cursorRequest.result;
+        if (!cursor) return resolve(null);
+        /** @type {Entry} */
+        const entry = cursor.value;
+        if (isLive(entry) && !seen.has(entry.taskId)) {
+          seen.add(entry.taskId);
+          try {
+            /** @type {Task | undefined} */
+            const task = await req(tasks.get(entry.taskId));
+            if (task && task.status === 'open') return resolve(task);
+          } catch (error) {
+            return reject(error);
+          }
+        }
+        cursor.continue();
+      };
+    });
+  });
 }
 
 /**

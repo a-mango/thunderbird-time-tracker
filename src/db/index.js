@@ -32,12 +32,14 @@ export {
   countEntries,
   getEntry,
   getRunning,
+  lastTrackedTask,
   listEntries,
   listEntriesByTask,
   listEntriesInRange,
   purgeDeleted,
   restoreEntry,
   softDeleteEntry,
+  splitEntry,
   updateEntry,
 } from './entries.js';
 export { getSettings, updateSettings } from './settings.js';
