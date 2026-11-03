@@ -85,7 +85,7 @@ async function main() {
     console.error('time tracker: opening the database failed', error);
     showStorageError(error, 'open');
     notification.setAttribute('persistent', '');
-    // Only the error bar under the tab's name: the empty panes would offer nothing that works.
+    // Only the error bar and the tab's name: the empty panes would offer nothing that works.
     ref('list-title').textContent = t('extensionName');
     const list = /** @type {HTMLElement} */ (document.getElementById('list'));
     for (const pane of document.querySelectorAll('.tracker > *')) {

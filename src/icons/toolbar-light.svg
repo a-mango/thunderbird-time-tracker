@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="#fbfbfe" stroke-width="1.5" stroke-linecap="round">
-  <!-- Time Tracker toolbar glyph (light: for dark backgrounds). Original artwork. -->
-  <path d="M6 1.25h4M8 1.25v2"/>
-  <circle cx="8" cy="9.25" r="5.75"/>
-  <path d="M8 9.25 10.75 6.5"/>
-  <path d="M13 3.5l1 1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="#fbfbfe" stroke-width="1" stroke-linecap="round">
+  <!-- Time Tracker toolbar glyph (light: for dark backgrounds). 1px outlines like Thunderbird's
+       compact spaces icons. Original artwork. -->
+  <path d="M6.5 1.5h3M8 1.5v2"/>
+  <circle cx="8" cy="9.5" r="5.5"/>
+  <path d="M8 9.5 10.5 7"/>
+  <path d="M12.5 3.5l1 1"/>
 </svg>

@@ -632,7 +632,7 @@
     "message": "Aujourd’hui"
   },
   "statWeek": {
-    "message": "Cette semaine"
+    "message": "Semaine"
   },
   "statTotal": {
     "message": "Total"
@@ -1103,7 +1103,7 @@
     "message": "Toutes les données ont été supprimées."
   },
   "popupSplit": {
-    "message": "Scinder maintenant"
+    "message": "Scinder"
   },
   "popupSearchPlaceholder": {
     "message": "Rechercher des tâches ouvertes"

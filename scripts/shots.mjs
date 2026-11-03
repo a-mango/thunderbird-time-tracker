@@ -35,6 +35,7 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-settings-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
   ['tracker-forced-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-forced-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-error-light', '/ui/tracker.html?seed=42&fail=newer', 'light', TAB],
   ['popup-fr-light', '/ui/popup.html?locale=fr', 'light', { width: 360, height: 600 }],
   ['popup-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 360, height: 600 }],
@@ -67,7 +68,9 @@ try {
       colorScheme,
       viewport,
       reducedMotion: 'reduce',
+      // Windows High Contrast sets both; Firefox's emulation ignores the colour scheme there.
       forcedColors: name.includes('forced') ? 'active' : 'none',
+      contrast: name.includes('forced') ? 'more' : 'no-preference',
     });
     await page.clock.setFixedTime(NOW);
     await page.goto(`http://localhost:${port}${path}`);
@@ -109,7 +112,7 @@ try {
       await page.screenshot({ path: file });
       if (
         !path.includes('fixtures=empty') &&
-        !/tracker-(list|entry|split|settings|export)/.test(name)
+        !/tracker-(list|entry|split|settings|export|error)/.test(name)
       ) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });
