@@ -12,8 +12,13 @@ import { dayRange, overlapMs, weekRange } from './time.js';
  *            deletedAt?: number | null}} RollupEntry
  */
 /**
- * @typedef {{projects: RollupProject[], tasks: RollupTask[], entries: RollupEntry[]}} RollupData
- *   Full records (`Project`, `Task`, `Entry`) fit; only these fields are read.
+ * @typedef {{ms: number, last: number | null}} TaskAggregate all-time sum of a task's live,
+ *   stopped entries and their latest end (db/aggregates.js)
+ * @typedef {{projects: RollupProject[], tasks: RollupTask[], entries: RollupEntry[],
+ *            aggregates?: Record<string, TaskAggregate>}} RollupData
+ *   Full records (`Project`, `Task`, `Entry`) fit; only these fields are read. With `aggregates`,
+ *   `entries` may be a recent window only (every entry that can count toward today or this week):
+ *   older entries reach `total` and `last` through the aggregates.
  * @typedef {{now: number, weekStart: WeekStart}} RollupOptions
  * @typedef {{tasks: Map<string, Totals>, projects: Map<string, Totals>}} RollupResult
  * @typedef {{now: number, day: Range, week: Range}} Ranges
@@ -135,6 +140,8 @@ export function visibleProjects(projects) {
  * @property {(id: string) => void} removeProject
  * @property {(now: number) => void} setNow advances running entries; rolls over day and week
  * @property {(weekStart: WeekStart) => void} setWeekStart
+ * @property {(aggregates: Record<string, TaskAggregate>) => void} setAggregates new all-time
+ *   aggregates (after a change); entries in the window must be current first
  */
 
 /**
@@ -164,9 +171,48 @@ export function createRollup(data, { now, weekStart }) {
   let sums = new Map();
   /** @type {Map<string, Totals>} */
   let projectTotals = new Map();
+  /** Per task: the part of the aggregates outside the window (older entries). */
+  /** @type {Map<string, TaskAggregate>} */
+  const base = new Map();
 
   /** @param {string} taskId */
   const sumOf = (taskId) => sums.get(taskId) ?? zero();
+
+  /**
+   * Summed duration of the task's live, stopped entries in the window.
+   * @param {string} taskId
+   */
+  function windowMs(taskId) {
+    let ms = 0;
+    for (const entryId of byTask.get(taskId) ?? []) {
+      const entry = /** @type {RollupEntry} */ (entries.get(entryId));
+      if (entry.end !== null && (entry.deletedAt === null || entry.deletedAt === undefined)) {
+        ms += Math.max(0, entry.end - entry.start);
+      }
+    }
+    return ms;
+  }
+
+  /**
+   * Sets a task's older part from its all-time aggregate, adjusting its totals and chain.
+   * @param {string} taskId
+   * @param {TaskAggregate | undefined} aggregate
+   */
+  function applyAggregate(taskId, aggregate) {
+    const old = base.get(taskId) ?? { ms: 0, last: null };
+    const next = aggregate
+      ? { ms: Math.max(0, aggregate.ms - windowMs(taskId)), last: aggregate.last }
+      : { ms: 0, last: null };
+    if (next.ms === 0 && next.last === null) base.delete(taskId);
+    else base.set(taskId, next);
+    const delta = next.ms - old.ms;
+    if (delta === 0) return;
+    let totals = sums.get(taskId);
+    if (!totals) sums.set(taskId, (totals = zero()));
+    totals.total += delta;
+    const task = tasks.get(taskId);
+    if (task) applyToChain(task.projectId, { today: 0, week: 0, total: delta }, 1);
+  }
 
   /**
    * @param {string | null} projectId
@@ -193,7 +239,7 @@ export function createRollup(data, { now, weekStart }) {
   }
 
   function rebuildSums() {
-    sums = new Map();
+    sums = new Map([...base].map(([id, older]) => [id, { today: 0, week: 0, total: older.ms }]));
     for (const entry of entries.values()) {
       let totals = sums.get(entry.taskId);
       if (!totals) sums.set(entry.taskId, (totals = zero()));
@@ -234,6 +280,10 @@ export function createRollup(data, { now, weekStart }) {
   }
   for (const { id, projectId } of data.tasks) tasks.set(id, { id, projectId });
   for (const entry of data.entries) storeEntry(entry);
+  for (const [taskId, aggregate] of Object.entries(data.aggregates ?? {})) {
+    const older = { ms: Math.max(0, aggregate.ms - windowMs(taskId)), last: aggregate.last };
+    if (older.ms !== 0 || older.last !== null) base.set(taskId, older);
+  }
   rebuildSums();
   rebuildProjects();
 
@@ -241,7 +291,7 @@ export function createRollup(data, { now, weekStart }) {
     task: (id) => (tasks.has(id) ? { ...sumOf(id) } : zero()),
     project: (id) => ({ ...(projectTotals.get(id) ?? zero()) }),
     last(id) {
-      let latest = null;
+      let latest = base.get(id)?.last ?? null;
       for (const entryId of byTask.get(id) ?? []) {
         const entry = /** @type {RollupEntry} */ (entries.get(entryId));
         if (entry.deletedAt !== null && entry.deletedAt !== undefined) continue;
@@ -335,6 +385,11 @@ export function createRollup(data, { now, weekStart }) {
       ranges = rangesFor(ranges.now, next);
       rebuildSums();
       rebuildProjects();
+    },
+    setAggregates(aggregates) {
+      for (const taskId of new Set([...base.keys(), ...Object.keys(aggregates)])) {
+        applyAggregate(taskId, aggregates[taskId]);
+      }
     },
   };
 }
