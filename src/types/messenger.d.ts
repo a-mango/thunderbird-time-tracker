@@ -161,6 +161,19 @@ declare namespace messenger {
     const onAlarm: WebExtEvent<(alarm: Alarm) => void>;
   }
 
+  /** notifications.rst (only what we use) */
+  namespace notifications {
+    interface CreateNotificationOptions {
+      type: 'basic' | 'image' | 'list' | 'progress';
+      title: string;
+      message: string;
+      iconUrl?: string;
+    }
+    function create(notificationId: string, options: CreateNotificationOptions): Promise<string>;
+    function create(options: CreateNotificationOptions): Promise<string>;
+    function clear(notificationId: string): Promise<boolean>;
+  }
+
   /** commands.rst */
   namespace commands {
     interface Command {

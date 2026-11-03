@@ -36,9 +36,10 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 |---|---|---|
 | (none for IndexedDB) | data store | M2 |
 | `storage` | small settings and state mirror (`storage.local`) | Deferred from M2: settings live in IndexedDB `meta`; add it with the first feature that needs a `storage.local` mirror |
-| `alarms` | 1-minute tick while running (badge and label refresh) | M5 |
+| `alarms` | 1-minute tick while running (action label refresh) | M5 (added) |
 | `menus`, `menus.overrideContext` | native context menus on project and task rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded); task rows in M4 |
-| `idle`, `notifications` | idle prompt | S2 |
+| `notifications` | `Alt+Shift+K` with no task tracked yet: says how to start one (the command has no other UI) | M5 (added) |
+| `idle` | idle prompt | S2 |
 | `messagesRead` | read headers for linking | S1 |
 | `accountsRead` | folder → project mapping | S1+ |
 
@@ -49,7 +50,7 @@ No host permissions. Keep the default MV3 CSP, no `eval`, no `innerHTML` (follow
 ```
 src/
   manifest.json
-  background/      event page: space + action setup, timer side-effects (alarms, badge, label),
+  background/      event page: space + action setup, timer side-effects (alarm, action label),
                    commands, menus, runtime message router
   lib/             pure, DOM-free: time math, rollups, formatting, CSV, import validation
   db/              IndexedDB wrapper, repositories, migrations, change notifications
@@ -62,8 +63,8 @@ tests/ui           Playwright (Firefox engine) against the dev harness
 ```
 
 - **Single source of truth**: IndexedDB in the extension origin. The tab, popup, and background all use `db/`.
-- **Change propagation**: after a write, `db/` posts `{type, ids}` on a `BroadcastChannel('tt')` (for open pages) and calls `messenger.runtime.sendMessage({type:'tt:changed'})` (this wakes the event page for badge, label, and alarm updates).
-- **Timer** = the entry with `end === null`. Elapsed time is computed from `start`; nothing ticks in storage. While a timer runs, the 1-minute alarm refreshes the action label, the action badge, and the space badge. Pages tick locally every 1s with `requestAnimationFrame`/`setInterval` only while visible.
+- **Change propagation**: after a write, `db/` posts `{type, ids}` on a `BroadcastChannel('tt')` (for open pages) and calls `messenger.runtime.sendMessage({type:'tt:changed'})` (this wakes the event page for label and alarm updates).
+- **Timer** = the entry with `end === null`. Elapsed time is computed from `start`; nothing ticks in storage. While a timer runs, the 1-minute alarm refreshes the action label (`h:mm · task`). No action or space badge: the label already shows the time (decided in the M5 Thunderbird check). Pages tick locally every 1s with `requestAnimationFrame`/`setInterval` only while visible.
 - **Startup**: on `runtime.onStartup`/`onInstalled`, ensure the space exists (`spaces.query({isSelfOwned:true})` → create if missing), restore the action label, and re-arm the alarm when a timer is running.
 - **UI**: vanilla custom elements, a small render helper (DOM + `<template>`), and keyed list updates. No framework.
 
@@ -103,7 +104,7 @@ Mirror Thunderbird where an equivalent exists. Before claiming a global shortcut
 
 | Key | Action |
 |---|---|
-| `Alt+Shift+T` (manifest `commands`) | start the last task / stop the running timer |
+| `Alt+Shift+K` (manifest `commands`) | start the last task / stop the running timer. Not `Alt+Shift+T`: on Linux the menu bar takes Alt+letter as an access key even with Shift (T = Tools) |
 | `Alt+Shift+O` (`_execute_action`) | open the popup |
 | `Ctrl+N` / `Ctrl+Shift+N` (in tab) | new task / new project |
 | `Space` on a task row | start/stop |

@@ -6,11 +6,15 @@ import {
   adjustStart,
   discard,
   getRunning,
+  resume,
   split,
   start,
   stop,
+  stopAt,
   switchTo,
+  toggle,
 } from '../../src/lib/timer.js';
+import { addEntry } from '../../src/db/entries.js';
 import { TaskDoneError, ValidationError } from '../../src/lib/errors.js';
 import { MIN, T0, allEntries, freshDB, runningPointer, seed } from './db-helpers.js';
 
@@ -165,6 +169,86 @@ describe('timer', () => {
       });
     }
     expect((await getRunning(db))?.start).toBe(T0 - 15 * MIN);
+  });
+});
+
+describe('timer: stop at, split to a task, resume, toggle', () => {
+  it('stops at a chosen time in (start, now]', async () => {
+    const { db } = await freshDB();
+    const { checkout } = await seed(db);
+    await start(db, checkout.id, { now: T0 });
+    await expect(stopAt(db, T0 + 2 * MIN, { now: T0 + MIN })).rejects.toMatchObject({
+      constructor: ValidationError,
+      code: 'end',
+    });
+    expect((await stopAt(db, T0 + MIN, { now: T0 + 5 * MIN }))?.entry.end).toBe(T0 + MIN);
+    expect(await getRunning(db)).toBeNull();
+  });
+
+  it('splits the running entry to another task', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    await start(db, checkout.id, { now: T0 });
+    const result = await split(db, T0 + MIN, { now: T0 + 2 * MIN, taskId: pipeline.id });
+    expect(result.stopped.taskId).toBe(checkout.id);
+    expect((await getRunning(db))?.taskId).toBe(pipeline.id);
+  });
+
+  it('resumes a task with the note of its latest stopped entry', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    expect((await resume(db, pipeline.id, { now: T0 })).entry.note).toBe('');
+    await stop(db, { now: T0 + MIN });
+    await addEntry(db, {
+      taskId: checkout.id,
+      start: T0 - 60 * MIN,
+      end: T0 - 50 * MIN,
+      note: 'Old',
+    });
+    await addEntry(db, {
+      taskId: checkout.id,
+      start: T0 - 40 * MIN,
+      end: T0 - 30 * MIN,
+      note: 'Card fields',
+    });
+    const { entry, previous } = await resume(db, checkout.id, { now: T0 + 2 * MIN });
+    expect(entry).toMatchObject({
+      taskId: checkout.id,
+      start: T0 + 2 * MIN,
+      end: null,
+      note: 'Card fields',
+      source: 'timer',
+    });
+    expect(previous).toBeNull();
+  });
+
+  it('resume refuses a done task', async () => {
+    const { db } = await freshDB();
+    const { checkout } = await seed(db);
+    await markTaskDone(db, checkout.id);
+    await expect(resume(db, checkout.id, { now: T0 })).rejects.toBeInstanceOf(TaskDoneError);
+  });
+
+  it('toggle stops the running entry, else starts the task tracked last', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    expect(await toggle(db, { now: T0 })).toEqual({ action: 'none' });
+    await start(db, pipeline.id, { now: T0 });
+    const stopped = await toggle(db, { now: T0 + 10 * MIN });
+    expect(stopped).toMatchObject({ action: 'stopped', stop: { entry: { taskId: pipeline.id } } });
+    const started = await toggle(db, { now: T0 + 20 * MIN });
+    expect(started).toMatchObject({
+      action: 'started',
+      start: { entry: { taskId: pipeline.id, start: T0 + 20 * MIN } },
+    });
+    await toggle(db, { now: T0 + 30 * MIN });
+    await markTaskDone(db, pipeline.id);
+    expect(await toggle(db, { now: T0 + 40 * MIN })).toEqual({ action: 'none' });
+    await addEntry(db, { taskId: checkout.id, start: T0, end: T0 + MIN });
+    expect(await toggle(db, { now: T0 + 50 * MIN })).toMatchObject({
+      action: 'started',
+      start: { entry: { taskId: checkout.id } },
+    });
   });
 });
 

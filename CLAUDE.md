@@ -41,6 +41,7 @@ Read only the sections the current task needs.
 - Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
 - Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?density=`/`?accent=` write settings.
 - `scripts/serve.mjs` serves `/src/`; `<html data-dev-ready>` is set after seeding, `data-ready` once the page rendered.
+- Playwright `page.clock.pauseAt()` freezes timers too: `clock.resume()` before `expectNoAxeViolations` (axe waits on timers).
 - Colour tokens in tests: assert the inline style (`--icon-color: var(--color-accent-teal)`); computed style resolves `var()`.
 - Port 5173 may be taken by another app (Playwright then reuses it and every test times out): run `PORT=5199 npm run test:ui`.
 - Unit tests run in `TZ=Europe/Zurich` (`vitest.config.js`). db tests use `freshDB()` from `tests/unit/db-helpers.js` (own `IDBFactory`, sets the `IDBKeyRange` global Node lacks).

@@ -1,4 +1,4 @@
-// Native context menu items for the project tree and the task table (docs/DESIGN.md, Components). The background
+// Native context menu items for the project tree, the task table and the entry list (docs/DESIGN.md, Components). The background
 // owns the items; the tracker page shows them with menus.overrideContext() on a right-click on a
 // project row and handles onShown/onClicked itself (ui/context-menu.js).
 import { PALETTE } from '../lib/palette.js';
@@ -29,6 +29,15 @@ export const TASK_MENU = Object.freeze({
   move: 'tt-task-move',
   separator: 'tt-task-separator',
   delete: 'tt-task-delete',
+});
+
+/** Time entry rows (detail pane). */
+export const ENTRY_MENU = Object.freeze({
+  edit: 'tt-entry-edit',
+  split: 'tt-entry-split',
+  duplicate: 'tt-entry-duplicate',
+  separator: 'tt-entry-separator',
+  delete: 'tt-entry-delete',
 });
 
 /** Prefix of the colour radio items: `tt-project-color:#rrggbb`. */
@@ -70,6 +79,11 @@ export async function registerMenus(api = messenger) {
     [TASK_MENU.move, 'menuTaskMove'],
     [TASK_MENU.separator, '', { type: 'separator' }],
     [TASK_MENU.delete, 'menuTaskDelete'],
+    [ENTRY_MENU.edit, 'menuEntryEdit'],
+    [ENTRY_MENU.split, 'menuEntrySplit'],
+    [ENTRY_MENU.duplicate, 'menuEntryDuplicate'],
+    [ENTRY_MENU.separator, '', { type: 'separator' }],
+    [ENTRY_MENU.delete, 'menuEntryDelete'],
   ];
   for (const [id, title, extra] of items) {
     api.menus.create({ ...common, id, ...(title ? { title: t(title) } : {}), ...extra });
