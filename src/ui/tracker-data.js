@@ -64,21 +64,7 @@ export class TrackerData extends EventTarget {
       },
       onVersionChange: () => data.dispatchEvent(new Event('closed')),
     });
-    const [projects, tasks, entries, settings, running] = await Promise.all([
-      listProjects(data.db),
-      listTasks(data.db),
-      listEntries(data.db),
-      getSettings(data.db),
-      getRunning(data.db),
-    ]);
-    data.projects = projects;
-    data.tasks = new Map(tasks.map((task) => [task.id, task]));
-    data.settings = settings;
-    data.running = running;
-    data.rollup = createRollup(
-      { projects, tasks, entries },
-      { now: now(), weekStart: settings.weekStart },
-    );
+    await data.#load();
     if (typeof BroadcastChannel === 'function') {
       data.#channel = new BroadcastChannel(CHANNEL_NAME);
       data.#channel.onmessage = (event) => data.#queue(event.data);
@@ -94,6 +80,25 @@ export class TrackerData extends EventTarget {
     this.settings = /** @type {Settings} */ ({});
     this.rollup = /** @type {any} */ (null);
     this.db = /** @type {any} */ (null);
+  }
+
+  /** Reads everything and rebuilds the rollup (opening, and after a restore or wipe). */
+  async #load() {
+    const [projects, tasks, entries, settings, running] = await Promise.all([
+      listProjects(this.db),
+      listTasks(this.db),
+      listEntries(this.db),
+      getSettings(this.db),
+      getRunning(this.db),
+    ]);
+    this.projects = projects;
+    this.tasks = new Map(tasks.map((task) => [task.id, task]));
+    this.settings = settings;
+    this.running = running;
+    this.rollup = createRollup(
+      { projects, tasks, entries },
+      { now: this.now(), weekStart: settings.weekStart },
+    );
   }
 
   /** @param {string} id */
@@ -146,6 +151,11 @@ export class TrackerData extends EventTarget {
     const pending = this.#pending;
     this.#pending = new Map();
     if (pending.size === 0) return;
+    if (pending.has('reset')) {
+      await this.#load();
+      this.#emit(new Set(['reset', 'projects', 'tasks', 'entries', 'settings']));
+      return;
+    }
     const { db, rollup } = this;
     if (pending.has('settings')) {
       const settings = await getSettings(db);

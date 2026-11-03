@@ -579,6 +579,8 @@ export function createTaskList({ data, commands }) {
   return {
     setScope,
     render: () => render(),
+    /** The "Show done tasks" setting changed: apply it to the current list's Open pill. */
+    applyShowDone: () => setFilter({ open: !data.settings.showDone }),
     focusFilter,
     startRename,
     focus: () => table.focusSelected(),
