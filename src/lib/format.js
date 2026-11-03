@@ -158,3 +158,15 @@ export function formatTimerLabel(elapsedMs, taskName, { max = 24 } = {}) {
         .join('')
         .trimEnd()}…`;
 }
+
+/**
+ * Calendar date with the year, `20 Oct 2026` (`Oct 20, 2026` in en-US).
+ * @param {number} ms
+ * @param {{locale: string, time?: boolean}} options `time` adds the time of day
+ */
+export function formatDate(ms, { locale, time = false }) {
+  return dateTimeFormat(locale, {
+    dateStyle: 'medium',
+    ...(time ? { timeStyle: 'short' } : {}),
+  }).format(ms);
+}
