@@ -34,6 +34,17 @@ tt-splitter {
     background-color: var(--selected-item-color);
     box-shadow: 0 0 0 1px var(--selected-item-color);
   }
+  /* Forced colours reset backgrounds to Canvas: keep the line in the text colour. */
+  @media (forced-colors: active) {
+    forced-color-adjust: none;
+    background-color: CanvasText;
+
+    &:focus-visible,
+    &.resizing {
+      background-color: Highlight;
+      box-shadow: 0 0 0 1px Highlight;
+    }
+  }
 }
 
 /* ---- Folder-pane sections (about3Pane.css .mode-container / .mode-name) ---- */
@@ -152,6 +163,14 @@ tt-tree {
     }
   }
   & li.muted > .container {
+    color: var(--tt-text-muted);
+  }
+  /* Selected: the row colour, like done tasks in the list (muted text fails AA on the
+   * selection background). The icon keeps the muted colour (no text, no contrast rule). */
+  & li.muted > .container[aria-selected='true'] {
+    color: inherit;
+  }
+  & li.muted > .container[aria-selected='true'] .content > .icon {
     color: var(--tt-text-muted);
   }
 

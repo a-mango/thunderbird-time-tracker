@@ -36,6 +36,10 @@
 | Resume last entry (M5) | Starts a new timer entry on the task with the note of its latest stopped entry | Stopped entries are never reopened (`start < end` stays an invariant) |
 | Duplicate (M5) | Opens the entry dialog prefilled as a new entry | An exact copy would always overlap the original |
 | `toggle-timer` (M5) | Stops the running entry, else starts the open task with the latest-ended entry (`lastTrackedTask`, `end` index backwards); if none, a notification (`notifications` permission) | The shortcut has no other UI to explain why nothing happened |
+| Aggregates (M7) | `meta.aggregates`: per task `{count, ms, last}`; every entry write recomputes its touched tasks from the `taskId` index in its own transaction (`db/aggregates.js` `touchTasks`). Pages load the cache + entries with `end` in the last 7 days (`loadRollupState`); `createRollup` takes the cache as the part outside that window | Cold open no longer reads every entry. Mismatch check (sum of counts = `entries.count()`, format) on open, where a stale cache is rebuilt; change refreshes check only the shape (`count()` costs ~20 ms at 50k) |
+| Storage errors (M7) | `storageErrorKind` (`blocked`, `version`, `quota`, `unknown`) → `ui/storage-errors.js` message + Reload where it helps; a tab that can't open shows only the bar | One mapping for tab and popup; dev harness fakes them with `?fail=newer` / `?fail=quota` |
+| Timer announcements (M7) | The tab announces start/stop from changes of `data.running` (`timerTransition`), not from its own commands | Timers started in the popup or with the shortcut are announced too; a split on the same task says nothing |
+| Icons (M7) | Coloured stopwatch (`src/icons/time-tracker*.svg`) for the add-on; one 1px-outline glyph (`src/icons/toolbar.svg`) for the action and the space button that picks its own colour with `prefers-color-scheme`; colour swatch icons on the native Color menu items | Thunderbird's own toolbar icons are monochrome. A `themeIcons` light/dark pair didn't work: TB 157's spaces toolbar only draws the default image (found in the RC check: dark glyph on the dark theme). PNGs for ATN come from `npm run icon:png` |
 | Entry rows (M5) | `<button class="entry-row">` per entry, name from its content (visually hidden source label) | Enter/click opens the dialog, Delete deletes, native context menu like task rows; the name always matches the ticking time (axe `label-content-name-mismatch`) |
 
 ## How each milestone runs (Claude Code on your machine)
@@ -126,6 +130,12 @@
 - FR locale; DB error and upgrade handling; clean `web-ext lint`.
 - README, PRIVACY.md, CHANGELOG, extension icon, release workflow, ATN checklist.
 - ✅ The RC XPI passes the manual checklist on a clean 157 profile and a clean current-Release profile.
+
+### M7 outcomes
+- **Performance** (`tests/ui/perf-large.spec.js`, `?fixtures=large`: 300 tasks, 50,000 entries over 3 years, headless Firefox on the maintainer's machine): cold open (`tt-start` → `tt-ready`, the tab's own work) 644–793 ms before the cache, 60–104 ms after; badges update 12–28 ms after a change in another connection (write 3–19 ms). From navigation start the dev harness shows 252–412 ms, of which ~190–215 ms pass before `tt-start` (mock `messenger` boot and ~40 module requests to the dev server, neither of which exists in Thunderbird). The same timings inside Thunderbird come from `npm run tb:spike` (`artifacts/tb/spike.json` → `tracker.timing`; not run yet: the spike refuses to run while the real Thunderbird holds Marionette's port). The 50k test is local only (skipped in CI).
+- **axe** sweep (`tests/ui/a11y.spec.js`): views, archive, dialogs, menus, popup in light, dark and forced colours. Under emulated forced colours Firefox's SelectedItem/SelectedItemText pair is 3:1, so `color-contrast` is off there (the user's palette decides); every other rule runs.
+- **Installed XPI**: `npm run tb:rc -- --headless` on Thunderbird 157.0 installs `time-tracker@a-mango.github.io` 1.0.0 into a fresh profile (`extensions.json`: active, unsigned, `app-profile`); Thunderbird doesn't require signing.
+- **Orca** pass: not done (Orca isn't installed); checklist in `docs/RELEASE.md`.
 
 ## Stretch (after M7)
 

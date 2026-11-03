@@ -26,11 +26,10 @@ import { confirmReopen, moveTaskDialog, taskDialog } from './task-dialogs.js';
  * @param {{
  *   data: TrackerData,
  *   onError: (error: unknown) => void,
- *   announce: (text: string) => void,
  *   offerUndo: (message: string, undo: () => Promise<void>) => void,
  * }} options
  */
-export function createTaskCommands({ data, onError, announce, offerUndo }) {
+export function createTaskCommands({ data, onError, offerUndo }) {
   /** @template T @param {() => Promise<T>} fn @returns {Promise<T | undefined>} */
   const guarded = async (fn) => {
     try {
@@ -79,7 +78,6 @@ export function createTaskCommands({ data, onError, announce, offerUndo }) {
     return guarded(async () => {
       if (data.running?.taskId === id) {
         await stop(data.db);
-        announce(t('timerStopped', task.name));
         return;
       }
       try {
@@ -90,7 +88,6 @@ export function createTaskCommands({ data, onError, announce, offerUndo }) {
         await reopenTask(data.db, id);
         await start(data.db, id);
       }
-      announce(t('timerStarted', task.name));
     });
   }
 

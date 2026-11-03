@@ -1,0 +1,1141 @@
+{
+  "extensionName": {
+    "message": "Time Tracker"
+  },
+  "extensionDescription": {
+    "message": "Suivez le temps passé sur vos projets et tâches dans un onglet Thunderbird dédié."
+  },
+  "actionTitle": {
+    "message": "Time Tracker"
+  },
+  "spaceTitle": {
+    "message": "Time Tracker"
+  },
+  "commandToggleTimer": {
+    "message": "Démarrer la dernière tâche ou arrêter le minuteur en cours"
+  },
+  "trackerEmpty": {
+    "message": "Aucun projet pour le moment."
+  },
+  "popupHeading": {
+    "message": "Time Tracker"
+  },
+  "trackerLoadError": {
+    "message": "Impossible de charger vos données. Rechargez, ou redémarrez Thunderbird."
+  },
+  "tableColumnPicker": {
+    "message": "Choisir les colonnes à afficher"
+  },
+  "tableResizeColumn": {
+    "message": "Redimensionner la colonne $COLUMN$",
+    "placeholders": {
+      "column": {
+        "content": "$1",
+        "example": "Week"
+      }
+    }
+  },
+  "dialogOk": {
+    "message": "OK"
+  },
+  "dialogCancel": {
+    "message": "Annuler"
+  },
+  "notificationClose": {
+    "message": "Fermer"
+  },
+  "sidebarNewTask": {
+    "message": "Nouvelle tâche"
+  },
+  "sidebarAddEntry": {
+    "message": "Ajouter une saisie de temps"
+  },
+  "sidebarMore": {
+    "message": "Plus d’options"
+  },
+  "sidebarResize": {
+    "message": "Redimensionner le panneau des projets"
+  },
+  "modeViews": {
+    "message": "Vues"
+  },
+  "modeProjects": {
+    "message": "Projets"
+  },
+  "modeOptions": {
+    "message": "Options de $MODE$",
+    "placeholders": {
+      "mode": {
+        "content": "$1",
+        "example": "Projects"
+      }
+    }
+  },
+  "viewToday": {
+    "message": "Aujourd’hui"
+  },
+  "viewThisWeek": {
+    "message": "Cette semaine"
+  },
+  "viewStarred": {
+    "message": "Suivies"
+  },
+  "projectArchive": {
+    "message": "Archives"
+  },
+  "listSummary": {
+    "message": "$COUNT$ tâches ouvertes · $TOTAL$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      },
+      "total": {
+        "content": "$2",
+        "example": "30h 45m"
+      }
+    }
+  },
+  "listQuickFilter": {
+    "message": "Filtre rapide"
+  },
+  "listDisplayOptions": {
+    "message": "Options d’affichage"
+  },
+  "filterOpen": {
+    "message": "Ouvertes"
+  },
+  "filterStarred": {
+    "message": "Suivies"
+  },
+  "filterBillable": {
+    "message": "Facturables"
+  },
+  "filterTags": {
+    "message": "Étiquettes"
+  },
+  "filterPlaceholder": {
+    "message": "Filtrer ces tâches…"
+  },
+  "filterLabel": {
+    "message": "Filtrer les tâches"
+  },
+  "filterShortcut": {
+    "message": "Ctrl+Maj+K"
+  },
+  "tasksLabel": {
+    "message": "Tâches"
+  },
+  "columnStarred": {
+    "message": "Suivie"
+  },
+  "columnTimer": {
+    "message": "Minuteur"
+  },
+  "columnTask": {
+    "message": "Tâche"
+  },
+  "columnWeek": {
+    "message": "Semaine"
+  },
+  "columnTotal": {
+    "message": "Total"
+  },
+  "columnEstimate": {
+    "message": "Estimation"
+  },
+  "columnLastTracked": {
+    "message": "Dernier suivi"
+  },
+  "lastTrackedRunning": {
+    "message": "En cours"
+  },
+  "lastTrackedNever": {
+    "message": "Jamais"
+  },
+  "doneHidden": {
+    "message": "$COUNT$ tâches terminées masquées",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "listSeparator": {
+    "message": "·"
+  },
+  "doneShow": {
+    "message": "Afficher"
+  },
+  "taskRunning": {
+    "message": "En cours"
+  },
+  "colorBlue": {
+    "message": "Bleu"
+  },
+  "colorDarkBlue": {
+    "message": "Bleu foncé"
+  },
+  "colorTeal": {
+    "message": "Bleu canard"
+  },
+  "colorGreen": {
+    "message": "Vert"
+  },
+  "colorYellow": {
+    "message": "Jaune"
+  },
+  "colorOrange": {
+    "message": "Orange"
+  },
+  "colorPink": {
+    "message": "Rose"
+  },
+  "colorPurple": {
+    "message": "Violet"
+  },
+  "colorInk": {
+    "message": "Encre"
+  },
+  "menuColorCurrent": {
+    "message": "$NAME$ (actuelle)",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Blue"
+      }
+    }
+  },
+  "sidebarLabel": {
+    "message": "Projets et vues"
+  },
+  "detailResize": {
+    "message": "Redimensionner le panneau de détails"
+  },
+  "detailEmpty": {
+    "message": "Aucune tâche sélectionnée."
+  },
+  "detailLabel": {
+    "message": "Détails de la tâche"
+  },
+  "menuNewProject": {
+    "message": "Nouveau projet…"
+  },
+  "menuNewSubproject": {
+    "message": "Nouveau sous-projet…"
+  },
+  "menuRename": {
+    "message": "Renommer le projet…"
+  },
+  "menuColor": {
+    "message": "Couleur"
+  },
+  "menuMoveTo": {
+    "message": "Déplacer vers…"
+  },
+  "menuArchive": {
+    "message": "Archiver"
+  },
+  "menuUnarchive": {
+    "message": "Désarchiver"
+  },
+  "menuDelete": {
+    "message": "Supprimer le projet"
+  },
+  "menuSettings": {
+    "message": "Paramètres…"
+  },
+  "menuExport": {
+    "message": "Exporter en CSV…"
+  },
+  "projectDialogNew": {
+    "message": "Nouveau projet"
+  },
+  "projectDialogEdit": {
+    "message": "Propriétés du projet"
+  },
+  "projectName": {
+    "message": "Nom"
+  },
+  "projectColor": {
+    "message": "Couleur"
+  },
+  "projectParent": {
+    "message": "Créer comme sous-projet de"
+  },
+  "projectParentEdit": {
+    "message": "Sous-projet de"
+  },
+  "projectTopLevel": {
+    "message": "Aucun (premier niveau)"
+  },
+  "projectCreate": {
+    "message": "Créer le projet"
+  },
+  "dialogSave": {
+    "message": "Enregistrer"
+  },
+  "moveDialogTitle": {
+    "message": "Déplacer le projet"
+  },
+  "moveDialogLabel": {
+    "message": "Déplacer vers"
+  },
+  "moveButton": {
+    "message": "Déplacer"
+  },
+  "deleteDialogTitle": {
+    "message": "Supprimer le projet"
+  },
+  "deleteButton": {
+    "message": "Supprimer"
+  },
+  "deleteCascadeNote": {
+    "message": "Tout son contenu est aussi supprimé. Cette action est irréversible."
+  },
+  "errorBlocked": {
+    "message": "Un autre onglet ou une autre fenêtre Time Tracker bloque une mise à jour. Fermez-le, puis rechargez."
+  },
+  "errorNewerVersion": {
+    "message": "Vos données proviennent d’une version plus récente de Time Tracker. Mettez à jour le module pour les ouvrir."
+  },
+  "errorQuota": {
+    "message": "Espace de stockage insuffisant. Libérez de l’espace disque, puis réessayez."
+  },
+  "errorSave": {
+    "message": "Impossible d’enregistrer la modification. Réessayez."
+  },
+  "dbUpgraded": {
+    "message": "Time Tracker a été mis à jour dans un autre onglet. Rechargez cet onglet pour continuer."
+  },
+  "notificationReload": {
+    "message": "Recharger"
+  },
+  "deleteConfirm": {
+    "message": "Supprimer le projet « $NAME$ » ?",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Training"
+      }
+    }
+  },
+  "deleteCascade": {
+    "message": "Supprimer le projet « $NAME$ » et tout son contenu ?",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Client work"
+      }
+    }
+  },
+  "deleteCountProjects": {
+    "message": "Sous-projets : $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "deleteCountTasks": {
+    "message": "Tâches : $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "deleteCountEntries": {
+    "message": "Saisies de temps : $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "40"
+      }
+    }
+  },
+  "moveDialogText": {
+    "message": "Déplacer « $NAME$ » vers :",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Build"
+      }
+    }
+  },
+  "projectNameRequired": {
+    "message": "Saisissez un nom pour le projet."
+  },
+  "taskNewName": {
+    "message": "Nouvelle tâche"
+  },
+  "columnProject": {
+    "message": "Projet"
+  },
+  "timerStart": {
+    "message": "Démarrer le minuteur"
+  },
+  "timerStop": {
+    "message": "Arrêter le minuteur"
+  },
+  "listCount": {
+    "message": "$COUNT$ tâches ouvertes",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "7"
+      }
+    }
+  },
+  "emptyNoProject": {
+    "message": "Sélectionnez un projet pour voir ses tâches."
+  },
+  "emptyProject": {
+    "message": "Aucune tâche dans ce projet pour le moment."
+  },
+  "emptyProjectAllDone": {
+    "message": "Toutes les tâches sont terminées."
+  },
+  "emptyToday": {
+    "message": "Rien de suivi aujourd’hui."
+  },
+  "emptyWeek": {
+    "message": "Rien de suivi cette semaine."
+  },
+  "emptyStarred": {
+    "message": "Aucune tâche suivie."
+  },
+  "emptyFilter": {
+    "message": "Aucune tâche ne correspond au filtre."
+  },
+  "filterClear": {
+    "message": "Effacer le filtre"
+  },
+  "filterTagsLabel": {
+    "message": "Étiquettes à afficher"
+  },
+  "estimateOver": {
+    "message": "Estimation dépassée"
+  },
+  "displayColumns": {
+    "message": "Colonnes…"
+  },
+  "displayShowDone": {
+    "message": "Afficher les tâches terminées"
+  },
+  "taskDialogEdit": {
+    "message": "Propriétés de la tâche"
+  },
+  "taskName": {
+    "message": "Nom"
+  },
+  "taskProject": {
+    "message": "Projet"
+  },
+  "taskEstimate": {
+    "message": "Estimation"
+  },
+  "taskEstimateHint": {
+    "message": "Par exemple 90m, 1.5h ou 1h30. Laissez vide pour aucune."
+  },
+  "taskEstimateInvalid": {
+    "message": "Saisissez une durée comme 90m, 1.5h ou 1h30."
+  },
+  "taskBillable": {
+    "message": "Facturable"
+  },
+  "taskDone": {
+    "message": "Terminée"
+  },
+  "taskTags": {
+    "message": "Étiquettes"
+  },
+  "taskTagsHint": {
+    "message": "Séparez les étiquettes par des virgules."
+  },
+  "taskNotes": {
+    "message": "Notes"
+  },
+  "taskNameRequired": {
+    "message": "Saisissez un nom pour la tâche."
+  },
+  "taskMoveTitle": {
+    "message": "Déplacer la tâche"
+  },
+  "taskMoveText": {
+    "message": "Déplacer « $NAME$ » vers :",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Performance pass"
+      }
+    }
+  },
+  "taskDeleted": {
+    "message": "« $NAME$ » supprimée.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Performance pass"
+      }
+    }
+  },
+  "undo": {
+    "message": "Annuler"
+  },
+  "reopenTitle": {
+    "message": "Rouvrir la tâche"
+  },
+  "reopenText": {
+    "message": "« $NAME$ » est terminée. La rouvrir et démarrer le minuteur ?",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Form state refactor"
+      }
+    }
+  },
+  "reopenButton": {
+    "message": "Rouvrir et démarrer"
+  },
+  "timerStarted": {
+    "message": "Minuteur démarré : $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "timerStopped": {
+    "message": "Minuteur arrêté : $NAME$",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "renameLabel": {
+    "message": "Nom de la tâche"
+  },
+  "menuTaskStart": {
+    "message": "Démarrer le minuteur"
+  },
+  "menuTaskStop": {
+    "message": "Arrêter le minuteur"
+  },
+  "menuTaskEdit": {
+    "message": "Modifier la tâche…"
+  },
+  "menuTaskRename": {
+    "message": "Renommer"
+  },
+  "menuTaskStar": {
+    "message": "Suivre"
+  },
+  "menuTaskUnstar": {
+    "message": "Ne plus suivre"
+  },
+  "menuTaskDone": {
+    "message": "Marquer comme terminée"
+  },
+  "menuTaskReopen": {
+    "message": "Rouvrir"
+  },
+  "menuTaskMove": {
+    "message": "Déplacer vers…"
+  },
+  "menuTaskDelete": {
+    "message": "Supprimer la tâche"
+  },
+  "listSummaryOne": {
+    "message": "1 tâche ouverte · $TOTAL$",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "30h 45m"
+      }
+    }
+  },
+  "listCountOne": {
+    "message": "1 tâche ouverte"
+  },
+  "doneHiddenOne": {
+    "message": "1 tâche terminée masquée"
+  },
+  "notificationNoLastTask": {
+    "message": "Aucune tâche ouverte suivie pour l’instant. Démarrez une tâche une fois dans Time Tracker ; ce raccourci la redémarrera ensuite."
+  },
+  "detailBreadcrumb": {
+    "message": "Projet"
+  },
+  "timerBoxLabel": {
+    "message": "Minuteur"
+  },
+  "timerBoxStop": {
+    "message": "Arrêter"
+  },
+  "timerBoxSplit": {
+    "message": "Scinder…"
+  },
+  "timerBoxStart": {
+    "message": "Démarrer"
+  },
+  "timerBoxResume": {
+    "message": "Reprendre la dernière saisie"
+  },
+  "timerSince": {
+    "message": "En cours depuis $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "13:40"
+      }
+    }
+  },
+  "timerSinceNote": {
+    "message": "En cours depuis $TIME$ · $NOTE$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "13:40"
+      },
+      "note": {
+        "content": "$2",
+        "example": "Inline errors"
+      }
+    }
+  },
+  "timerLast": {
+    "message": "Dernière saisie $RANGE$",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "09:00 – 10:00"
+      }
+    }
+  },
+  "timerIdle": {
+    "message": "Pas encore suivie"
+  },
+  "detailAddEntry": {
+    "message": "Ajouter une saisie"
+  },
+  "detailMarkDone": {
+    "message": "Terminer"
+  },
+  "detailReopen": {
+    "message": "Rouvrir"
+  },
+  "detailEdit": {
+    "message": "Modifier"
+  },
+  "detailMore": {
+    "message": "Plus d’actions"
+  },
+  "statToday": {
+    "message": "Aujourd’hui"
+  },
+  "statWeek": {
+    "message": "Semaine"
+  },
+  "statTotal": {
+    "message": "Total"
+  },
+  "statEstimate": {
+    "message": "Estimation"
+  },
+  "entriesTitle": {
+    "message": "Saisies de temps"
+  },
+  "entriesEmpty": {
+    "message": "Aucune saisie de temps sur cette période."
+  },
+  "rangeToday": {
+    "message": "Aujourd’hui"
+  },
+  "rangeWeek": {
+    "message": "Cette semaine"
+  },
+  "rangeLastWeek": {
+    "message": "Semaine dernière"
+  },
+  "rangeMonth": {
+    "message": "Ce mois-ci"
+  },
+  "rangeAll": {
+    "message": "Tout"
+  },
+  "rangeLabel": {
+    "message": "Afficher les saisies : $RANGE$",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "This week"
+      }
+    }
+  },
+  "dayToday": {
+    "message": "Aujourd’hui · $DAY$",
+    "placeholders": {
+      "day": {
+        "content": "$1",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "sourceTimer": {
+    "message": "Depuis le minuteur"
+  },
+  "sourceSplit": {
+    "message": "Scindée d’une saisie du minuteur"
+  },
+  "sourceIdle": {
+    "message": "Depuis l’invite d’inactivité"
+  },
+  "sourceManual": {
+    "message": "Saisie manuelle"
+  },
+  "sourceRunning": {
+    "message": "En cours"
+  },
+  "entryNow": {
+    "message": "maintenant"
+  },
+  "entryDialogNew": {
+    "message": "Nouvelle saisie de temps"
+  },
+  "entryDialogEdit": {
+    "message": "Modifier la saisie de temps"
+  },
+  "entryDate": {
+    "message": "Date"
+  },
+  "entryStart": {
+    "message": "Début"
+  },
+  "entryEnd": {
+    "message": "Fin"
+  },
+  "entryEndRunningHint": {
+    "message": "Laissez vide pour que le minuteur continue."
+  },
+  "entryDuration": {
+    "message": "Durée"
+  },
+  "entryDurationInvalid": {
+    "message": "Saisissez une durée comme 90m, 1.5h ou 1h30."
+  },
+  "entryNextDay": {
+    "message": "Se termine le lendemain."
+  },
+  "entryNote": {
+    "message": "Note"
+  },
+  "entryTask": {
+    "message": "Tâche"
+  },
+  "entryStartMissing": {
+    "message": "Saisissez une date et une heure de début."
+  },
+  "entryStartFuture": {
+    "message": "Le minuteur en cours ne peut pas commencer dans le futur."
+  },
+  "entryEndMissing": {
+    "message": "Saisissez une heure de fin ou une durée."
+  },
+  "entryEndBeforeStart": {
+    "message": "La fin doit être après le début."
+  },
+  "entryEndFuture": {
+    "message": "Le minuteur en cours ne peut pas se terminer dans le futur."
+  },
+  "entryDeleted": {
+    "message": "Saisie de temps de « $NAME$ » supprimée.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "overlapTitle": {
+    "message": "Chevauchement"
+  },
+  "overlapTextOne": {
+    "message": "Cette saisie chevauche une autre saisie :"
+  },
+  "overlapText": {
+    "message": "Cette saisie chevauche $COUNT$ autres saisies :",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "overlapBack": {
+    "message": "Retour"
+  },
+  "overlapSave": {
+    "message": "Enregistrer quand même"
+  },
+  "splitTitle": {
+    "message": "Scinder la saisie de temps"
+  },
+  "splitText": {
+    "message": "Scinder la saisie"
+  },
+  "splitWhen": {
+    "message": "Scinder à"
+  },
+  "splitAtNow": {
+    "message": "Maintenant"
+  },
+  "splitAtTime": {
+    "message": "À"
+  },
+  "splitTime": {
+    "message": "Heure de scission"
+  },
+  "splitOutside": {
+    "message": "Choisissez une heure comprise dans la saisie."
+  },
+  "splitTask": {
+    "message": "La seconde partie va à"
+  },
+  "splitButton": {
+    "message": "Scinder"
+  },
+  "menuEntryEdit": {
+    "message": "Modifier la saisie…"
+  },
+  "menuEntrySplit": {
+    "message": "Scinder ici…"
+  },
+  "menuEntryDuplicate": {
+    "message": "Dupliquer…"
+  },
+  "menuEntryDelete": {
+    "message": "Supprimer la saisie"
+  },
+  "popupNoTimer": {
+    "message": "Aucun minuteur en cours"
+  },
+  "popupSwitchTo": {
+    "message": "Passer à…"
+  },
+  "popupStart": {
+    "message": "Démarrer…"
+  },
+  "popupRecent": {
+    "message": "Tâches récentes"
+  },
+  "popupMatching": {
+    "message": "Tâches correspondantes"
+  },
+  "popupNoRecent": {
+    "message": "Aucune tâche récente. Tapez pour rechercher."
+  },
+  "popupNoMatch": {
+    "message": "Aucune tâche ouverte correspondante."
+  },
+  "popupOpenTracker": {
+    "message": "Ouvrir Time Tracker"
+  },
+  "settingsTitle": {
+    "message": "Paramètres"
+  },
+  "settingsAppearance": {
+    "message": "Apparence"
+  },
+  "settingsDensity": {
+    "message": "Densité"
+  },
+  "settingsDensityCompact": {
+    "message": "Compacte"
+  },
+  "settingsDensityDefault": {
+    "message": "Par défaut"
+  },
+  "settingsDensityRelaxed": {
+    "message": "Aérée"
+  },
+  "settingsAccent": {
+    "message": "Couleur d’accentuation"
+  },
+  "settingsAccentSystem": {
+    "message": "Système"
+  },
+  "settingsAccentThunderbird": {
+    "message": "Thunderbird"
+  },
+  "settingsAccentPurple": {
+    "message": "Violet"
+  },
+  "settingsAccentOrange": {
+    "message": "Orange"
+  },
+  "settingsAccentPink": {
+    "message": "Rose"
+  },
+  "settingsAccentInk": {
+    "message": "Encre"
+  },
+  "settingsAccentTeal": {
+    "message": "Bleu canard"
+  },
+  "settingsTime": {
+    "message": "Temps"
+  },
+  "settingsWeekStart": {
+    "message": "La semaine commence le"
+  },
+  "settingsWeekMonday": {
+    "message": "Lundi"
+  },
+  "settingsWeekSunday": {
+    "message": "Dimanche"
+  },
+  "settingsDailyTarget": {
+    "message": "Objectif quotidien (heures)"
+  },
+  "settingsDurationFormat": {
+    "message": "Format des durées"
+  },
+  "settingsDurationHm": {
+    "message": "Heures et minutes (1h 05m)"
+  },
+  "settingsDurationDecimal": {
+    "message": "Heures décimales (1.08h)"
+  },
+  "settingsLists": {
+    "message": "Listes"
+  },
+  "settingsShowDone": {
+    "message": "Afficher les tâches terminées"
+  },
+  "settingsConfirmDelete": {
+    "message": "Confirmer avant de supprimer"
+  },
+  "settingsData": {
+    "message": "Données"
+  },
+  "settingsDataHint": {
+    "message": "Vos données restent dans ce profil Thunderbird. Sauvegardez-les dans un fichier pour les garder en sécurité."
+  },
+  "settingsBackup": {
+    "message": "Sauvegarder…"
+  },
+  "settingsRestore": {
+    "message": "Restaurer…"
+  },
+  "settingsExportCsv": {
+    "message": "Exporter en CSV…"
+  },
+  "settingsWipe": {
+    "message": "Supprimer toutes les données…"
+  },
+  "settingsClose": {
+    "message": "Fermer"
+  },
+  "exportTitle": {
+    "message": "Exporter les saisies de temps"
+  },
+  "exportFrom": {
+    "message": "Du"
+  },
+  "exportTo": {
+    "message": "Au"
+  },
+  "exportProject": {
+    "message": "Projet"
+  },
+  "exportAllProjects": {
+    "message": "Tous les projets"
+  },
+  "exportHint": {
+    "message": "Les saisies qui commencent dans la période, sous-projets compris. Un minuteur en cours n’est pas inclus."
+  },
+  "exportButton": {
+    "message": "Exporter"
+  },
+  "exportBadRange": {
+    "message": "Le dernier jour ne doit pas précéder le premier."
+  },
+  "exportDone": {
+    "message": "$COUNT$ saisies exportées.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "csvDate": {
+    "message": "Date"
+  },
+  "csvStart": {
+    "message": "Début"
+  },
+  "csvEnd": {
+    "message": "Fin"
+  },
+  "csvMinutes": {
+    "message": "Minutes"
+  },
+  "csvProject": {
+    "message": "Projet"
+  },
+  "csvTask": {
+    "message": "Tâche"
+  },
+  "csvNote": {
+    "message": "Note"
+  },
+  "csvBillable": {
+    "message": "Facturable"
+  },
+  "restoreTitle": {
+    "message": "Restaurer une sauvegarde"
+  },
+  "restoreSummary": {
+    "message": "Sauvegarde du $DATE$",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "20 Oct 2026, 14:45"
+      }
+    }
+  },
+  "restoreCounts": {
+    "message": "$PROJECTS$ projets, $TASKS$ tâches, $ENTRIES$ saisies de temps",
+    "placeholders": {
+      "projects": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tasks": {
+        "content": "$2",
+        "example": "12"
+      },
+      "entries": {
+        "content": "$3",
+        "example": "340"
+      }
+    }
+  },
+  "restoreRange": {
+    "message": "Saisies du $FROM$ au $TO$",
+    "placeholders": {
+      "from": {
+        "content": "$1",
+        "example": "1 Sep 2026"
+      },
+      "to": {
+        "content": "$2",
+        "example": "20 Oct 2026"
+      }
+    }
+  },
+  "restoreNoEntries": {
+    "message": "Aucune saisie de temps"
+  },
+  "restoreHint": {
+    "message": "Fusionner conserve vos données actuelles et remplace les enregistrements présents dans la sauvegarde. Tout remplacer supprime d’abord tout, paramètres compris."
+  },
+  "restoreMerge": {
+    "message": "Fusionner"
+  },
+  "restoreReplace": {
+    "message": "Tout remplacer"
+  },
+  "restoreDone": {
+    "message": "Sauvegarde restaurée."
+  },
+  "restoreInvalid": {
+    "message": "Ce fichier ne peut pas être restauré : $REASON$.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "it isn’t a Time Tracker backup"
+      }
+    }
+  },
+  "restoreConflict": {
+    "message": "La sauvegarde ne peut pas être fusionnée : $REASON$. Arrêtez le minuteur, ou utilisez Tout remplacer.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "both have a running timer"
+      }
+    }
+  },
+  "restoreReadError": {
+    "message": "Impossible de lire le fichier."
+  },
+  "backupDone": {
+    "message": "Sauvegarde enregistrée sous $NAME$.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "time-tracker-2026-10-20.json"
+      }
+    }
+  },
+  "wipeTitle": {
+    "message": "Supprimer toutes les données"
+  },
+  "wipeText": {
+    "message": "Cela supprime tous les projets, tâches, saisies de temps et paramètres de Time Tracker. Cette action est irréversible. Sauvegardez d’abord si vous pourriez avoir besoin des données."
+  },
+  "wipeWord": {
+    "message": "SUPPRIMER"
+  },
+  "wipePrompt": {
+    "message": "Tapez $WORD$ pour confirmer",
+    "placeholders": {
+      "word": {
+        "content": "$1",
+        "example": "DELETE"
+      }
+    }
+  },
+  "wipeButton": {
+    "message": "Tout supprimer"
+  },
+  "wipeDone": {
+    "message": "Toutes les données ont été supprimées."
+  },
+  "popupSplit": {
+    "message": "Scinder"
+  },
+  "popupSearchPlaceholder": {
+    "message": "Rechercher des tâches ouvertes"
+  },
+  "restoreReasonTooLarge": {
+    "message": "il dépasse 10 Mo"
+  },
+  "restoreReasonJson": {
+    "message": "ce n’est pas du JSON valide"
+  },
+  "restoreReasonFormat": {
+    "message": "ce n’est pas une sauvegarde Time Tracker"
+  },
+  "restoreReasonVersion": {
+    "message": "il provient d’une version plus récente de Time Tracker"
+  },
+  "restoreReasonRunning": {
+    "message": "un minuteur en cours serait sur une tâche terminée"
+  },
+  "restoreReasonMultipleRunning": {
+    "message": "les deux ont un minuteur en cours"
+  },
+  "restoreReasonContents": {
+    "message": "son contenu ne correspond pas au format de sauvegarde"
+  }
+}

@@ -10,6 +10,7 @@ import {
 import { createProject, listProjects } from '../../src/db/projects.js';
 import { getSettings, updateSettings } from '../../src/db/settings.js';
 import { listTasks, markTaskDone, updateTask } from '../../src/db/tasks.js';
+import { AGGREGATES_FORMAT, getAggregates } from '../../src/db/aggregates.js';
 import { tx, req } from '../../src/db/idb.js';
 import { ImportError } from '../../src/lib/errors.js';
 import { parseBackup } from '../../src/lib/importer.js';
@@ -58,7 +59,10 @@ async function populated() {
 describe('backup', () => {
   it('round-trips: backup → wipe → restore gives a deep-equal database', async () => {
     const { db } = await populated();
+    // The aggregates cache exists (a page opened): restore must give back the same one.
+    await getAggregates(db);
     const before = await dump(db);
+    expect(Object.keys(before.meta.aggregates.tasks).length).toBeGreaterThan(0);
     const backup = await exportBackup(db, { now: T0 + MIN });
     expect(backup).toMatchObject({
       format: 'thunderbird-time-tracker',
@@ -71,7 +75,11 @@ describe('backup', () => {
     await wipeAll(db);
     const wiped = await dump(db);
     expect(wiped).toMatchObject({ projects: [], tasks: [], entries: [], links: [] });
-    expect(wiped.meta).toEqual({ schemaVersion: before.meta.schemaVersion, running: null });
+    expect(wiped.meta).toEqual({
+      schemaVersion: before.meta.schemaVersion,
+      running: null,
+      aggregates: { format: AGGREGATES_FORMAT, tasks: {} },
+    });
 
     await restoreBackup(db, parsed, { mode: 'replace' });
     expect(await dump(db)).toEqual(before);

@@ -44,7 +44,9 @@ test('tracker tab shows an error when the database cannot be opened', async ({ p
     };
   });
   await page.goto('/ui/tracker.html');
-  await expect(page.getByText('Could not load your data. Try reopening this tab.')).toBeVisible();
+  await expect(page.getByText('Could not load your data. Reload, or restart Thunderbird.')).toBeVisible(); // prettier-ignore
+  await expect(page.getByRole('button', { name: 'Reload' })).toBeVisible();
+  await expectNoAxeViolations(page);
 });
 
 test('popup renders without errors', async ({ page }) => {

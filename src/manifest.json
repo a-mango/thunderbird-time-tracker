@@ -2,11 +2,16 @@
   "manifest_version": 3,
   "name": "__MSG_extensionName__",
   "description": "__MSG_extensionDescription__",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "default_locale": "en",
+  "icons": {
+    "16": "icons/time-tracker-16.svg",
+    "32": "icons/time-tracker.svg",
+    "64": "icons/time-tracker.svg"
+  },
   "browser_specific_settings": {
     "gecko": {
-      "id": "time-tracker@example.invalid",
+      "id": "time-tracker@a-mango.github.io",
       "strict_min_version": "157.0",
       "data_collection_permissions": {
         "required": ["none"]
@@ -21,7 +26,8 @@
   "action": {
     "default_title": "__MSG_actionTitle__",
     "default_popup": "ui/popup.html",
-    "allowed_spaces": []
+    "allowed_spaces": [],
+    "default_icon": "icons/toolbar.svg"
   },
   "commands": {
     "toggle-timer": {

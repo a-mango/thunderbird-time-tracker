@@ -1,7 +1,8 @@
 // Dev-only: fills the page origin's IndexedDB with fixtures, through the same importer checks a
 // backup goes through. Used by mock-messenger.js in the dev harness; never shipped.
 import { DB_NAME, META, STORES } from '../src/db/schema.js';
-import { openDB, req, tx } from '../src/db/idb.js';
+import { storeAggregates } from '../src/db/aggregates.js';
+import { openDB, tx } from '../src/db/idb.js';
 import { updateSettings } from '../src/db/settings.js';
 import { parseBackup } from '../src/lib/importer.js';
 
@@ -55,7 +56,8 @@ export async function seedDatabase(fixtures, { factory = indexedDB, now = Date.n
       for (const task of backup.tasks) s.tasks.put(task);
       for (const entry of backup.entries) s.entries.put(entry);
       const running = backup.entries.find((entry) => entry.end === null);
-      return req(s.meta.put(running?.id ?? null, META.running));
+      s.meta.put(running?.id ?? null, META.running);
+      return storeAggregates(s, backup.entries);
     });
   } finally {
     db.close();

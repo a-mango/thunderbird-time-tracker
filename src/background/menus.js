@@ -44,6 +44,17 @@ export const ENTRY_MENU = Object.freeze({
 export const COLOR_ITEM_PREFIX = `${MENU.color}:`;
 
 /**
+ * Swatch icon of a palette colour: `src/icons/colors/rrggbb.svg`, or `rrggbb-current.svg` (with
+ * a check mark) for the project's current colour. Pass it through `runtime.getURL`: the menus
+ * schema resolves a relative icon path against the calling script (`background/`, `ui/`), not
+ * the extension root.
+ * @param {string} color `#rrggbb`
+ * @param {{current?: boolean}} [options]
+ */
+export const colorIconPath = (color, { current = false } = {}) =>
+  `icons/colors/${color.slice(1)}${current ? '-current' : ''}.svg`;
+
+/**
  * Recreates the items. They start hidden: the page makes the right ones visible in onShown, so a
  * right-click anywhere else in the page (default menu) never shows them.
  * @param {typeof messenger} [api]
@@ -93,8 +104,10 @@ export async function registerMenus(api = messenger) {
       ...common,
       id: `${COLOR_ITEM_PREFIX}${color}`,
       parentId: MENU.color,
-      type: 'radio',
+      // Normal items: Thunderbird draws a radio item's check in place of its icon, so the
+      // current colour is a swatch with a check mark instead (set by the page in onShown).
       title: t(label),
+      icons: { 16: api.runtime.getURL(colorIconPath(color)) },
       visible: true,
     });
   }

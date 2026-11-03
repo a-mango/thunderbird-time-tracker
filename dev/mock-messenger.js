@@ -8,6 +8,7 @@
 // items, and before the page script runs it seeds IndexedDB with fixtures (see `ready`).
 
 import { registerMenus } from '../src/background/menus.js';
+import { DB_NAME } from '../src/db/schema.js';
 import { generateFixtures } from './fixtures.js';
 import { databaseExists, deleteDatabase, seedDatabase, seedSettings } from './seed.js';
 
@@ -67,6 +68,7 @@ const BUILT_IN_SPACES = ['mail', 'addressbook', 'calendar', 'tasks', 'chat', 'se
  * @property {Record<string, any>} [messages] contents of _locales/en/messages.json
  * @property {string} [baseUrl] extension origin, ends with '/'
  * @property {Record<string, any>} [manifest]
+ * @property {string} [locale] what getUILanguage and @@ui_locale return (default 'en')
  */
 
 /**
@@ -76,6 +78,7 @@ export function createMessenger({
   messages = {},
   baseUrl = 'moz-extension://mock/',
   manifest = {},
+  locale = 'en',
 } = {}) {
   /** @type {messenger.spaces.Space[]} */
   const spaces = BUILT_IN_SPACES.map((name, index) => ({
@@ -428,9 +431,10 @@ export function createMessenger({
     },
     i18n: {
       /** @param {string} name @param {string | string[]} [substitutions] */
-      getMessage: (name, substitutions) => formatMessage(messages, name, substitutions),
-      getUILanguage: () => 'en',
-      getAcceptLanguages: async () => ['en'],
+      getMessage: (name, substitutions) =>
+        name === '@@ui_locale' ? locale : formatMessage(messages, name, substitutions),
+      getUILanguage: () => locale,
+      getAcceptLanguages: async () => [locale],
     },
     tabs: {
       /** @param {number} tabId */
@@ -488,8 +492,11 @@ export function createMessenger({
  * - default: seed fixtures (seed 42) only if the database doesn't exist yet, so changes survive
  *   reloads;
  * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything; `?fixtures=bulk`:
- *   re-seed with 2,000 extra tasks in Support retainer (performance fixture);
- * - `?density=` / `?accent=`: store those settings (for screenshots).
+ *   re-seed with 2,000 extra tasks in Support retainer (M4 performance fixture);
+ *   `?fixtures=large`: re-seed with 300 tasks and 50,000 entries over 3 years (M7);
+ * - `?density=` / `?accent=`: store those settings (for screenshots);
+ * - `?fail=newer`: the stored database gets a newer schema version (VersionError on open);
+ *   `?fail=quota`: every later IndexedDB write throws QuotaExceededError (M7 error bars).
  * @param {URLSearchParams} params
  */
 export async function prepareDatabase(params) {
@@ -497,6 +504,11 @@ export async function prepareDatabase(params) {
   if (params.get('fixtures') === 'empty') await deleteDatabase();
   else if (params.get('fixtures') === 'bulk') {
     await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }, { bulkTasks: 2000 }));
+  } else if (params.get('fixtures') === 'large') {
+    const options = { seed: Number(seed ?? 42) };
+    // 16 reference tasks + 284 = 300 tasks; 50,000 entries in all.
+    const base = generateFixtures(options).entries.length;
+    await seedDatabase(generateFixtures(options, { largeTasks: 284, largeEntries: 50_000 - base }));
   } else if (seed !== null || !(await databaseExists())) {
     await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }));
   }
@@ -507,6 +519,30 @@ export async function prepareDatabase(params) {
     if (value) settings[name] = value;
   }
   if (Object.keys(settings).length > 0) await seedSettings(settings);
+  const fail = params.get('fail');
+  if (fail === 'newer') await bumpVersion();
+  if (fail === 'quota') failWrites();
+}
+
+/** Upgrades the stored database to a version this code doesn't know. */
+function bumpVersion() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1000);
+    request.onsuccess = () => {
+      request.result.close();
+      resolve(undefined);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/** Makes every IndexedDB write fail like a full disk. */
+function failWrites() {
+  for (const method of /** @type {const} */ (['put', 'add', 'delete', 'clear'])) {
+    IDBObjectStore.prototype[method] = () => {
+      throw new DOMException('The disk is full (dev ?fail=quota)', 'QuotaExceededError');
+    };
+  }
 }
 
 /**
@@ -518,6 +554,7 @@ async function boot() {
   const api = createMessenger({
     messages: data ? JSON.parse(data.textContent ?? '{}') : {},
     baseUrl: `${location.origin}/`,
+    locale: data?.dataset.locale ?? 'en',
   });
   Object.assign(globalThis, { messenger: api, browser: api });
   // Like Thunderbird, record the target before the page's own contextmenu listeners run.

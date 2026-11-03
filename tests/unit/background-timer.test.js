@@ -49,8 +49,9 @@ describe('syncTimerStatus', () => {
     // The space is left alone.
     expect(api.spaces._props(space.id)).toEqual({
       url: 'moz-extension://test/ui/tracker.html',
-      button: { title: 'Time Tracker' },
+      button: expect.objectContaining({ title: 'Time Tracker' }),
     });
+    expect(api.spaces._props(space.id).button.badgeText).toBeUndefined();
   });
 
   it('clears the label and the alarm when stopped', async () => {

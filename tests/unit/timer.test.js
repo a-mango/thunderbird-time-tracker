@@ -12,6 +12,7 @@ import {
   stop,
   stopAt,
   switchTo,
+  timerTransition,
   toggle,
 } from '../../src/lib/timer.js';
 import { addEntry } from '../../src/db/entries.js';
@@ -301,5 +302,19 @@ describe('single running timer across contexts', () => {
       for (const entry of all) if (entry.end !== null) expect(entry.start).toBeLessThan(entry.end);
       now += 10 * MIN;
     }
+  });
+});
+
+describe('timerTransition', () => {
+  const a = { id: 'e1', taskId: 't1' };
+  it.each([
+    ['nothing runs', null, null, null],
+    ['a timer starts', null, a, { type: 'started', taskId: 't1' }],
+    ['it stops', a, null, { type: 'stopped', taskId: 't1' }],
+    ['the same entry', a, a, null],
+    ['a split on the same task', a, { id: 'e2', taskId: 't1' }, null],
+    ['a switch to another task', a, { id: 'e2', taskId: 't2' }, { type: 'started', taskId: 't2' }],
+  ])('%s', (_name, before, after, expected) => {
+    expect(timerTransition(before, after)).toEqual(expected);
   });
 });

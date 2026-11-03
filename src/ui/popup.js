@@ -18,6 +18,7 @@ import { isArchived, projectPathName } from '../lib/sidebar.js';
 import { split, start, stop } from '../lib/timer.js';
 import { applySettings } from './apply-settings.js';
 import { localize, t } from './i18n.js';
+import { storageMessage } from './storage-errors.js';
 import { el, icon } from './render.js';
 
 /**
@@ -163,7 +164,7 @@ async function act(action) {
     window.close();
   } catch (error) {
     console.error('time tracker: popup action failed', error);
-    ref('error').textContent = t('errorSave');
+    ref('error').textContent = storageMessage(error, 'write').message;
   } finally {
     busy = false;
   }
@@ -208,7 +209,11 @@ async function main() {
     await load();
   } catch (error) {
     console.error('time tracker: opening the database failed', error);
-    ref('error').textContent = t('trackerLoadError');
+    ref('error').textContent = storageMessage(error, 'open').message;
+    // Nothing to show or switch to; Open Time Tracker still works.
+    ref('timer').hidden = true;
+    /** @type {HTMLElement} */ (document.querySelector('.popup-switch')).hidden = true;
+    document.documentElement.dataset.ready = '';
     return;
   }
   renderTimer();

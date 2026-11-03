@@ -10,6 +10,7 @@
 // `purgeDeleted` (called on Thunderbird start) removes it for good.
 import { InvariantError, NotFoundError, TaskDoneError, ValidationError } from '../lib/errors.js';
 import { emit, req, tx } from './idb.js';
+import { touchTasks } from './aggregates.js';
 import { INDEXES, META, STORES } from './schema.js';
 import { checkFields, checkId, checkString, checkTime, newId } from './validate.js';
 
@@ -69,6 +70,9 @@ async function requireTask(tasks, taskId) {
   return task;
 }
 
+// Every write below that adds, changes or removes entries calls `touchTasks` (db/aggregates.js)
+// for the tasks it touched, inside its own transaction, so `meta.aggregates` stays current.
+
 // ---- Running pointer helpers. Only call them inside a readwrite tx over entries + meta. ----
 
 /**
@@ -97,9 +101,11 @@ export async function stopRunningIn({ entries, meta }, entry, now) {
   if (now > entry.start) {
     const stopped = { ...entry, end: now, updatedAt: now };
     await req(entries.put(stopped));
+    await touchTasks({ entries, meta }, [entry.taskId]);
     return { entry: stopped, discarded: false };
   }
   await req(entries.delete(entry.id));
+  await touchTasks({ entries, meta }, [entry.taskId]);
   return { entry, discarded: true };
 }
 
@@ -124,6 +130,7 @@ export async function removeEntriesOfTasks(stores, taskIds) {
   if (typeof running === 'string' && removed.includes(running)) {
     await req(stores.meta.put(null, META.running));
   }
+  await touchTasks(stores, taskIds);
   return removed;
 }
 
@@ -163,10 +170,16 @@ export async function addEntry(db, input, { now = Date.now() } = {}) {
     updatedAt: now,
     deletedAt: null,
   };
-  await tx(db, [STORES.tasks, STORES.entries], 'readwrite', async ({ tasks, entries }) => {
-    await requireTask(tasks, taskId);
-    await req(entries.add(entry));
-  });
+  await tx(
+    db,
+    [STORES.tasks, STORES.entries, STORES.meta],
+    'readwrite',
+    async ({ tasks, entries, meta }) => {
+      await requireTask(tasks, taskId);
+      await req(entries.add(entry));
+      await touchTasks({ entries, meta }, [taskId]);
+    },
+  );
   emit(db, { type: 'entries', ids: [entry.id] });
   return entry;
 }
@@ -196,9 +209,9 @@ export async function updateEntry(db, id, patch, { now = Date.now() } = {}) {
 
   const updated = await tx(
     db,
-    [STORES.tasks, STORES.entries],
+    [STORES.tasks, STORES.entries, STORES.meta],
     'readwrite',
-    async ({ tasks, entries }) => {
+    async ({ tasks, entries, meta }) => {
       /** @type {Entry | undefined} */
       const entry = await req(entries.get(id));
       if (!entry || !isLive(entry)) throw new NotFoundError('entry', 'entry not found', { id });
@@ -222,6 +235,7 @@ export async function updateEntry(db, id, patch, { now = Date.now() } = {}) {
         }
       }
       await req(entries.put(next));
+      await touchTasks({ entries, meta }, [entry.taskId, next.taskId]);
       return next;
     },
   );
@@ -325,12 +339,14 @@ export async function softDeleteEntry(db, id, { now = Date.now() } = {}) {
       }
       if (now <= entry.start) {
         await req(stores.entries.delete(id));
+        await touchTasks(stores, [entry.taskId]);
         return { ...entry, deletedAt: now };
       }
       target = { ...entry, end: now, updatedAt: now };
     }
     const marked = { ...target, deletedAt: now };
     await req(stores.entries.put(marked));
+    await touchTasks(stores, [entry.taskId]);
     return marked;
   });
   emit(db, { type: 'entries', ids: [id] });
@@ -347,7 +363,8 @@ export async function softDeleteEntry(db, id, { now = Date.now() } = {}) {
  * @throws {InvariantError} `running` when the stored entry has no end (corrupt data)
  */
 export async function restoreEntry(db, id, { now = Date.now() } = {}) {
-  const restored = await tx(db, STORES.entries, 'readwrite', async ({ entries }) => {
+  const restored = await tx(db, [STORES.entries, STORES.meta], 'readwrite', async (stores) => {
+    const { entries } = stores;
     /** @type {Entry | undefined} */
     const entry = await req(entries.get(id));
     if (!entry || entry.deletedAt === null) {
@@ -360,6 +377,7 @@ export async function restoreEntry(db, id, { now = Date.now() } = {}) {
     }
     const next = { ...entry, deletedAt: null, updatedAt: now };
     await req(entries.put(next));
+    await touchTasks(stores, [entry.taskId]);
     return next;
   });
   emit(db, { type: 'entries', ids: [id] });
@@ -373,10 +391,15 @@ export async function restoreEntry(db, id, { now = Date.now() } = {}) {
  * @returns {Promise<string[]>} purged ids
  */
 export async function purgeDeleted(db) {
-  const ids = await tx(db, STORES.entries, 'readwrite', async ({ entries }) => {
-    const keys = await req(entries.index(INDEXES.entryDeleted).getAllKeys());
-    for (const key of keys) await req(entries.delete(key));
-    return keys.map(String);
+  const ids = await tx(db, [STORES.entries, STORES.meta], 'readwrite', async (stores) => {
+    /** @type {Entry[]} */
+    const deleted = await req(stores.entries.index(INDEXES.entryDeleted).getAll());
+    for (const entry of deleted) await req(stores.entries.delete(entry.id));
+    await touchTasks(
+      stores,
+      deleted.map((entry) => entry.taskId),
+    );
+    return deleted.map((entry) => entry.id);
   });
   emit(db, { type: 'entries', ids });
   return ids;
@@ -440,6 +463,7 @@ export async function startEntry(
       };
       await req(entries.add(entry));
       await req(meta.put(entry.id, META.running));
+      await touchTasks({ entries, meta }, [taskId]);
       return { entry, previous, changed: true };
     },
   );
@@ -477,6 +501,7 @@ export async function stopRunning(db, { now = Date.now(), at, id } = {}) {
     await req(stores.meta.put(null, META.running));
     const stopped = { ...running, end: at, updatedAt: now };
     await req(stores.entries.put(stopped));
+    await touchTasks(stores, [running.taskId]);
     return { entry: stopped, discarded: false };
   });
   if (stop) emit(db, { type: 'entries', ids: [stop.entry.id] });
@@ -533,6 +558,7 @@ export async function splitRunning(db, at, { now = Date.now(), taskId, id } = {}
       await req(stores.entries.put(stopped));
       await req(stores.entries.add(entry));
       await req(stores.meta.put(entry.id, META.running));
+      await touchTasks(stores, [running.taskId, target]);
       return { stopped, entry };
     },
   );
@@ -558,9 +584,9 @@ export async function splitEntry(db, id, at, { now = Date.now(), taskId } = {}) 
   if (taskId !== undefined) checkId(taskId, 'taskId');
   const result = await tx(
     db,
-    [STORES.tasks, STORES.entries],
+    [STORES.tasks, STORES.entries, STORES.meta],
     'readwrite',
-    async ({ tasks, entries }) => {
+    async ({ tasks, entries, meta }) => {
       /** @type {Entry | undefined} */
       const entry = await req(entries.get(id));
       if (!entry || !isLive(entry)) throw new NotFoundError('entry', 'entry not found', { id });
@@ -587,6 +613,7 @@ export async function splitEntry(db, id, at, { now = Date.now(), taskId } = {}) 
       };
       await req(entries.put(stopped));
       await req(entries.add(second));
+      await touchTasks({ entries, meta }, [entry.taskId, target]);
       return { stopped, entry: second };
     },
   );
@@ -656,6 +683,7 @@ export async function discardRunning(db) {
     if (!running) return null;
     await req(stores.entries.delete(running.id));
     await req(stores.meta.put(null, META.running));
+    await touchTasks(stores, [running.taskId]);
     return running;
   });
   if (removed) emit(db, { type: 'entries', ids: [removed.id] });
