@@ -68,6 +68,7 @@ const BUILT_IN_SPACES = ['mail', 'addressbook', 'calendar', 'tasks', 'chat', 'se
  * @property {Record<string, any>} [messages] contents of _locales/en/messages.json
  * @property {string} [baseUrl] extension origin, ends with '/'
  * @property {Record<string, any>} [manifest]
+ * @property {string} [locale] what getUILanguage and @@ui_locale return (default 'en')
  */
 
 /**
@@ -77,6 +78,7 @@ export function createMessenger({
   messages = {},
   baseUrl = 'moz-extension://mock/',
   manifest = {},
+  locale = 'en',
 } = {}) {
   /** @type {messenger.spaces.Space[]} */
   const spaces = BUILT_IN_SPACES.map((name, index) => ({
@@ -429,9 +431,10 @@ export function createMessenger({
     },
     i18n: {
       /** @param {string} name @param {string | string[]} [substitutions] */
-      getMessage: (name, substitutions) => formatMessage(messages, name, substitutions),
-      getUILanguage: () => 'en',
-      getAcceptLanguages: async () => ['en'],
+      getMessage: (name, substitutions) =>
+        name === '@@ui_locale' ? locale : formatMessage(messages, name, substitutions),
+      getUILanguage: () => locale,
+      getAcceptLanguages: async () => [locale],
     },
     tabs: {
       /** @param {number} tabId */
@@ -551,6 +554,7 @@ async function boot() {
   const api = createMessenger({
     messages: data ? JSON.parse(data.textContent ?? '{}') : {},
     baseUrl: `${location.origin}/`,
+    locale: data?.dataset.locale ?? 'en',
   });
   Object.assign(globalThis, { messenger: api, browser: api });
   // Like Thunderbird, record the target before the page's own contextmenu listeners run.

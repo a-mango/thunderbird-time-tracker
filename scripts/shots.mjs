@@ -30,6 +30,12 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-settings-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-settings-dark', '/ui/tracker.html', 'dark', TAB],
   ['tracker-export-light', '/ui/tracker.html', 'light', TAB],
+  // M7: French (string lengths) and forced colours (system palette).
+  ['tracker-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
+  ['tracker-settings-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
+  ['tracker-forced-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-forced-dark', '/ui/tracker.html', 'dark', TAB],
+  ['popup-fr-light', '/ui/popup.html?locale=fr', 'light', { width: 360, height: 600 }],
   ['popup-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 360, height: 600 }],
   ['popup-search-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
@@ -57,7 +63,12 @@ const browser = await firefox.launch();
 try {
   for (const [name, path, colorScheme, viewport] of SHOTS) {
     // A new page is a new context: its own IndexedDB, seeded by the mock.
-    const page = await browser.newPage({ colorScheme, viewport, reducedMotion: 'reduce' });
+    const page = await browser.newPage({
+      colorScheme,
+      viewport,
+      reducedMotion: 'reduce',
+      forcedColors: name.includes('forced') ? 'active' : 'none',
+    });
     await page.clock.setFixedTime(NOW);
     await page.goto(`http://localhost:${port}${path}`);
     await page.waitForLoadState('networkidle');
@@ -89,10 +100,10 @@ try {
       } else if (name.includes('split-dialog')) {
         await page.getByRole('button', { name: 'Split…' }).click();
       } else if (name.includes('settings') || name.includes('export')) {
-        await page.getByRole('button', { name: 'More options' }).click();
-        await page
-          .getByRole('menuitem', { name: name.includes('settings') ? 'Settings…' : 'Export CSV…' })
-          .click();
+        const fr = path.includes('locale=fr');
+        await page.getByRole('button', { name: fr ? 'Plus d’options' : 'More options' }).click();
+        const item = name.includes('settings') ? 'Settings…' : 'Export CSV…';
+        await page.getByRole('menuitem', { name: fr ? 'Paramètres…' : item }).click();
       }
       await page.mouse.move(0, 0);
       await page.screenshot({ path: file });
