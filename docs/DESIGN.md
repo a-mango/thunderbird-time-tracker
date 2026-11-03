@@ -54,6 +54,19 @@ The mockups show the whole window. Only the **content of our tab** is ours.
 
 360px wide, 3–4 blocks. The running task shows elapsed time, Stop, and Split. Then a "Switch to…" search field with the 5 most recent tasks (Enter = start), then "Open Time Tracker". Use the same tokens and no new visual language.
 
+- The popup reuses the detail pane's timer box (Stop, **Split Now**: no dialog in a 360px popup, so it splits at the current time) and list rows with the tree-listbox row states. The field is an ARIA combobox over a listbox (`aria-activedescendant`), so focus stays in the field: Up/Down move, Enter starts, the pointer moves the same highlight. Done tasks, tasks in archived projects and the running task are never offered. The popup closes after each action (`window.close()`).
+
+## Settings (M6)
+
+A modal dialog from the project pane's More menu (More › Settings…), not a mode of the tab. This is closer to Thunderbird because:
+- Thunderbird's own settings apply each change as you make it (no OK button), and its smaller option groups open as in-content subdialogs over the page they affect. Our settings are short, so one subdialog fits.
+- The panes stay visible behind the dialog, so a density, accent or duration-format change can be seen at once. Every other open page follows through the `settings` change on `BroadcastChannel('tt')`.
+
+Sections: Appearance (density, accent), Time (week start, daily target, duration format), Lists (show done tasks, confirm deletes), Data (Back Up…, Restore…, Export CSV…, Delete All Data…; the result shows in a status line). Export CSV… is also in the More menu.
+- **Backup**: `<a download>` of a blob (`time-tracker-YYYY-MM-DD.json`). The M6 spike showed that this saves the file in Thunderbird 158 (`artifacts/tb/spike.json` → `download`), so the `downloads` permission isn't needed.
+- **Restore**: `parseBackup` validates the file, then a preview shows the export date, counts and entry date range, with **Merge** (primary; same id = the backup wins, nothing removed, settings kept) or **Replace All** (destructive; settings included).
+- **Delete All Data**: typing the localised word (`DELETE`) is required; the primary button refuses until it matches.
+
 ## Components
 
 - **Buttons**: min-height `--button-min-height`, radius 3px, 1px `--button-border-color`, background `--button-background-color`, horizontal padding 12px. Primary uses the accent tokens. Icon buttons are 28–32px square and transparent, with `--toolbar-button-hover-background-color` on hover.

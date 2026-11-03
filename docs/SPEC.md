@@ -98,6 +98,8 @@ tests/ui           Playwright (Firefox engine) against the dev harness
 
 Density, accent, week start (default Monday), daily target (8h), duration format, show done tasks, confirm before deleting, idle threshold (S2), rounding for reports (S3).
 
+They're edited in the Settings dialog (M6) and apply live in every open page. Backup, restore (merge by id or replace) and CSV export are in its Data section; backups and CSV files are saved through `<a download>`, so no `downloads` permission is needed. **Delete All Data** removes every record and the settings.
+
 ## Keyboard
 
 Mirror Thunderbird where an equivalent exists. Before claiming a global shortcut, check that Thunderbird doesn't already use it.

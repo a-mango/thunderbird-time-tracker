@@ -155,3 +155,11 @@ Details and numbers: `docs/DESIGN.md` → M1 spike outcomes (measured on Thunder
 - **Native context menu in Thunderbird** (`npm run tb:spike`, Thunderbird 158.0, `artifacts/tb/spike.json` → `tracker`): a right-click on a project row in `ui/tracker.html` shows exactly our items (New Subproject…, Rename Project…, Color, Move To…, Archive, Delete Project); activating Rename Project… fires `menus.onClicked` **in the tab page** with a `targetElementId`, and the Project Properties dialog opens. The fallback (background forwards `{menuItemId, targetElementId}`) isn't needed.
 - **Restart survival**: `web-ext run` uninstalls the temporary add-on on quit, which drops its IndexedDB; `npm run tb` sets `extensions.webextensions.keepStorageOnUninstall` and `keepUuidOnUninstall`.
 - Marionette chrome screenshots drop elements with `opacity < 1` (disabled buttons look absent in `artifacts/tb/*.png`; computed styles are correct). Judge disabled states by eye in Thunderbird.
+
+### M6 outcomes
+- **Settings** are a dialog, not a tab mode (`docs/DESIGN.md` → Settings (M6)).
+- **Downloads**: `<a download>` with a blob URL works in an extension tab on Thunderbird 158 (`npm run tb:spike`: the probe's file was saved with `browser.download.useDownloadDir`; with the default prefs Thunderbird shows its native save dialog). No `downloads` permission.
+- **Restore/wipe propagation**: a new change type `reset` (`ids: ['*']`) makes open pages reload everything instead of one record at a time; the background re-syncs the action label.
+- **Merge by id** validates the merged database with the importer before writing (`validateBackup`). It can't create cycles or dangling references (every parent chain from a backup record stays inside the backup), but it can create two running entries or a running entry on a done task; those are refused.
+- **CSV**: dates `YYYY-MM-DD`, times `HH:MM` local (the end may be on the next day), whole minutes rounded, UTF-8 BOM. Checked in LibreOffice Calc 26.2 (`soffice --infilter=CSV:44,34,76,1`): every row has 8 columns, and dates, times and minutes import as values. Formula-like notes keep the `'` guard visibly.
+- Thunderbird's destructive-button hover colour (`--button-destructive-hover-background-color`, white text) is below AA; the axe check runs on the resting state.
