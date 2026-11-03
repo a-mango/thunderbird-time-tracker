@@ -78,6 +78,24 @@ describe('backup', () => {
     expect((await getRunning(db))?.taskId).toBeDefined();
   });
 
+  it('replace clears message links (not in a v1 backup)', async () => {
+    const { db } = await populated();
+    const backup = await exportBackup(db);
+    await tx(db, ['links'], 'readwrite', ({ links }) =>
+      req(
+        links.put({
+          id: 'l1',
+          taskId: 'x',
+          headerMessageId: 'a@example.invalid',
+          subject: 'Hi',
+          date: T0,
+        }),
+      ),
+    );
+    await restoreBackup(db, backup, { mode: 'replace' });
+    expect((await dump(db)).links).toEqual([]);
+  });
+
   it('exports soft-deleted entries and only known settings', async () => {
     const { db } = await populated();
     const backup = await exportBackup(db);

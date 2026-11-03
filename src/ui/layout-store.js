@@ -6,6 +6,7 @@
  * @typedef {object} LayoutStore
  * @property {(key: string) => unknown} get returns undefined when missing or unreadable
  * @property {(key: string, value: unknown) => void} set
+ * @property {() => void} clear removes every key (Delete All Data)
  */
 
 const PREFIX = 'tt.layout.';
@@ -27,6 +28,14 @@ export const localStorageStore = {
       // Storage blocked or full: the layout just isn't remembered.
     }
   },
+  clear() {
+    try {
+      const keys = Array.from({ length: localStorage.length }, (_, i) => localStorage.key(i));
+      for (const key of keys) if (key?.startsWith(PREFIX)) localStorage.removeItem(key);
+    } catch {
+      // Storage blocked: nothing was stored.
+    }
+  },
 };
 
 let store = localStorageStore;
@@ -44,4 +53,9 @@ export function getLayout(key) {
 /** @param {string} key @param {unknown} value */
 export function setLayout(key, value) {
   store.set(key, value);
+}
+
+/** Forgets every stored layout value (sizes, selection, filter text). */
+export function clearLayout() {
+  store.clear();
 }

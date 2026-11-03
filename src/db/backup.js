@@ -50,7 +50,8 @@ export function exportBackup(db, { now = Date.now() } = {}) {
 
 /**
  * Writes a validated backup (from `parseBackup`).
- * - `replace`: the database becomes the backup, settings included (none in the backup = defaults).
+ * - `replace`: the database becomes the backup, settings included (none in the backup = defaults);
+ *   message links are cleared.
  * - `merge`: records with the same id are replaced by the backup's, others are added, nothing is
  *   removed, settings stay. The merged result must pass the importer's checks (no dangling
  *   reference, no cycle, one running entry at most), else nothing is written.
@@ -61,8 +62,10 @@ export function exportBackup(db, { now = Date.now() } = {}) {
  * @throws {import('../lib/errors.js').ImportError} merge only: the merged data breaks a check
  */
 export async function restoreBackup(db, backup, { mode, now = Date.now() }) {
-  const counts = await tx(db, DATA_STORES, 'readwrite', async (s) => {
+  const counts = await tx(db, [...DATA_STORES, STORES.links], 'readwrite', async (s) => {
     if (mode === 'replace') {
+      // Message links (S1) aren't in a v1 backup; they'd point at tasks that may be gone.
+      s.links.clear();
       await Promise.all([req(s.projects.clear()), req(s.tasks.clear()), req(s.entries.clear())]);
       for (const project of backup.projects) s.projects.put(project);
       for (const task of backup.tasks) s.tasks.put(task);

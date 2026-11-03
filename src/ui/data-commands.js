@@ -6,11 +6,12 @@ import { dateInput } from '../lib/entry-form.js';
 import { ImportError } from '../lib/errors.js';
 import { backupSummary, entriesCsv, exportedEntries, exportFileName } from '../lib/export.js';
 import { formatDate } from '../lib/format.js';
-import { parseBackup } from '../lib/importer.js';
+import { MAX_IMPORT_BYTES, parseBackup } from '../lib/importer.js';
 import { projectPathName } from '../lib/sidebar.js';
 import { startOfDay } from '../lib/time.js';
 import { TtDialog } from './components/tt-dialog.js';
 import { t } from './i18n.js';
+import { clearLayout } from './layout-store.js';
 import { el } from './render.js';
 import { labelled, uid } from './task-dialogs.js';
 
@@ -18,6 +19,26 @@ import { labelled, uid } from './task-dialogs.js';
  * @typedef {import('./tracker-data.js').TrackerData} TrackerData
  * @typedef {{type: 'success' | 'error', text: string}} DataMessage
  */
+
+/** Localised reason per ImportError code; anything else is a format mismatch. */
+/** @type {Record<string, string>} */
+const IMPORT_REASONS = {
+  'too-large': 'restoreReasonTooLarge',
+  json: 'restoreReasonJson',
+  format: 'restoreReasonFormat',
+  version: 'restoreReasonVersion',
+  running: 'restoreReasonRunning',
+  'multiple-running': 'restoreReasonMultipleRunning',
+};
+
+/**
+ * The user-facing reason of a rejected backup; the code and location go to the console.
+ * @param {ImportError} error
+ */
+function importReason(error) {
+  console.warn('time tracker: backup rejected', error.code, error.details.path);
+  return t(IMPORT_REASONS[error.code] ?? 'restoreReasonContents');
+}
 
 /** Blob URLs live a minute: long enough for the download to start. */
 const REVOKE_MS = 60_000;
@@ -78,6 +99,10 @@ export function createDataCommands({ data, now = Date.now }) {
   async function restore() {
     const file = await pickFile('.json,application/json');
     if (!file) return null;
+    // Refuse before reading a huge file into memory (parseBackup checks the text again).
+    if (file.size > MAX_IMPORT_BYTES) {
+      return { type: 'error', text: t('restoreInvalid', t('restoreReasonTooLarge')) };
+    }
     /** @type {string} */
     let text;
     try {
@@ -91,7 +116,7 @@ export function createDataCommands({ data, now = Date.now }) {
       parsed = parseBackup(text);
     } catch (error) {
       if (!(error instanceof ImportError)) throw error;
-      return { type: 'error', text: t('restoreInvalid', error.message) };
+      return { type: 'error', text: t('restoreInvalid', importReason(error)) };
     }
     const mode = await restorePreview(parsed);
     if (!mode) return null;
@@ -99,7 +124,7 @@ export function createDataCommands({ data, now = Date.now }) {
       await restoreBackup(data.db, parsed, { mode, now: now() });
     } catch (error) {
       if (!(error instanceof ImportError)) throw error;
-      return { type: 'error', text: t('restoreConflict', error.message) };
+      return { type: 'error', text: t('restoreConflict', importReason(error)) };
     }
     await data.settled();
     return { type: 'success', text: t('restoreDone') };
@@ -263,6 +288,8 @@ export function createDataCommands({ data, now = Date.now }) {
     });
     if (answer !== 'wipe') return null;
     await wipeAll(data.db);
+    // Layout values hold project ids and typed filter text.
+    clearLayout();
     await data.settled();
     return { type: 'success', text: t('wipeDone') };
   }

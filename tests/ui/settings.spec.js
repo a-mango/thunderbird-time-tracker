@@ -121,7 +121,7 @@ test('restore rejects an invalid file without changing anything', async ({ page 
     buffer: Buffer.from('{"format":"something-else"}'),
   });
   await expect(dialog.getByRole('status')).toHaveText(
-    'This file is not a valid Time Tracker backup (not a time tracker backup at format).',
+    'This file can’t be restored: it isn’t a Time Tracker backup.',
   );
   await expect(page.getByRole('dialog', { name: 'Restore Backup' })).toHaveCount(0);
 });
@@ -161,6 +161,13 @@ test('CSV export downloads the entries of a range', async ({ page }) => {
 test('wipe needs the typed word, then empties everything', async ({ page }) => {
   await page.clock.setFixedTime(NOW);
   await openTracker(page);
+  // Typed quick-filter text is stored per project in the layout store.
+  await page.evaluate(() =>
+    localStorage.setItem(
+      'tt.layout.tracker.filter.project:p4',
+      JSON.stringify({ text: 'invoice' }),
+    ),
+  );
   const settings = await openSettings(page);
   await settings.getByRole('button', { name: 'Delete All Data…' }).click();
   const confirm = page.getByRole('dialog', { name: 'Delete All Data' });
@@ -177,4 +184,7 @@ test('wipe needs the typed word, then empties everything', async ({ page }) => {
   await expect(settings.getByRole('status')).toHaveText('All data deleted.');
   await settings.getByRole('button', { name: 'Close' }).click();
   await expect(page.getByText('No projects yet.')).toBeVisible();
+  // Layout values (selection, filter text) are gone too.
+  const keys = await page.evaluate(() => Object.keys(localStorage));
+  expect(keys.filter((key) => key.startsWith('tt.layout.'))).toEqual([]);
 });

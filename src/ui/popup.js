@@ -177,6 +177,8 @@ field.addEventListener('input', () => {
   renderList();
 });
 field.addEventListener('keydown', (event) => {
+  // Enter that confirms an IME composition doesn't start a task.
+  if (event.isComposing) return;
   if (event.key === 'ArrowDown') setActive(active + 1);
   else if (event.key === 'ArrowUp') setActive(active - 1);
   else if (event.key === 'Home' && shown.length && !field.value) setActive(0);

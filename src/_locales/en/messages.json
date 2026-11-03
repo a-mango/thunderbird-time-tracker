@@ -1324,22 +1324,22 @@
     "description": "Restore: notification after a restore."
   },
   "restoreInvalid": {
-    "message": "This file is not a valid Time Tracker backup ($REASON$).",
-    "description": "Restore: error for a rejected file; the reason is a short code and location for support.",
+    "message": "This file can’t be restored: $REASON$.",
+    "description": "Restore: error for a rejected file; the reason is one of the restoreReason* messages.",
     "placeholders": {
       "reason": {
         "content": "$1",
-        "example": "unknown-field at tasks[3].colour"
+        "example": "it isn’t a Time Tracker backup"
       }
     }
   },
   "restoreConflict": {
-    "message": "The backup can’t be merged: it conflicts with your data ($REASON$). Stop the running timer or use Replace All.",
-    "description": "Restore: error when the merged data would break a rule.",
+    "message": "The backup can’t be merged: $REASON$. Stop the timer, or use Replace All.",
+    "description": "Restore: error when merging would break a rule; the reason is one of the restoreReason* messages.",
     "placeholders": {
       "reason": {
         "content": "$1",
-        "example": "multiple-running"
+        "example": "both have a running timer"
       }
     }
   },
@@ -1394,5 +1394,33 @@
   "popupSearchPlaceholder": {
     "message": "Search open tasks",
     "description": "Toolbar popup: placeholder of the task search field."
+  },
+  "restoreReasonTooLarge": {
+    "message": "it’s larger than 10 MB",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonJson": {
+    "message": "it isn’t valid JSON",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonFormat": {
+    "message": "it isn’t a Time Tracker backup",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonVersion": {
+    "message": "it was made by a newer version of Time Tracker",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonRunning": {
+    "message": "a running timer would be on a done task",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonMultipleRunning": {
+    "message": "both have a running timer",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonContents": {
+    "message": "its contents don’t match the backup format",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
   }
 }
