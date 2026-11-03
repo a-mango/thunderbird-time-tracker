@@ -1,6 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
-import { COLOR_ITEM_PREFIX, MENU, TASK_MENU, registerMenus } from '../../src/background/menus.js';
+import {
+  COLOR_ITEM_PREFIX,
+  ENTRY_MENU,
+  MENU,
+  TASK_MENU,
+  registerMenus,
+} from '../../src/background/menus.js';
 import { PALETTE } from '../../src/lib/palette.js';
 import { createMessenger } from '../../dev/mock-messenger.js';
 
@@ -11,7 +17,7 @@ const messages = JSON.parse(
 const mock = () => createMessenger({ messages, baseUrl: 'moz-extension://test/' });
 
 describe('registerMenus', () => {
-  it('creates hidden project and task items limited to the tracker tab, with localized titles', async () => {
+  it('creates hidden project, task and entry items limited to the tracker tab, with localized titles', async () => {
     const api = mock();
     await registerMenus(api);
     const items = api.menus._items();
@@ -19,6 +25,7 @@ describe('registerMenus', () => {
     expect(top.map((/** @type {any} */ i) => i.id)).toEqual([
       ...Object.values(MENU),
       ...Object.values(TASK_MENU),
+      ...Object.values(ENTRY_MENU),
     ]);
     for (const item of top) {
       expect(item).toMatchObject({
@@ -46,7 +53,10 @@ describe('registerMenus', () => {
     await registerMenus(api);
     await registerMenus(api);
     expect(api.menus._items()).toHaveLength(
-      Object.keys(MENU).length + Object.keys(TASK_MENU).length + PALETTE.length,
+      Object.keys(MENU).length +
+        Object.keys(TASK_MENU).length +
+        Object.keys(ENTRY_MENU).length +
+        PALETTE.length,
     );
   });
 });

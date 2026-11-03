@@ -1,7 +1,7 @@
 // Pure helpers for the detail pane's entry list: range presets, grouping by local day with day
 // totals, and overlap checks for the entry dialog. An entry that crosses midnight is listed under
 // every day it overlaps and counts toward each one (docs/SPEC.md, Data model).
-import { addDays, dayRange, overlapMs, splitByDay, startOfDay, weekRange } from './time.js';
+import { addDays, dayKey, dayRange, overlapMs, splitByDay, startOfDay, weekRange } from './time.js';
 
 /**
  * @typedef {import('./types.js').Entry} Entry
@@ -53,8 +53,16 @@ export function groupByDay(entries, { now, range }) {
   /** @type {Map<string, DayGroup>} */
   const groups = new Map();
   for (const entry of entries) {
-    for (const part of splitByDay(entry, { now })) {
-      if (range && (part.end <= range.start || part.start >= range.end)) continue;
+    const parts = splitByDay(entry, { now });
+    // A timer started this instant has no length yet but is listed.
+    if (parts.length === 0 && entry.end === null && entry.start <= now) {
+      parts.push({ day: dayKey(entry.start), start: entry.start, end: entry.start, ms: 0 });
+    }
+    for (const part of parts) {
+      // Inside the range: overlapping it, or (zero length) starting in it.
+      const inside =
+        !range || (part.start < range.end && (part.end > range.start || part.start >= range.start));
+      if (!inside) continue;
       let group = groups.get(part.day);
       if (!group) {
         group = { day: part.day, start: startOfDay(part.start), total: 0, rows: [] };

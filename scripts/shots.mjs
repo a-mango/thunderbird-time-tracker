@@ -62,6 +62,9 @@ try {
       const build = page.getByRole('treeitem', { name: /^Build( |$)/ });
       await page.bringToFront();
       if (await build.count()) await build.click();
+      // The running task fills the details pane, like reference A.
+      const running = page.getByRole('row', { name: /Checkout form validation/ });
+      if (!name.startsWith('tracker-list') && (await running.count())) await running.click();
       if (name.startsWith('tracker-list')) {
         await page.getByRole('button', { name: 'Quick Filter' }).click();
         await page.getByRole('button', { name: 'Tags', exact: true }).click();

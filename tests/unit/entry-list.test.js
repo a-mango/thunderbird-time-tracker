@@ -71,6 +71,18 @@ describe('groupByDay', () => {
     expect(monday.total).toBe((60 + 155 + 35) * MIN);
   });
 
+  it('lists a timer started this instant with zero length', () => {
+    const groups = groupByDay([entry('now', NOW, null)], { now: NOW, range: null });
+    expect(groups).toEqual([
+      {
+        day: '2026-10-20',
+        start: at(2026, 9, 20),
+        total: 0,
+        rows: [{ entry: expect.objectContaining({ id: 'now' }), ms: 0 }],
+      },
+    ]);
+  });
+
   it('keeps only days inside the range', () => {
     const range = rangeOf('today', { now: NOW, weekStart: 1 });
     expect(groupByDay(entries, { now: NOW, range }).map((g) => g.day)).toEqual(['2026-10-20']);
