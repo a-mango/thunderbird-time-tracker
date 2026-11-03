@@ -1,7 +1,9 @@
+import { readFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { describe, expect, it } from 'vitest';
 import {
   COLOR_ITEM_PREFIX,
+  colorIconPath,
   ENTRY_MENU,
   MENU,
   TASK_MENU,
@@ -46,6 +48,16 @@ describe('registerMenus', () => {
       PALETTE.map((p) => `${COLOR_ITEM_PREFIX}${p.color}`),
     );
     expect(colors.every((/** @type {any} */ i) => i.type === 'radio' && i.title)).toBe(true);
+    // Each shows a swatch file whose fill is that colour.
+    for (const [index, item] of colors.entries()) {
+      const { color } = PALETTE[index];
+      expect(item.icons).toEqual({ 16: colorIconPath(color) });
+      const svg = readFileSync(
+        new URL(`../../src/${colorIconPath(color)}`, import.meta.url),
+        'utf8',
+      );
+      expect(svg).toContain(`fill="${color}"`);
+    }
   });
 
   it('can run again (every background start) without duplicate ids', async () => {

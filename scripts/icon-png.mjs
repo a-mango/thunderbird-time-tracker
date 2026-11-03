@@ -12,8 +12,7 @@ const svg = async (path) =>
 
 const main = await svg('src/icons/time-tracker.svg');
 const small = await svg('src/icons/time-tracker-16.svg');
-const dark = await svg('src/icons/toolbar-dark.svg');
-const light = await svg('src/icons/toolbar-light.svg');
+const toolbar = await svg('src/icons/toolbar.svg');
 
 await mkdir(new URL('design/icon/', root), { recursive: true });
 await mkdir(new URL('artifacts/', root), { recursive: true });
@@ -46,9 +45,9 @@ try {
   await page.setContent(
     `<body style="margin:8px;font:12px sans-serif">` +
       `<div>${cell(small, 16, '#fff')}${cell(main, 32, '#fff')}${cell(main, 64, '#fff')}` +
-      `${cell(dark, 16, '#f0f0f4')}${cell(dark, 32, '#f0f0f4')}</div>` +
+      `${cell(toolbar, 16, '#f0f0f4')}${cell(toolbar, 32, '#f0f0f4')}</div>` +
       `<div>${cell(small, 16, '#1c1b22')}${cell(main, 32, '#1c1b22')}${cell(main, 64, '#1c1b22')}` +
-      `${cell(light, 16, '#2b2a33')}${cell(light, 32, '#2b2a33')}</div></body>`,
+      `${cell(toolbar, 16, '#2b2a33')}${cell(toolbar, 32, '#2b2a33')}</div></body>`,
   );
   await page.waitForLoadState('networkidle');
   await page.screenshot({ path: new URL('artifacts/icon-preview.png', root).pathname });

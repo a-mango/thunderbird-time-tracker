@@ -27,19 +27,7 @@
     "default_title": "__MSG_actionTitle__",
     "default_popup": "ui/popup.html",
     "allowed_spaces": [],
-    "default_icon": "icons/toolbar-dark.svg",
-    "theme_icons": [
-      {
-        "dark": "icons/toolbar-dark.svg",
-        "light": "icons/toolbar-light.svg",
-        "size": 16
-      },
-      {
-        "dark": "icons/toolbar-dark.svg",
-        "light": "icons/toolbar-light.svg",
-        "size": 32
-      }
-    ]
+    "default_icon": "icons/toolbar.svg"
   },
   "commands": {
     "toggle-timer": {

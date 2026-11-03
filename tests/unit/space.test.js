@@ -6,16 +6,8 @@ const messages = { spaceTitle: { message: 'Time Tracker' } };
 /** @returns {any} */
 const mock = () => createMessenger({ messages, baseUrl: 'moz-extension://test/' });
 
-/** Title and the one-colour toolbar glyphs (light and dark themes, 16 and 32 px). */
-const BUTTON = {
-  title: 'Time Tracker',
-  defaultIcons: 'icons/toolbar-dark.svg',
-  themeIcons: [16, 32].map((size) => ({
-    dark: 'icons/toolbar-dark.svg',
-    light: 'icons/toolbar-light.svg',
-    size,
-  })),
-};
+/** Title and the toolbar glyph (one SVG for light and dark themes). */
+const BUTTON = { title: 'Time Tracker', defaultIcons: 'icons/toolbar.svg' };
 
 describe('ensureSpace', () => {
   it('creates the space when it is missing', async () => {

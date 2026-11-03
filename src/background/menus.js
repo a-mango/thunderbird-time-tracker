@@ -44,6 +44,12 @@ export const ENTRY_MENU = Object.freeze({
 export const COLOR_ITEM_PREFIX = `${MENU.color}:`;
 
 /**
+ * Swatch icon of a palette colour (`src/icons/colors/rrggbb.svg`).
+ * @param {string} color `#rrggbb`
+ */
+export const colorIconPath = (color) => `icons/colors/${color.slice(1)}.svg`;
+
+/**
  * Recreates the items. They start hidden: the page makes the right ones visible in onShown, so a
  * right-click anywhere else in the page (default menu) never shows them.
  * @param {typeof messenger} [api]
@@ -95,6 +101,8 @@ export async function registerMenus(api = messenger) {
       parentId: MENU.color,
       type: 'radio',
       title: t(label),
+      // A dot in the colour (menus allow icons on submenu items only, like this one).
+      icons: { 16: colorIconPath(color) },
       visible: true,
     });
   }

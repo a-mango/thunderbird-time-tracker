@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke-width="1" stroke-linecap="round">
+  <!-- Time Tracker toolbar glyph: 1px outlines like Thunderbird's compact spaces icons. Original
+       artwork. One file for both themes: the spaces toolbar (TB 157) only draws the default
+       image, never a themeIcons variant, so the colour follows the embedding window's scheme. -->
+  <style>
+    svg { stroke: #18181b; }
+    @media (prefers-color-scheme: dark) { svg { stroke: #fbfbfe; } }
+  </style>
+  <path d="M6.5 1.5h3M8 1.5v2"/>
+  <circle cx="8" cy="9.5" r="5.5"/>
+  <path d="M8 9.5 10.5 7"/>
+  <path d="M12.5 3.5l1 1"/>
+</svg>
