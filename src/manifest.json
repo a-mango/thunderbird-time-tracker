@@ -13,7 +13,7 @@
       }
     }
   },
-  "permissions": ["menus", "menus.overrideContext"],
+  "permissions": ["alarms", "menus", "menus.overrideContext", "notifications"],
   "background": {
     "scripts": ["background/main.js"],
     "type": "module"

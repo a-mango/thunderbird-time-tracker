@@ -700,5 +700,9 @@
   "doneHiddenOne": {
     "message": "1 done task hidden",
     "description": "doneHidden when exactly one done task is hidden."
+  },
+  "notificationNoLastTask": {
+    "message": "No task to start yet. Open Time Tracker and start a task once; then this shortcut starts it again.",
+    "description": "Notification when the toggle-timer shortcut is pressed but no task was ever tracked."
   }
 }

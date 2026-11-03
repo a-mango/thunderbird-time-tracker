@@ -1,6 +1,7 @@
 import { ensureSpace } from './space.js';
 import { registerMenus } from './menus.js';
 import { handleMessage } from './messages.js';
+import { TICK_ALARM, syncTimerStatus, toggleTimer } from './timer-status.js';
 import { openDB, purgeDeleted } from '../db/index.js';
 
 // Event page: listeners are registered synchronously at top level, no state in memory.
@@ -8,9 +9,32 @@ import { openDB, purgeDeleted } from '../db/index.js';
 /** @param {unknown} error */
 const logSpaceError = (error) => console.error('time tracker: space setup failed', error);
 
+/**
+ * Runs `fn` on a short-lived connection: the event page may unload at any time.
+ * @template T
+ * @param {(db: IDBDatabase) => Promise<T>} fn
+ */
+async function withDB(fn) {
+  const db = await openDB();
+  try {
+    return await fn(db);
+  } finally {
+    db.close();
+  }
+}
+
 // Every background start (app start, install, re-enable, wake-up) makes sure the space exists:
 // Thunderbird drops extension spaces when the add-on shuts down.
 const spaceReady = ensureSpace().catch(logSpaceError);
+
+/** Label, badges and the tick alarm follow the running entry (after the space exists). */
+const syncStatus = () =>
+  spaceReady
+    .then(() => withDB((db) => syncTimerStatus(db)))
+    .catch((error) => console.error('time tracker: timer status update failed', error));
+
+// Restores the label and re-arms the alarm after a restart, and fixes them after a wake-up.
+syncStatus();
 
 // Context menu items for the tracker tab. Recreated on every background start like the space
 // (the M1 spike's proven path); the tracker page handles onShown/onClicked.
@@ -25,21 +49,21 @@ messenger.runtime.onInstalled.addListener(() => {
 // entries ("until the next session"). Not at top level: the event page wakes up many times.
 messenger.runtime.onStartup.addListener(async () => {
   try {
-    const db = await openDB();
-    try {
-      await purgeDeleted(db);
-    } finally {
-      db.close();
-    }
+    await withDB((db) => purgeDeleted(db));
   } catch (error) {
     console.error('time tracker: purging deleted entries failed', error);
   }
 });
 
-messenger.runtime.onMessage.addListener((message) => handleMessage(message));
+messenger.runtime.onMessage.addListener((message) => handleMessage(message, { syncStatus }));
+
+messenger.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === TICK_ALARM) syncStatus();
+});
 
 messenger.commands.onCommand.addListener((command) => {
-  if (command === 'toggle-timer') {
-    // M5: start the last task or stop the running timer.
-  }
+  if (command !== 'toggle-timer') return;
+  spaceReady
+    .then(() => withDB((db) => toggleTimer(db)))
+    .catch((error) => console.error('time tracker: toggling the timer failed', error));
 });
