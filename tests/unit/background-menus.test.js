@@ -47,7 +47,8 @@ describe('registerMenus', () => {
     expect(colors.map((/** @type {any} */ i) => i.id)).toEqual(
       PALETTE.map((p) => `${COLOR_ITEM_PREFIX}${p.color}`),
     );
-    expect(colors.every((/** @type {any} */ i) => i.type === 'radio' && i.title)).toBe(true);
+    // Normal items: Thunderbird hides a radio item's icon behind its check.
+    expect(colors.every((/** @type {any} */ i) => i.type !== 'radio' && i.title)).toBe(true);
     // Each shows a swatch file whose fill is that colour.
     for (const [index, item] of colors.entries()) {
       const { color } = PALETTE[index];
@@ -57,6 +58,11 @@ describe('registerMenus', () => {
         'utf8',
       );
       expect(svg).toContain(`fill="${color}"`);
+      const current = readFileSync(
+        new URL(`../../src/${colorIconPath(color, { current: true })}`, import.meta.url),
+        'utf8',
+      );
+      expect(current).toContain(`fill="${color}"`);
     }
   });
 

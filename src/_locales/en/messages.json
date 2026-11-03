@@ -255,6 +255,16 @@
     "message": "Ink",
     "description": "Name of a project colour in the colour picker."
   },
+  "menuColorCurrent": {
+    "message": "$NAME$ (current)",
+    "description": "Native Color menu: the project’s current colour.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Blue"
+      }
+    }
+  },
   "sidebarLabel": {
     "message": "Projects and views",
     "description": "Accessible name of the project pane (left column)."

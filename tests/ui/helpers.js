@@ -98,7 +98,9 @@ export async function contextMenu(page, row, itemId) {
       visible: items
         .filter((/** @type {any} */ i) => !i.parentId && i.visible && i.type !== 'separator')
         .map((/** @type {any} */ i) => i.id),
-      checked: items.find((/** @type {any} */ i) => i.checked)?.id ?? null,
+      // The current colour: the item with the checked swatch.
+      checked:
+        items.find((/** @type {any} */ i) => i.icons?.[16]?.endsWith('-current.svg'))?.id ?? null,
     };
     if (id) await Promise.all(menus.onClicked.dispatch({ ...info, menuItemId: id }, {}));
     return result;

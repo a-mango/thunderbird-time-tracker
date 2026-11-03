@@ -198,6 +198,15 @@
   "colorInk": {
     "message": "Encre"
   },
+  "menuColorCurrent": {
+    "message": "$NAME$ (actuelle)",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Blue"
+      }
+    }
+  },
   "sidebarLabel": {
     "message": "Projets et vues"
   },
