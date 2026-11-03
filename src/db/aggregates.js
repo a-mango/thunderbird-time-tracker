@@ -5,6 +5,7 @@
 // Mismatch: `count` covers every stored entry (soft-deleted and running ones too), so the sum of
 // the counts must equal `entries.count()`. Readers check that and the format; when either is off
 // (or the cache is missing), they rebuild it with one full scan and store it.
+import { storageErrorKind } from '../lib/errors.js';
 import { req, tx } from './idb.js';
 import { INDEXES, META, STORES } from './schema.js';
 
@@ -96,7 +97,9 @@ export async function touchTasks({ entries, meta }, taskIds) {
   if (stored === undefined || stored === null) return;
   const cache = /** @type {Aggregates} */ (stored);
   if (cache.format !== AGGREGATES_FORMAT) return;
-  const tasks = { ...cache.tasks };
+  // No prototype: task ids are any strings (`__proto__`, `toString` from an imported backup).
+  /** @type {Record<string, TaskAggregate>} */
+  const tasks = Object.assign(Object.create(null), cache.tasks);
   for (const taskId of new Set(taskIds)) {
     /** @type {Entry[]} */
     const rows = await req(entries.index(INDEXES.entryTask).getAll(taskId));
@@ -122,44 +125,58 @@ export function storeAggregates({ meta }, entries) {
  * @property {Entry[]} recent live entries that ended after `since`, plus the running entry
  * @property {Entry | null} running
  * @property {boolean} rebuilt the cache was missing or stale and has been rebuilt
+ * @property {boolean} [unsaved] rebuilt in memory only: storing it failed (e.g. a full disk)
  */
 
 /**
  * What a page needs for its badges without reading every entry: the aggregates (rebuilt on a
  * mismatch) and the entries that can count toward today or this week. One snapshot: both come
- * from the same transaction.
+ * from the same transaction. If storing a rebuilt cache fails (a full disk), the data is still
+ * readable: the cache is then computed in memory for this page and rebuilt again next time.
  * @param {IDBDatabase} db
  * @param {number} since lower bound for `end` (exclusive)
  * @returns {Promise<RollupState>}
  */
 export async function loadRollupState(db, since) {
-  const read = (/** @type {IDBTransactionMode} */ mode) =>
-    tx(db, [STORES.entries, STORES.meta], mode, async ({ entries, meta }) => {
-      const [stored, count, ended, runningId] = await Promise.all([
-        req(meta.get(META.aggregates)),
-        req(entries.count()),
-        req(entries.index(INDEXES.entryEnd).getAll(IDBKeyRange.lowerBound(since, true))),
-        req(meta.get(META.running)),
-      ]);
-      /** @type {Entry | undefined} */
-      const pointed = typeof runningId === 'string' ? await req(entries.get(runningId)) : undefined;
-      const running =
-        pointed && pointed.deletedAt === null && pointed.end === null ? pointed : null;
-      let aggregates = aggregatesMatch(stored, count) ? stored : null;
-      let rebuilt = false;
-      if (!aggregates && mode === 'readwrite') {
-        aggregates = computeAggregates(/** @type {Entry[]} */ (await req(entries.getAll())));
-        await req(meta.put(aggregates, META.aggregates));
-        rebuilt = true;
-      }
-      /** @type {Entry[]} */
-      const recent = /** @type {Entry[]} */ (ended).filter((entry) => entry.deletedAt === null);
-      if (running) recent.push(running);
-      return { aggregates, recent, running, rebuilt };
-    });
-  const first = await read('readonly');
-  const state = first.aggregates ? first : await read('readwrite');
-  return /** @type {RollupState} */ (state);
+  /** @param {'check' | 'store' | 'memory'} rebuild */
+  const read = (rebuild) =>
+    tx(
+      db,
+      [STORES.entries, STORES.meta],
+      rebuild === 'store' ? 'readwrite' : 'readonly',
+      async ({ entries, meta }) => {
+        const [stored, count, ended, runningId] = await Promise.all([
+          req(meta.get(META.aggregates)),
+          req(entries.count()),
+          req(entries.index(INDEXES.entryEnd).getAll(IDBKeyRange.lowerBound(since, true))),
+          req(meta.get(META.running)),
+        ]);
+        /** @type {Entry | undefined} */
+        const pointed =
+          typeof runningId === 'string' ? await req(entries.get(runningId)) : undefined;
+        const running =
+          pointed && pointed.deletedAt === null && pointed.end === null ? pointed : null;
+        let aggregates = aggregatesMatch(stored, count) ? stored : null;
+        let rebuilt = false;
+        if (!aggregates && rebuild !== 'check') {
+          aggregates = computeAggregates(/** @type {Entry[]} */ (await req(entries.getAll())));
+          if (rebuild === 'store') await req(meta.put(aggregates, META.aggregates));
+          rebuilt = true;
+        }
+        /** @type {Entry[]} */
+        const recent = /** @type {Entry[]} */ (ended).filter((entry) => entry.deletedAt === null);
+        if (running) recent.push(running);
+        return { aggregates, recent, running, rebuilt, unsaved: rebuild === 'memory' };
+      },
+    );
+  const first = await read('check');
+  if (first.aggregates) return /** @type {RollupState} */ (first);
+  try {
+    return /** @type {RollupState} */ (await read('store'));
+  } catch (error) {
+    if (storageErrorKind(error) !== 'quota') throw error;
+    return /** @type {RollupState} */ (await read('memory'));
+  }
 }
 
 /**

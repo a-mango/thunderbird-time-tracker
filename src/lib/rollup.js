@@ -388,7 +388,8 @@ export function createRollup(data, { now, weekStart }) {
     },
     setAggregates(aggregates) {
       for (const taskId of new Set([...base.keys(), ...Object.keys(aggregates)])) {
-        applyAggregate(taskId, aggregates[taskId]);
+        // Own keys only: an id like `toString` must not read Object.prototype.
+        applyAggregate(taskId, Object.hasOwn(aggregates, taskId) ? aggregates[taskId] : undefined);
       }
     },
   };

@@ -1,3 +1,4 @@
+import { IDBObjectStore } from 'fake-indexeddb';
 import { describe, expect, it } from 'vitest';
 import {
   AGGREGATES_FORMAT,
@@ -24,7 +25,11 @@ import {
 import { req, tx } from '../../src/db/idb.js';
 import { deleteProject } from '../../src/db/projects.js';
 import { deleteTask, editTask, markTaskDone, restoreTask } from '../../src/db/tasks.js';
+import { createRollup } from '../../src/lib/rollup.js';
+import { parseBackup } from '../../src/lib/importer.js';
 import { MIN, T0, freshDB, seed } from './db-helpers.js';
+
+const DAY = 24 * 60 * MIN;
 
 /** @typedef {import('../../src/lib/types.js').Entry} Entry */
 
@@ -253,5 +258,81 @@ describe('readEntryChanges', () => {
     expect((await readEntryChanges(db, [])).aggregates).toBeNull();
     await tx(db, 'meta', 'readwrite', ({ meta }) => req(meta.put({ format: 1 }, 'aggregates')));
     expect((await readEntryChanges(db, [])).aggregates).toBeNull();
+  });
+});
+
+describe('robustness', () => {
+  it('keeps task ids like toString or __proto__ apart from Object.prototype', async () => {
+    const { db } = await freshDB();
+    const backup = {
+      format: 'thunderbird-time-tracker',
+      version: 1,
+      exportedAt: T0,
+      projects: [
+        { id: 'p', parentId: null, name: 'P', color: '#2493ef', order: 0, archived: false, createdAt: T0, updatedAt: T0 }, // prettier-ignore
+      ],
+      tasks: ['toString', 'constructor', '__proto__'].map((id, order) => ({
+        id,
+        projectId: 'p',
+        name: id,
+        status: 'open',
+        starred: false,
+        estimateMin: null,
+        billable: false,
+        tags: [],
+        notes: '',
+        order,
+        createdAt: T0,
+        updatedAt: T0,
+        doneAt: null,
+      })),
+      entries: ['toString', 'constructor', '__proto__'].map((taskId, n) => ({
+        id: `e${n}`,
+        taskId,
+        start: T0 - 60 * MIN,
+        end: T0,
+        note: '',
+        source: 'manual',
+        createdAt: T0,
+        updatedAt: T0,
+        deletedAt: null,
+      })),
+    };
+    await restoreBackup(db, parseBackup(JSON.stringify(backup)), { mode: 'replace' });
+    await addEntry(db, { taskId: '__proto__', start: T0, end: T0 + 30 * MIN });
+    await expectCurrent(db);
+    const { aggregates } = await loadRollupState(db, T0 + DAY);
+    for (const id of ['toString', 'constructor']) {
+      expect(Object.hasOwn(aggregates.tasks, id) && aggregates.tasks[id].ms).toBe(60 * MIN);
+    }
+    expect(Object.hasOwn(aggregates.tasks, '__proto__')).toBe(true);
+    expect(aggregates.tasks['__proto__'].ms).toBe(90 * MIN);
+    // The page rollup: own keys only.
+    const rollup = createRollup(
+      { projects: backup.projects, tasks: backup.tasks, entries: [], aggregates: aggregates.tasks },
+      { now: T0 + DAY, weekStart: 1 },
+    );
+    rollup.setAggregates(aggregates.tasks);
+    expect(rollup.project('p').total).toBe(210 * MIN);
+    rollup.setAggregates({});
+    expect(rollup.project('p').total).toBe(0);
+  });
+
+  it('opens on a full disk: a cache that cannot be stored is computed in memory', async () => {
+    const { db, ids } = await freshDB().then(async (ctx) => ({ ...ctx, ids: await seed(ctx.db) }));
+    await addEntry(db, { taskId: ids.checkout.id, start: T0, end: T0 + 30 * MIN });
+    const put = IDBObjectStore.prototype.put;
+    IDBObjectStore.prototype.put = function (...args) {
+      if (this.name === 'meta') throw new DOMException('full', 'QuotaExceededError');
+      return put.apply(this, /** @type {any} */ (args));
+    };
+    try {
+      const state = await loadRollupState(db, T0 - MIN);
+      expect(state).toMatchObject({ rebuilt: true, unsaved: true });
+      expect(state.aggregates.tasks[ids.checkout.id].ms).toBe(30 * MIN);
+    } finally {
+      IDBObjectStore.prototype.put = put;
+    }
+    expect(await storedAggregates(db)).toBeUndefined();
   });
 });

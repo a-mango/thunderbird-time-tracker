@@ -6,6 +6,9 @@ import { expect, test } from '@playwright/test';
 //   on a database that already exists (the harness doesn't re-seed), under 300 ms.
 // - Badges: an older entry changes in another connection (like the popup or the background);
 //   the tree's badges show the new total under 50 ms after the change notification arrives.
+//   Also logged: tt-ready from navigation start (includes loading and parsing the modules).
+// Local measurements: hard budgets on shared CI runners would block releases on noise.
+test.skip(!!process.env.CI, 'performance budgets are measured locally (docs/PLAN.md, M7 outcomes)');
 test.describe.configure({ mode: 'serial' });
 test.setTimeout(120_000);
 
@@ -19,15 +22,23 @@ test('50k entries: tab cold-open under 300 ms', async ({ page }) => {
   await openLarge(page);
   /** @type {number[]} */
   const runs = [];
+  /** @type {number[]} */
+  const fromNavigation = [];
   for (let n = 0; n < 3; n += 1) {
     await page.goto('/ui/tracker.html');
     await page.locator('html[data-ready]').waitFor();
-    runs.push(
-      await page.evaluate(() => performance.measure('open', 'tt-start', 'tt-ready').duration),
-    );
+    const [open, ready] = await page.evaluate(() => [
+      performance.measure('open', 'tt-start', 'tt-ready').duration,
+      performance.getEntriesByName('tt-ready')[0].startTime,
+    ]);
+    runs.push(open);
+    fromNavigation.push(ready);
   }
   const best = Math.min(...runs);
-  console.log(`perf: cold open ${runs.map((ms) => ms.toFixed(0)).join(' / ')} ms (50k entries)`);
+  const ms = (/** @type {number[]} */ list) => list.map((v) => v.toFixed(0)).join(' / ');
+  console.log(
+    `perf: cold open ${ms(runs)} ms; from navigation start ${ms(fromNavigation)} ms (50k entries)`,
+  );
   expect(best).toBeLessThan(300);
 });
 
