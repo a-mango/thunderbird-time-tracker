@@ -103,3 +103,58 @@ export function formatRelative(ms, { now, locale, todayLabel, hourCycle }) {
   }
   return dateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }).format(ms);
 }
+
+/**
+ * Running time without seconds, `h:mm` (`1:05`, `0:09`): the action label and space badge,
+ * which refresh once a minute.
+ * @param {number} ms
+ */
+export function formatClock(ms) {
+  const minutes = Math.floor(Math.max(0, ms) / MINUTE);
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Time range of an entry, `13:40 – 15:25`; a running entry ends in `nowLabel` (`13:40 – now`).
+ * @param {number} start
+ * @param {number | null} end
+ * @param {{locale: string, nowLabel: string, hourCycle?: HourCycle}} options
+ */
+export function formatTimeRange(start, end, { locale, nowLabel, hourCycle }) {
+  const to = end === null ? nowLabel : formatTime(end, { locale, hourCycle });
+  return `${formatTime(start, { locale, hourCycle })} – ${to}`;
+}
+
+/**
+ * Day group heading: `Tue 20 Oct` (`Tue, Oct 20` in en-US), with the year when it isn't the
+ * current one.
+ * @param {number} ms
+ * @param {{now: number, locale: string}} options
+ */
+export function formatDay(ms, { now, locale }) {
+  const sameYear = new Date(ms).getFullYear() === new Date(now).getFullYear();
+  return dateTimeFormat(locale, {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
+  }).format(ms);
+}
+
+/**
+ * Action button label while a timer runs: `1:05 · Checkout form validation`, cut with `…` to
+ * at most `max` characters so the toolbar button stays small.
+ * @param {number} elapsedMs
+ * @param {string} taskName
+ * @param {{max?: number}} [options]
+ */
+export function formatTimerLabel(elapsedMs, taskName, { max = 24 } = {}) {
+  const label = `${formatClock(elapsedMs)} · ${taskName}`;
+  const chars = [...label];
+  return chars.length <= max
+    ? label
+    : `${chars
+        .slice(0, max - 1)
+        .join('')
+        .trimEnd()}…`;
+}
