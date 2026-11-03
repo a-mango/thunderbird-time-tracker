@@ -49,7 +49,7 @@ test('both splitters resize their pane and the widths persist', async ({ page })
   expect(errors).toEqual([]);
 });
 
-test('header: New Task and Add entry wait for later milestones; More offers New Project', async ({
+test('header: New Task and Add entry need a selection; More offers New Project, Export, Settings', async ({
   page,
 }) => {
   await openTracker(page);
@@ -58,21 +58,11 @@ test('header: New Task and Add entry wait for later milestones; More offers New 
 
   await page.getByRole('button', { name: 'More options' }).click();
   const menu = page.getByRole('menu');
-  await expect(menu.getByRole('menuitem')).toHaveText(['New Project…', 'Settings', 'Export…']);
+  await expect(menu.getByRole('menuitem')).toHaveText(['New Project…', 'Export CSV…', 'Settings…']);
   await expect(menu.getByRole('menuitem', { name: 'New Project…' })).toBeFocused();
-  await expect(menu.getByRole('menuitem', { name: 'Settings' })).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  );
-  await expect(menu.getByRole('menuitem', { name: 'Export…' })).toHaveAttribute(
-    'aria-disabled',
-    'true',
-  );
   await expectNoAxeViolations(page);
 
-  // A disabled item does nothing; Escape closes and returns focus.
-  await menu.getByRole('menuitem', { name: 'Settings' }).dispatchEvent('click');
-  await expect(menu).toBeVisible();
+  // Escape closes and returns focus.
   await page.keyboard.press('Escape');
   await expect(menu).toBeHidden();
   await expect(page.getByRole('button', { name: 'More options' })).toBeFocused();

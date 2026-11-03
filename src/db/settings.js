@@ -11,7 +11,7 @@ import { META, STORES } from './schema.js';
  * @param {unknown} stored
  * @returns {Partial<Settings>}
  */
-function known(stored) {
+export function knownSettings(stored) {
   if (stored === null || typeof stored !== 'object') return {};
   /** @type {Record<string, unknown>} */
   const clean = {};
@@ -31,7 +31,7 @@ function known(stored) {
  */
 export async function getSettings(db) {
   const stored = await tx(db, STORES.meta, 'readonly', ({ meta }) => req(meta.get(META.settings)));
-  return { ...DEFAULT_SETTINGS, ...known(stored) };
+  return { ...DEFAULT_SETTINGS, ...knownSettings(stored) };
 }
 
 /**
@@ -44,7 +44,7 @@ export async function getSettings(db) {
 export async function updateSettings(db, patch) {
   const clean = validateSettings(patch);
   const stored = await tx(db, STORES.meta, 'readwrite', async ({ meta }) => {
-    const next = { ...known(await req(meta.get(META.settings))), ...clean };
+    const next = { ...knownSettings(await req(meta.get(META.settings))), ...clean };
     await req(meta.put(next, META.settings));
     return next;
   });

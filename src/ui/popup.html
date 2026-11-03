@@ -5,13 +5,69 @@
     <title>Time Tracker</title>
     <link rel="stylesheet" href="styles/tokens.css" />
     <link rel="stylesheet" href="styles/base.css" />
+    <link rel="stylesheet" href="styles/controls.css" />
+    <link rel="stylesheet" href="styles/panes.css" />
     <link rel="stylesheet" href="popup.css" />
     <script type="module" src="popup.js"></script>
   </head>
   <body>
-    <main>
-      <h1 data-i18n="popupHeading"></h1>
-      <p data-i18n="popupPlaceholder"></p>
+    <main class="popup">
+      <h1 class="visually-hidden" data-i18n="popupHeading"></h1>
+      <div
+        class="timer-box popup-timer"
+        role="group"
+        data-ref="timer"
+        data-i18n-label="timerBoxLabel"
+      >
+        <div class="timer-main">
+          <span class="timer-line">
+            <span class="live-dot"></span>
+            <span class="timer-elapsed num" data-ref="elapsed"></span>
+          </span>
+          <span class="popup-task" data-ref="task"></span>
+          <span class="timer-since" data-ref="project"></span>
+        </div>
+        <div class="popup-timer-buttons">
+          <button class="button primary" type="button" data-ref="stop">
+            <span data-i18n="timerBoxStop"></span>
+          </button>
+          <button class="button" type="button" data-ref="split">
+            <span data-i18n="popupSplit"></span>
+          </button>
+        </div>
+      </div>
+      <p class="popup-idle" data-ref="idle" data-i18n="popupNoTimer" hidden></p>
+      <div class="popup-switch">
+        <label class="popup-label" for="switch-field" data-ref="switch-label"></label>
+        <div class="search-field">
+          <input
+            id="switch-field"
+            class="field"
+            type="search"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-expanded="true"
+            aria-controls="switch-list"
+            autocomplete="off"
+            data-ref="field"
+          />
+        </div>
+        <h2 class="popup-list-label" id="switch-list-label" data-ref="list-label"></h2>
+        <ul
+          id="switch-list"
+          class="popup-list"
+          role="listbox"
+          aria-labelledby="switch-list-label"
+          data-ref="list"
+        ></ul>
+        <p class="popup-empty" data-ref="empty" hidden></p>
+      </div>
+      <p class="popup-error" role="alert" data-ref="error"></p>
+      <div class="popup-footer">
+        <button class="button" type="button" data-ref="open">
+          <span data-i18n="popupOpenTracker"></span>
+        </button>
+      </div>
     </main>
   </body>
 </html>

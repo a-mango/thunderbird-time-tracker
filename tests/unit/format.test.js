@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   formatClock,
+  formatDate,
   formatDay,
   formatTimeRange,
   formatTimerLabel,
@@ -189,5 +190,13 @@ describe('formatTimerLabel', () => {
     expect(long).toBe('1:05 · Checkout form va…');
     expect([...long]).toHaveLength(24);
     expect(formatTimerLabel(0, 'Task name here', { max: 12 })).toBe('0:00 · Task…');
+  });
+});
+
+describe('formatDate', () => {
+  const ms = new Date(2026, 9, 20, 14, 45).getTime();
+  it('shows the date with the year, optionally the time', () => {
+    expect(formatDate(ms, { locale: 'en-GB' })).toBe('20 Oct 2026');
+    expect(formatDate(ms, { locale: 'en-GB', time: true })).toBe('20 Oct 2026, 14:45');
   });
 });

@@ -37,9 +37,11 @@ export {
   listEntriesByTask,
   listEntriesInRange,
   purgeDeleted,
+  recentTasks,
   restoreEntry,
   softDeleteEntry,
   splitEntry,
   updateEntry,
 } from './entries.js';
 export { getSettings, updateSettings } from './settings.js';
+export { exportBackup, restoreBackup, wipeAll } from './backup.js';

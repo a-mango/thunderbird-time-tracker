@@ -1,21 +1,123 @@
+/* Action popup (docs/DESIGN.md, Popup): 360px, panel colours, the detail pane's timer box and
+ * list rows with the tree-listbox row states. */
 body {
-  margin: 0;
-  min-width: 280px;
+  inline-size: 360px;
   background-color: var(--panel-background-color);
   color: var(--panel-text-color);
 }
 
-main {
+.popup {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-step) * 4);
   padding: calc(var(--space-step) * 4);
 }
 
-h1 {
-  margin-block: 0 var(--space-step);
-  font-size: 1.1em;
+.popup-timer {
+  & .popup-task {
+    overflow: hidden;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.popup-timer-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.popup-idle,
+.popup-empty {
+  margin: 0;
+  color: var(--tt-text-muted);
+}
+
+.popup-switch {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+}
+
+.popup-label,
+.popup-list-label {
+  margin: 0;
+  font-size: 1em;
   font-weight: 600;
 }
 
-p {
+.popup-list-label {
+  color: var(--tt-text-muted);
+  font-size: 0.85em;
+  font-weight: normal;
+}
+
+/* Rows like tree-listbox.css: 1px transparent border, radius 3px, accent fill when selected. */
+.popup-list {
   margin: 0;
-  color: var(--layout-color-2);
+  padding: 0;
+  list-style: none;
+}
+
+.popup-option {
+  display: flex;
+  align-items: center;
+  /* The folder pane's icon-to-name spacing (about3Pane.css .name margin-inline 7px). */
+  gap: 7px;
+  min-block-size: var(--list-item-min-height);
+  padding: var(--space-step) var(--space-base);
+  border: 1px solid transparent;
+  border-radius: var(--listbox-border-radius);
+
+  &[aria-selected='true'] {
+    background-color: var(--listbox-selected-bg);
+  }
+  .popup:has(.field:focus) &[aria-selected='true'] {
+    background-color: var(--listbox-focused-selected-bg);
+    color: var(--listbox-focused-selected-color);
+  }
+  & > .icon {
+    flex: none;
+  }
+}
+
+.popup-option-text {
+  display: flex;
+  flex-direction: column;
+  min-inline-size: 0;
+
+  & > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.popup-option-path {
+  color: var(--tt-text-muted);
+  font-size: 0.85em;
+
+  .popup:has(.field:focus) [aria-selected='true'] & {
+    color: inherit;
+  }
+}
+
+.popup-error {
+  margin: 0;
+  color: var(--color-text-critical);
+
+  &:empty {
+    display: none;
+  }
+}
+
+.popup-footer {
+  display: flex;
+  padding-block-start: calc(var(--space-step) * 3);
+  border-block-start: 1px solid var(--panel-border-color);
+
+  & > .button {
+    flex: 1;
+  }
 }

@@ -50,3 +50,51 @@ body {
 .list-pane > tt-notification-bar {
   flex: none;
 }
+
+/* ---- Settings dialog (settings-dialog.js): sections like Thunderbird's preference groups ---- */
+.settings {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-step) * 5);
+  inline-size: min(480px, 80vw);
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-base);
+  margin: 0;
+  padding: 0;
+  border: none;
+}
+
+.settings-heading {
+  margin-block-end: var(--space-step);
+  padding: 0;
+  font-size: 1.1em;
+  font-weight: 600;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+  align-items: center;
+  gap: var(--space-base);
+}
+
+.settings-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-base);
+}
+
+.settings-status {
+  margin: 0;
+
+  &:empty {
+    display: none;
+  }
+  &.error {
+    color: var(--color-text-critical);
+  }
+}

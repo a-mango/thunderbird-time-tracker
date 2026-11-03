@@ -1,12 +1,15 @@
 // Tracker tab (docs/DESIGN.md, Layout A): the three-pane shell with the project pane, the task
 // list and the details pane.
 import './components/index.js';
+import { applySettings } from './apply-settings.js';
 import { installContextMenu } from './context-menu.js';
+import { createDataCommands } from './data-commands.js';
 import { createDetail } from './detail.js';
 import { createEntryCommands } from './entry-commands.js';
 import { showMenu } from './menu.js';
 import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
+import { settingsDialog } from './settings-dialog.js';
 import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
@@ -25,15 +28,6 @@ const SECOND_MS = 1000;
 /** @param {string} name */
 const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
 const notification = /** @type {TtNotificationBar} */ (ref('notification'));
-
-/** @param {import('../lib/types.js').Settings} settings */
-function applySettings(settings) {
-  const root = document.documentElement;
-  if (settings.density === 'default') delete root.dataset.density;
-  else root.dataset.density = settings.density;
-  if (settings.accent === 'system') delete root.dataset.accent;
-  else root.dataset.accent = settings.accent;
-}
 
 /** @param {unknown} error */
 function showError(error) {
@@ -158,10 +152,17 @@ async function main() {
   };
   newTaskButton.addEventListener('click', newTask);
 
+  const dataCommands = createDataCommands({ data });
+  /** @param {import('./data-commands.js').DataMessage | null} message */
+  const showDataMessage = (message) => {
+    if (message) notification.show({ type: message.type, message: message.text });
+  };
   sidebar = createSidebar({
     data,
     run: commands.run,
     drop: commands.drop,
+    openSettings: () => settingsDialog({ data, commands: dataCommands, onError: showError }),
+    exportCsv: () => dataCommands.exportCsv().then(showDataMessage, showError),
     onSelect: (selection) => {
       taskList.setScope(scopeOf(data, selection));
       syncDetail();
@@ -183,9 +184,16 @@ async function main() {
     focusEntry: (id) => detail.focusEntry(id),
   });
 
+  let showDone = data.settings.showDone;
   data.addEventListener('change', (event) => {
     const { types } = /** @type {CustomEvent} */ (event).detail;
-    if (types.has('settings')) applySettings(data.settings);
+    if (types.has('settings')) {
+      applySettings(data.settings);
+      if (data.settings.showDone !== showDone) {
+        showDone = data.settings.showDone;
+        taskList.applyShowDone();
+      }
+    }
     sidebar.render();
     taskList.render();
     syncNewTask();

@@ -6,11 +6,12 @@
 //   - right-clicks the gallery (project tree → menus.overrideContext(); table → default menu)
 //     and records which menu items open;
 //   - M3: right-clicks a project row in the real tracker page, activates "Rename Project…" and
-//     records whether menus.onClicked reached the page and opened the dialog.
+//     records whether menus.onClicked reached the page and opened the dialog;
+//   - M6: whether an <a download> blob link in the tracker page saves a file.
 // Writes artifacts/tb/spike.json. Nothing in src/ or the shipped manifest changes.
 // Usage: node scripts/tb-spike.mjs [--keep-open]
 import { spawn } from 'node:child_process';
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -369,6 +370,18 @@ async function main() {
     );
     const after = /** @type {Record<string, any>} */ (await readPage());
 
+    // M6: save downloads without asking, into artifacts/tb/downloads/ (only inside .tb-profile/),
+    // so the probe's <a download> click either lands there or provably goes nowhere.
+    const downloadDir = join(outDir, 'downloads');
+    await rm(downloadDir, { recursive: true, force: true });
+    await mkdir(downloadDir, { recursive: true });
+    await client.run(
+      `Services.prefs.setBoolPref('browser.download.useDownloadDir', true);
+       Services.prefs.setIntPref('browser.download.folderList', 2);
+       Services.prefs.setStringPref('browser.download.dir', arguments[0]);`,
+      [downloadDir],
+    );
+
     // M3: the real tracker page and its native context menu.
     const trackerUrl = await client.run(
       `return WebExtensionPolicy.getByID(arguments[0]).getURL('ui/tracker.html');`,
@@ -399,6 +412,43 @@ async function main() {
     const clicked = /** @type {Record<string, any>} */ (await readProbe());
     const trackerShot = await client.screenshot(join(outDir, 'tracker-tab.png'));
 
+    // M6: the probe clicked an <a download> link after the dialog closed. Did Thunderbird save
+    // the file, or open a dialog asking where to?
+    const downloadResult = await waitFor(
+      () =>
+        client.run(`return (async () => {
+          const { Downloads } = ChromeUtils.importESModule('resource://gre/modules/Downloads.sys.mjs');
+          const list = await Downloads.getList(Downloads.ALL);
+          const all = await list.getAll();
+          const found = all.filter((d) => d.target.path?.includes('tt-probe') || d.source.url.startsWith('blob:moz-extension'));
+          const windows = [];
+          for (const win of Services.wm.getEnumerator(null)) {
+            windows.push(win.document.documentElement.getAttribute('windowtype') || win.location.href);
+          }
+          if (found.length === 0 && !windows.some((w) => /unknownContentType|filepicker/i.test(w))) return null;
+          return {
+            downloads: found.map((d) => ({ succeeded: d.succeeded, error: d.error?.message ?? null, path: d.target.path, source: d.source.url.slice(0, 20) })),
+            windows,
+          };
+        })();`),
+      'the probe download',
+      20_000,
+    ).catch(async (error) => ({
+      error: String(error),
+      probe: (await readProbe())?.download ?? null,
+      all: await client.run(`return (async () => {
+        const { Downloads } = ChromeUtils.importESModule('resource://gre/modules/Downloads.sys.mjs');
+        const list = await Downloads.getList(Downloads.ALL);
+        return (await list.getAll()).map((d) => d.source.url.slice(0, 40));
+      })();`),
+      prefs: await client.run(`return {
+        useDownloadDir: Services.prefs.getBoolPref('browser.download.useDownloadDir', null),
+        folderList: Services.prefs.getIntPref('browser.download.folderList', -1),
+        dir: Services.prefs.getStringPref('browser.download.dir', ''),
+      };`),
+    }));
+    await client.screenshot(join(outDir, 'tracker-download.png'));
+
     const result = {
       thunderbird: tb.version,
       mail,
@@ -410,6 +460,7 @@ async function main() {
         dialogOpened: clicked?.dialog ?? null,
         header: clicked?.header ?? null,
       },
+      download: { ...downloadResult, saved: await readdir(downloadDir) },
       shots: [
         mailShot,
         galleryShot,
