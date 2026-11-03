@@ -34,3 +34,21 @@ test('popup in French', async ({ page }) => {
   expect(await clipped(page)).toEqual([]);
   await expectNoAxeViolations(page);
 });
+
+test('a narrow project pane ends the New Task label with an ellipsis', async ({ page }) => {
+  await openTracker(page, '?seed=42&locale=fr');
+  await page.locator('#sidebar').evaluate((sidebar) => {
+    /** @type {HTMLElement} */ (sidebar).style.inlineSize = '150px';
+  });
+  const button = page.getByRole('button', { name: 'Nouvelle tâche' });
+  await expect(button).toHaveAttribute('title', 'Nouvelle tâche');
+  const fit = await button.evaluate((element) => {
+    const label = /** @type {HTMLElement} */ (element.querySelector('span'));
+    return {
+      buttonFits: element.scrollWidth <= element.clientWidth + 1,
+      truncated: label.scrollWidth > label.clientWidth,
+      ellipsis: getComputedStyle(label).textOverflow,
+    };
+  });
+  expect(fit).toEqual({ buttonFits: true, truncated: true, ellipsis: 'ellipsis' });
+});

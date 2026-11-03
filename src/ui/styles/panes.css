@@ -21,6 +21,15 @@
   & .new-task {
     flex: 1;
     min-inline-size: 0;
+
+    /* A narrow pane, a wide font or a longer translation: end the label with an ellipsis
+     * (the button's tooltip has the full name). */
+    & > span {
+      min-inline-size: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   }
 }
 

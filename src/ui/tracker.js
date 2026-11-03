@@ -163,6 +163,7 @@ async function main() {
   };
   addEntryButton.addEventListener('click', addEntry);
   const newTaskButton = /** @type {HTMLButtonElement} */ (ref('new-task'));
+  newTaskButton.title = t('sidebarNewTask');
 
   /** The project New Task adds to: the selected project, if it is active. */
   const newTaskProject = () => {
