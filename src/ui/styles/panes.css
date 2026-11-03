@@ -333,6 +333,7 @@
 
 /* Running indicator: a solid dot in the running colour (the folder pane's new-mail cue). */
 .live-dot {
+  display: inline-block;
   flex: none;
   inline-size: 8px;
   block-size: 8px;
@@ -456,6 +457,10 @@
   & .entry-source {
     display: flex;
     justify-content: center;
+
+    & > span:first-child {
+      display: flex;
+    }
     color: var(--tt-text-muted);
 
     & .icon {

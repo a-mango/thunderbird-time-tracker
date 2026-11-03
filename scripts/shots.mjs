@@ -22,6 +22,10 @@ const SHOTS = /** @type {const} */ ([
   // List states the default shots don't show: quick filter bar with tags, a focused selected row.
   ['tracker-list-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-list-dark', '/ui/tracker.html', 'dark', TAB],
+  // Detail pane dialogs over the running task.
+  ['tracker-entry-dialog-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-entry-dialog-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-split-dialog-light', '/ui/tracker.html', 'light', TAB],
   ['popup-light', '/ui/popup.html', 'light', { width: 320, height: 200 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 320, height: 200 }],
   // Primitives gallery: light/dark × the three densities, full page.
@@ -70,9 +74,14 @@ try {
         await page.getByRole('button', { name: 'Tags', exact: true }).click();
         await page.getByRole('row', { name: /Performance pass/ }).click();
       }
+      if (name.includes('entry-dialog')) {
+        await page.locator('#detail .entry-row').first().click();
+      } else if (name.includes('split-dialog')) {
+        await page.getByRole('button', { name: 'Split…' }).click();
+      }
       await page.mouse.move(0, 0);
       await page.screenshot({ path: file });
-      if (!path.includes('fixtures=empty') && !name.startsWith('tracker-list')) {
+      if (!path.includes('fixtures=empty') && !/tracker-(list|entry|split)/.test(name)) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });
         console.log(clip);

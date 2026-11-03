@@ -31,6 +31,12 @@
 | Page data access (M3) | The tracker page reads and writes `db/` directly; `tt:summary` and `?fixtures=none` are gone | One data path for page, popup and background; `TrackerData` applies its own writes and other pages' `BroadcastChannel` changes |
 | Context menus (M3) | The background creates hidden items (`background/menus.js`); the page calls `overrideContext` on a project row, shows the right items in `menus.onShown`, and acts in `menus.onClicked` only if `menus.getTargetElement()` finds the element in its own document | `onShown`/`onClicked` fire in every extension page. Every command also has a keyboard path: F2, Delete, Enter/double-click, Ctrl+Shift+N, the Projects ⋮ menu |
 | In-TB measurements | `npm run tb:spike`: stage copy + `web-ext run --marionette -remote-allow-system-access`, chrome-scope scripts | Reproducible spike evidence without hand steps; nothing changes in `src/` or the shipped manifest |
+| Timer status (M5) | `background/timer-status.js` derives the action label (`h:mm · task`, max 24 chars), the action badge (`●`) and the space `badgeText` (`h:mm`) from the database on every background start, `tt:changed` (entries/tasks), `tt-tick` alarm and command | No state in the event page; restart and wake-up use the same path. The alarm's `when` is aligned to whole running minutes, so `h:mm` turns over on time |
+| Stopping at a time (M5) | `stopRunning(db, {at})` (lib `stopAt`): `at` in `(start, now]`; the entry dialog uses it to give the running entry an end | `updateEntry` keeps refusing an end on the running entry, so the pointer is only cleared inside the timer transaction |
+| Resume last entry (M5) | Starts a new timer entry on the task with the note of its latest stopped entry | Stopped entries are never reopened (`start < end` stays an invariant) |
+| Duplicate (M5) | Opens the entry dialog prefilled as a new entry | An exact copy would always overlap the original |
+| `toggle-timer` (M5) | Stops the running entry, else starts the open task with the latest-ended entry (`lastTrackedTask`, `end` index backwards); if none, a notification (`notifications` permission) | The shortcut has no other UI to explain why nothing happened |
+| Entry rows (M5) | `<button class="entry-row">` per entry, name from its content (visually hidden source label) | Enter/click opens the dialog, Delete deletes, native context menu like task rows; the name always matches the ticking time (axe `label-content-name-mismatch`) |
 
 ## How each milestone runs (Claude Code on your machine)
 
