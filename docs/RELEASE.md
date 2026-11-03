@@ -52,8 +52,7 @@ Submit at <https://addons.thunderbird.net/developers/>, "Submit a New Add-on", "
 - [ ] **Tags**: time tracking, timer, timesheet, projects, tasks.
 - [ ] **Homepage**: <https://github.com/a-mango/thunderbird-time-tracker>
 - [ ] **Support site**: <https://github.com/a-mango/thunderbird-time-tracker/issues>
-- [ ] **Licence**: choose one (the repository has no `LICENSE` file yet; Thunderbird's icons are
-      MPL 2.0, so MPL 2.0 is the natural fit).
+- [ ] **Licence**: Mozilla Public License 2.0 (`LICENSE`).
 - [ ] **Privacy policy**: paste `PRIVACY.md`.
 - [ ] **Icon**: `design/icon/time-tracker-128.png` (ATN also reads the manifest icons).
 - [ ] **Screenshots** (fictional data only, from `npm run shots`, in `docs/screenshots/`):

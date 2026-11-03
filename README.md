@@ -102,8 +102,10 @@ Dev harness options: `?seed=N` re-seeds, `?fixtures=empty` starts empty, `?fixtu
 Design and scope live in [docs/](docs/): `SPEC.md`, `DESIGN.md`, `PLAN.md`. Releases follow
 [docs/RELEASE.md](docs/RELEASE.md).
 
-## Licences and credits
+## Licence and credits
 
-Icons in `src/ui/icons/` and the design token values come from Thunderbird (MPL 2.0); see
+Time Tracker is licensed under the [Mozilla Public License 2.0](LICENSE).
+
+Icons in `src/ui/icons/` and the design token values come from Thunderbird (also MPL 2.0); see
 [THIRD_PARTY.md](THIRD_PARTY.md). The extension icon is original artwork. Changes are listed in
 [CHANGELOG.md](CHANGELOG.md).
