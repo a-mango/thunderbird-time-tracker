@@ -1,6 +1,6 @@
 {
   "name": "thunderbird-time-tracker",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Thunderbird extension: projects, tasks and time entries in their own space tab.",
   "type": "module",
@@ -18,8 +18,9 @@
     "shots": "node scripts/shots.mjs",
     "tb": "node scripts/tb.mjs",
     "tb:spike": "node scripts/tb-spike.mjs",
-    "build": "web-ext build --source-dir src --artifacts-dir dist --ignore-files 'types/**' --filename time-tracker-{version}.xpi --overwrite-dest",
+    "build": "web-ext build --source-dir src --artifacts-dir dist --ignore-files types 'types/**' --filename time-tracker-{version}.xpi --overwrite-dest",
     "icons": "node scripts/import-icons.mjs",
+    "icon:png": "node scripts/icon-png.mjs",
     "ref": "sh scripts/ref.sh"
   },
   "devDependencies": {

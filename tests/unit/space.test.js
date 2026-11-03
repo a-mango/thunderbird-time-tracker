@@ -6,6 +6,17 @@ const messages = { spaceTitle: { message: 'Time Tracker' } };
 /** @returns {any} */
 const mock = () => createMessenger({ messages, baseUrl: 'moz-extension://test/' });
 
+/** Title and the one-colour toolbar glyphs (light and dark themes, 16 and 32 px). */
+const BUTTON = {
+  title: 'Time Tracker',
+  defaultIcons: 'icons/toolbar-dark.svg',
+  themeIcons: [16, 32].map((size) => ({
+    dark: 'icons/toolbar-dark.svg',
+    light: 'icons/toolbar-light.svg',
+    size,
+  })),
+};
+
 describe('ensureSpace', () => {
   it('creates the space when it is missing', async () => {
     const api = mock();
@@ -13,7 +24,7 @@ describe('ensureSpace', () => {
     expect(space).toMatchObject({ name: SPACE_NAME, isSelfOwned: true, isBuiltIn: false });
     expect(api.spaces._props(space.id)).toEqual({
       url: `moz-extension://test/${TRACKER_PATH}`,
-      button: { title: 'Time Tracker' },
+      button: BUTTON,
     });
   });
 
@@ -38,7 +49,7 @@ describe('ensureSpace', () => {
     await ensureSpace(api, { repair: true });
     expect(api.spaces._props(stale.id)).toEqual({
       url: `moz-extension://test/${TRACKER_PATH}`,
-      button: { title: 'Time Tracker' },
+      button: BUTTON,
     });
   });
 

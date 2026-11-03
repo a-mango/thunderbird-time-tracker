@@ -1,5 +1,10 @@
 export const SPACE_NAME = 'time_tracker';
 export const TRACKER_PATH = 'ui/tracker.html';
+/** One-colour glyphs like Thunderbird's own toolbar icons: dark for light themes and back. */
+export const TOOLBAR_ICON = Object.freeze({
+  dark: 'icons/toolbar-dark.svg',
+  light: 'icons/toolbar-light.svg',
+});
 
 /**
  * Make sure our space exists. Thunderbird keeps extension spaces in memory and removes them
@@ -12,7 +17,11 @@ export const TRACKER_PATH = 'ui/tracker.html';
  */
 export async function ensureSpace(api = messenger, { repair = false } = {}) {
   const url = api.runtime.getURL(TRACKER_PATH);
-  const buttonProperties = { title: api.i18n.getMessage('spaceTitle') };
+  const buttonProperties = {
+    title: api.i18n.getMessage('spaceTitle'),
+    defaultIcons: TOOLBAR_ICON.dark,
+    themeIcons: [16, 32].map((size) => ({ ...TOOLBAR_ICON, size })),
+  };
   const [existing] = await api.spaces.query({ isSelfOwned: true, name: SPACE_NAME });
   if (existing) {
     if (repair) await api.spaces.update(existing.id, { url }, buttonProperties);
