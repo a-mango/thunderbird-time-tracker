@@ -26,8 +26,15 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-entry-dialog-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-entry-dialog-dark', '/ui/tracker.html', 'dark', TAB],
   ['tracker-split-dialog-light', '/ui/tracker.html', 'light', TAB],
-  ['popup-light', '/ui/popup.html', 'light', { width: 320, height: 200 }],
-  ['popup-dark', '/ui/popup.html', 'dark', { width: 320, height: 200 }],
+  // Settings dialog and the restore preview over the tracker (M6).
+  ['tracker-settings-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-settings-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-export-light', '/ui/tracker.html', 'light', TAB],
+  ['popup-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
+  ['popup-dark', '/ui/popup.html', 'dark', { width: 360, height: 600 }],
+  ['popup-search-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
+  ['popup-idle-dark', '/ui/popup.html?fixtures=empty', 'dark', { width: 360, height: 600 }],
+  ['popup-compact-light', '/ui/popup.html?density=compact', 'light', { width: 360, height: 600 }],
   // Primitives gallery: light/dark × the three densities, full page.
   ...['light', 'dark'].flatMap((scheme) =>
     ['compact', 'default', 'relaxed'].map(
@@ -56,8 +63,11 @@ try {
     await page.waitForLoadState('networkidle');
     const file = `${outDir}${name}.png`;
     // Popups size to their content in Thunderbird: clip to <body> instead of the viewport.
-    if (path.includes('popup')) await page.locator('body').screenshot({ path: file });
-    else if (path.includes('gallery')) {
+    if (path.includes('popup')) {
+      await page.locator('html[data-ready]').waitFor();
+      if (name.includes('search')) await page.getByRole('combobox').fill('form');
+      await page.locator('body').screenshot({ path: file });
+    } else if (path.includes('gallery')) {
       await page.locator('html[data-ready]').waitFor();
       await page.screenshot({ path: file, fullPage: true });
     } else {
@@ -78,10 +88,18 @@ try {
         await page.locator('#detail .entry-row').first().click();
       } else if (name.includes('split-dialog')) {
         await page.getByRole('button', { name: 'Split…' }).click();
+      } else if (name.includes('settings') || name.includes('export')) {
+        await page.getByRole('button', { name: 'More options' }).click();
+        await page
+          .getByRole('menuitem', { name: name.includes('settings') ? 'Settings…' : 'Export CSV…' })
+          .click();
       }
       await page.mouse.move(0, 0);
       await page.screenshot({ path: file });
-      if (!path.includes('fixtures=empty') && !/tracker-(list|entry|split)/.test(name)) {
+      if (
+        !path.includes('fixtures=empty') &&
+        !/tracker-(list|entry|split|settings|export)/.test(name)
+      ) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });
         console.log(clip);
