@@ -1,9 +1,12 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect } from '@playwright/test';
 
-/** @param {import('@playwright/test').Page} page */
-export async function expectNoAxeViolations(page) {
-  const { violations } = await new AxeBuilder({ page }).analyze();
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {{disableRules?: string[]}} [options]
+ */
+export async function expectNoAxeViolations(page, { disableRules = [] } = {}) {
+  const { violations } = await new AxeBuilder({ page }).disableRules(disableRules).analyze();
   expect(
     violations.map(
       (v) => `${v.id}: ${v.help} (${v.nodes.map((n) => n.target.join(' ')).join(', ')})`,

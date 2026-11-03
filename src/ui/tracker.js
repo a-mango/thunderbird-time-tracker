@@ -15,6 +15,7 @@ import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
 import { TrackerData } from './tracker-data.js';
+import { timerTransition } from '../lib/timer.js';
 
 /**
  * @typedef {import('./components/tt-notification-bar.js').TtNotificationBar} TtNotificationBar
@@ -123,8 +124,8 @@ async function main() {
         },
       ],
     });
-  const taskCommands = createTaskCommands({ data, onError: showError, announce, offerUndo });
-  const entryCommands = createEntryCommands({ data, onError: showError, announce, offerUndo });
+  const taskCommands = createTaskCommands({ data, onError: showError, offerUndo });
+  const entryCommands = createEntryCommands({ data, onError: showError, offerUndo });
   const taskList = createTaskList({ data, commands: taskCommands });
   const addEntryButton = /** @type {HTMLButtonElement} */ (ref('add-entry'));
   const detail = createDetail({
@@ -215,8 +216,20 @@ async function main() {
   });
 
   let showDone = data.settings.showDone;
+  // Timer start and stop are announced whatever started them: this tab, the popup, the shortcut.
+  let running = data.running;
+  /** The running task's name, kept for "stopped" when the task was deleted with its timer. */
+  let runningName = running ? (data.tasks.get(running.taskId)?.name ?? '') : '';
   data.addEventListener('change', (event) => {
     const { types } = /** @type {CustomEvent} */ (event).detail;
+    const transition = timerTransition(running, data.running);
+    if (transition?.type === 'started') {
+      announce(t('timerStarted', data.tasks.get(transition.taskId)?.name ?? ''));
+    } else if (transition) {
+      announce(t('timerStopped', data.tasks.get(transition.taskId)?.name ?? runningName));
+    }
+    running = data.running;
+    runningName = running ? (data.tasks.get(running.taskId)?.name ?? '') : '';
     if (types.has('settings')) {
       applySettings(data.settings);
       if (data.settings.showDone !== showDone) {

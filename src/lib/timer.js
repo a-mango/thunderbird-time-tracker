@@ -145,3 +145,23 @@ export function adjustStart(db, startAt, { now = Date.now() } = {}) {
 export function getRunning(db) {
   return getRunningEntry(db);
 }
+
+/**
+ * @typedef {{type: 'started' | 'stopped', taskId: string}} TimerTransition
+ */
+
+/**
+ * What a change of the running entry means for the user (the live-region announcement):
+ * a timer started (also when switching to another task), stopped, or nothing worth saying
+ * (same entry, or a split that keeps tracking the same task).
+ * @param {{id: string, taskId: string} | null} before
+ * @param {{id: string, taskId: string} | null} after
+ * @returns {TimerTransition | null}
+ */
+export function timerTransition(before, after) {
+  if (after && (!before || before.taskId !== after.taskId)) {
+    return { type: 'started', taskId: after.taskId };
+  }
+  if (before && !after) return { type: 'stopped', taskId: before.taskId };
+  return null;
+}

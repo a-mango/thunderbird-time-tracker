@@ -154,6 +154,11 @@ tt-tree {
   & li.muted > .container {
     color: var(--tt-text-muted);
   }
+  /* Selected: the row colour, like done tasks in the list (muted text fails AA on the
+   * selection background). The icon stays muted-looking through currentColor. */
+  & li.muted > .container[aria-selected='true'] {
+    color: inherit;
+  }
 
   /* Row states. Selection follows focus, so selected = current. */
   & .container:not([aria-selected='true']):hover {
