@@ -78,13 +78,17 @@ export function createRandom(seed) {
 /**
  * @param {{seed?: number, now?: number, running?: boolean}} [options]
  *   `running` adds one open entry (end === null) on the first task, like the reference.
- * @param {{bulkTasks?: number}} [extra] `bulkTasks` adds that many tasks (one entry each) to
- *   Support retainer, reusing the reference's task names: the M4 performance fixture.
+ * @param {{bulkTasks?: number, largeTasks?: number, largeEntries?: number,
+ *          largeDays?: number}} [extra]
+ *   `bulkTasks` adds that many tasks (one entry each) to Support retainer, reusing the
+ *   reference's task names: the M4 performance fixture. `largeTasks` adds tasks spread over the
+ *   open projects and `largeEntries` entries spread over them across the last `largeDays` days:
+ *   the M7 performance fixture.
  * @returns {Fixtures}
  */
 export function generateFixtures(
   { seed = 42, now = Date.now(), running = true } = {},
-  { bulkTasks = 0 } = {},
+  { bulkTasks = 0, largeTasks = 0, largeEntries = 0, largeDays = 3 * 365 } = {},
 ) {
   const random = createRandom(seed);
   const pick = (/** @type {number} */ min, /** @type {number} */ max) =>
@@ -199,6 +203,47 @@ export function generateFixtures(
       start,
       end,
       note: '',
+      source: 'timer',
+      createdAt: end,
+      updatedAt: end,
+      deletedAt: null,
+    });
+  }
+
+  const openProjects = projects.filter((project) => !project.archived);
+  /** @type {Task[]} */
+  const largeTaskList = [];
+  for (let n = 0; n < largeTasks; n += 1) {
+    const [, name, , , estimateMin, tags] = TASKS[n % TASKS.length];
+    const projectId = openProjects[n % openProjects.length].id;
+    const task = {
+      id: `large${n + 1}`,
+      projectId,
+      name: `${name} ${n + 1}`,
+      status: /** @type {'open' | 'done'} */ (n % 5 === 0 ? 'done' : 'open'),
+      starred: false,
+      estimateMin,
+      billable: n % 2 === 0,
+      tags: [...tags],
+      notes: '',
+      order: 2000 + n,
+      createdAt: now - largeDays * DAY,
+      updatedAt: now - largeDays * DAY,
+      doneAt: n % 5 === 0 ? now - pick(1, largeDays) * DAY : null,
+    };
+    largeTaskList.push(task);
+    tasks.push(task);
+  }
+  for (let n = 0; n < largeEntries && largeTaskList.length > 0; n += 1) {
+    const task = largeTaskList[pick(0, largeTaskList.length - 1)];
+    const start = today.getTime() - pick(1, largeDays) * DAY + pick(7 * 60, 17 * 60) * MINUTE;
+    const end = start + pick(5, 120) * MINUTE;
+    entries.push({
+      id: `e${entries.length + 1}`,
+      taskId: task.id,
+      start,
+      end,
+      note: n % 9 === 0 ? NOTES[3] : '',
       source: 'timer',
       createdAt: end,
       updatedAt: end,

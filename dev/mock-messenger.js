@@ -488,7 +488,8 @@ export function createMessenger({
  * - default: seed fixtures (seed 42) only if the database doesn't exist yet, so changes survive
  *   reloads;
  * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything; `?fixtures=bulk`:
- *   re-seed with 2,000 extra tasks in Support retainer (performance fixture);
+ *   re-seed with 2,000 extra tasks in Support retainer (M4 performance fixture);
+ *   `?fixtures=large`: re-seed with 300 tasks and 50,000 entries over 3 years (M7);
  * - `?density=` / `?accent=`: store those settings (for screenshots).
  * @param {URLSearchParams} params
  */
@@ -497,6 +498,11 @@ export async function prepareDatabase(params) {
   if (params.get('fixtures') === 'empty') await deleteDatabase();
   else if (params.get('fixtures') === 'bulk') {
     await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }, { bulkTasks: 2000 }));
+  } else if (params.get('fixtures') === 'large') {
+    const options = { seed: Number(seed ?? 42) };
+    // 16 reference tasks + 284 = 300 tasks; 50,000 entries in all.
+    const base = generateFixtures(options).entries.length;
+    await seedDatabase(generateFixtures(options, { largeTasks: 284, largeEntries: 50_000 - base }));
   } else if (seed !== null || !(await databaseExists())) {
     await seedDatabase(generateFixtures({ seed: Number(seed ?? 42) }));
   }

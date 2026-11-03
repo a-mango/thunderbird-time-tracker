@@ -58,6 +58,8 @@ function announce(text) {
 }
 
 async function main() {
+  // Cold-open timing (tests/ui/perf-large.spec.js): tt-start → tt-ready.
+  performance.mark('tt-start');
   localize();
   /** @type {TrackerData} */
   let data;
@@ -236,6 +238,7 @@ async function main() {
   };
   document.addEventListener('visibilitychange', syncTicker);
   syncTicker();
+  performance.mark('tt-ready');
   document.documentElement.dataset.ready = '';
 }
 
