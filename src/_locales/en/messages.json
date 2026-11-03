@@ -27,10 +27,6 @@
     "message": "Time Tracker",
     "description": "Heading of the toolbar popup."
   },
-  "popupPlaceholder": {
-    "message": "No timer running.",
-    "description": "Placeholder text in the toolbar popup."
-  },
   "trackerLoadError": {
     "message": "Could not load your data. Try reopening this tab.",
     "description": "Shown in the tracker tab when the database cannot be opened or read."
@@ -308,12 +304,12 @@
     "description": "Project context menu item. Shortcut Delete."
   },
   "menuSettings": {
-    "message": "Settings",
-    "description": "Menu item in the project pane menu."
+    "message": "Settings…",
+    "description": "More menu: open the settings dialog."
   },
   "menuExport": {
-    "message": "Export…",
-    "description": "Menu item in the project pane menu."
+    "message": "Export CSV…",
+    "description": "More menu: export time entries as CSV."
   },
   "projectDialogNew": {
     "message": "New Project",
@@ -1026,5 +1022,405 @@
   "menuEntryDelete": {
     "message": "Delete Entry",
     "description": "Entry context menu."
+  },
+  "popupNoTimer": {
+    "message": "No timer running",
+    "description": "Toolbar popup: shown instead of the timer when nothing runs."
+  },
+  "popupSwitchTo": {
+    "message": "Switch to…",
+    "description": "Toolbar popup: label of the task search field while a timer runs."
+  },
+  "popupStart": {
+    "message": "Start…",
+    "description": "Toolbar popup: label of the task search field when no timer runs."
+  },
+  "popupRecent": {
+    "message": "Recent tasks",
+    "description": "Toolbar popup: heading of the list when the search field is empty."
+  },
+  "popupMatching": {
+    "message": "Matching tasks",
+    "description": "Toolbar popup: heading of the search results."
+  },
+  "popupNoRecent": {
+    "message": "No recent tasks. Type to search.",
+    "description": "Toolbar popup: nothing tracked yet."
+  },
+  "popupNoMatch": {
+    "message": "No matching open tasks.",
+    "description": "Toolbar popup: search found nothing."
+  },
+  "popupOpenTracker": {
+    "message": "Open Time Tracker",
+    "description": "Toolbar popup: button that opens the Time Tracker tab."
+  },
+  "settingsTitle": {
+    "message": "Settings",
+    "description": "Settings dialog: dialog title."
+  },
+  "settingsAppearance": {
+    "message": "Appearance",
+    "description": "Settings dialog: section heading."
+  },
+  "settingsDensity": {
+    "message": "Density",
+    "description": "Settings dialog: label."
+  },
+  "settingsDensityCompact": {
+    "message": "Compact",
+    "description": "Settings dialog: density option (same as Thunderbird)."
+  },
+  "settingsDensityDefault": {
+    "message": "Default",
+    "description": "Settings dialog: density option (same as Thunderbird)."
+  },
+  "settingsDensityRelaxed": {
+    "message": "Relaxed",
+    "description": "Settings dialog: density option (same as Thunderbird)."
+  },
+  "settingsAccent": {
+    "message": "Accent color",
+    "description": "Settings dialog: label."
+  },
+  "settingsAccentSystem": {
+    "message": "System",
+    "description": "Settings dialog: accent option: follow the system accent."
+  },
+  "settingsAccentThunderbird": {
+    "message": "Thunderbird",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsAccentPurple": {
+    "message": "Purple",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsAccentOrange": {
+    "message": "Orange",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsAccentPink": {
+    "message": "Pink",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsAccentInk": {
+    "message": "Ink",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsAccentTeal": {
+    "message": "Teal",
+    "description": "Settings dialog: accent option."
+  },
+  "settingsTime": {
+    "message": "Time",
+    "description": "Settings dialog: section heading."
+  },
+  "settingsWeekStart": {
+    "message": "Week starts on",
+    "description": "Settings dialog: label."
+  },
+  "settingsWeekMonday": {
+    "message": "Monday",
+    "description": "Settings dialog: week start option."
+  },
+  "settingsWeekSunday": {
+    "message": "Sunday",
+    "description": "Settings dialog: week start option."
+  },
+  "settingsDailyTarget": {
+    "message": "Daily target (hours)",
+    "description": "Settings dialog: label of the number field."
+  },
+  "settingsDurationFormat": {
+    "message": "Duration format",
+    "description": "Settings dialog: label."
+  },
+  "settingsDurationHm": {
+    "message": "Hours and minutes (1h 05m)",
+    "description": "Settings dialog: duration format option."
+  },
+  "settingsDurationDecimal": {
+    "message": "Decimal hours (1.08h)",
+    "description": "Settings dialog: duration format option."
+  },
+  "settingsLists": {
+    "message": "Lists",
+    "description": "Settings dialog: section heading."
+  },
+  "settingsShowDone": {
+    "message": "Show done tasks",
+    "description": "Settings dialog: checkbox."
+  },
+  "settingsConfirmDelete": {
+    "message": "Confirm before deleting",
+    "description": "Settings dialog: checkbox."
+  },
+  "settingsData": {
+    "message": "Data",
+    "description": "Settings dialog: section heading."
+  },
+  "settingsDataHint": {
+    "message": "Your data stays in this Thunderbird profile. Back it up to a file to keep it safe.",
+    "description": "Settings dialog: hint under the Data heading."
+  },
+  "settingsBackup": {
+    "message": "Back Up…",
+    "description": "Settings dialog: button: save a JSON backup file."
+  },
+  "settingsRestore": {
+    "message": "Restore…",
+    "description": "Settings dialog: button: restore from a JSON backup file."
+  },
+  "settingsExportCsv": {
+    "message": "Export CSV…",
+    "description": "Settings dialog: button: export time entries as CSV."
+  },
+  "settingsWipe": {
+    "message": "Delete All Data…",
+    "description": "Settings dialog: button: delete everything."
+  },
+  "settingsClose": {
+    "message": "Close",
+    "description": "Settings dialog: dialog button."
+  },
+  "exportTitle": {
+    "message": "Export Time Entries",
+    "description": "CSV export dialog: dialog title."
+  },
+  "exportFrom": {
+    "message": "From",
+    "description": "CSV export dialog: label of the first day."
+  },
+  "exportTo": {
+    "message": "To",
+    "description": "CSV export dialog: label of the last day (included)."
+  },
+  "exportProject": {
+    "message": "Project",
+    "description": "CSV export dialog: label of the project picker."
+  },
+  "exportAllProjects": {
+    "message": "All projects",
+    "description": "CSV export dialog: project picker option."
+  },
+  "exportHint": {
+    "message": "Entries that start in the range, including subprojects. A running timer is left out.",
+    "description": "CSV export dialog: hint."
+  },
+  "exportButton": {
+    "message": "Export",
+    "description": "CSV export dialog: primary button."
+  },
+  "exportBadRange": {
+    "message": "The last day must not be before the first.",
+    "description": "CSV export dialog: validation message."
+  },
+  "exportDone": {
+    "message": "Exported $COUNT$ entries.",
+    "description": "CSV export dialog: notification after the export.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      }
+    }
+  },
+  "csvDate": {
+    "message": "Date",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvStart": {
+    "message": "Start",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvEnd": {
+    "message": "End",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvMinutes": {
+    "message": "Minutes",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvProject": {
+    "message": "Project",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvTask": {
+    "message": "Task",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvNote": {
+    "message": "Note",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "csvBillable": {
+    "message": "Billable",
+    "description": "CSV export dialog: CSV column header."
+  },
+  "restoreTitle": {
+    "message": "Restore Backup",
+    "description": "Restore: preview dialog title."
+  },
+  "restoreSummary": {
+    "message": "Backup from $DATE$",
+    "description": "Restore: first line of the preview.",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "20 Oct 2026, 14:45"
+      }
+    }
+  },
+  "restoreCounts": {
+    "message": "$PROJECTS$ projects, $TASKS$ tasks, $ENTRIES$ time entries",
+    "description": "Restore: record counts in the preview.",
+    "placeholders": {
+      "projects": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tasks": {
+        "content": "$2",
+        "example": "12"
+      },
+      "entries": {
+        "content": "$3",
+        "example": "340"
+      }
+    }
+  },
+  "restoreRange": {
+    "message": "Entries from $FROM$ to $TO$",
+    "description": "Restore: date range of the entries in the preview.",
+    "placeholders": {
+      "from": {
+        "content": "$1",
+        "example": "1 Sep 2026"
+      },
+      "to": {
+        "content": "$2",
+        "example": "20 Oct 2026"
+      }
+    }
+  },
+  "restoreNoEntries": {
+    "message": "No time entries",
+    "description": "Restore: preview when the backup has no entries."
+  },
+  "restoreHint": {
+    "message": "Merge keeps your current data and replaces records that are also in the backup. Replace deletes everything first, settings included.",
+    "description": "Restore: explains the two buttons."
+  },
+  "restoreMerge": {
+    "message": "Merge",
+    "description": "Restore: button: merge by id."
+  },
+  "restoreReplace": {
+    "message": "Replace All",
+    "description": "Restore: button: replace the whole database."
+  },
+  "restoreDone": {
+    "message": "Backup restored.",
+    "description": "Restore: notification after a restore."
+  },
+  "restoreInvalid": {
+    "message": "This file can’t be restored: $REASON$.",
+    "description": "Restore: error for a rejected file; the reason is one of the restoreReason* messages.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "it isn’t a Time Tracker backup"
+      }
+    }
+  },
+  "restoreConflict": {
+    "message": "The backup can’t be merged: $REASON$. Stop the timer, or use Replace All.",
+    "description": "Restore: error when merging would break a rule; the reason is one of the restoreReason* messages.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "both have a running timer"
+      }
+    }
+  },
+  "restoreReadError": {
+    "message": "Could not read the file.",
+    "description": "Restore: error."
+  },
+  "backupDone": {
+    "message": "Backup saved as $NAME$.",
+    "description": "Notification after saving a backup.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "time-tracker-2026-10-20.json"
+      }
+    }
+  },
+  "wipeTitle": {
+    "message": "Delete All Data",
+    "description": "Delete all data dialog: title."
+  },
+  "wipeText": {
+    "message": "This deletes every project, task, time entry and setting in Time Tracker. It can’t be undone. Back up first if you may need the data.",
+    "description": "Delete all data dialog: warning."
+  },
+  "wipeWord": {
+    "message": "DELETE",
+    "description": "Delete all data dialog: the word the user must type to confirm."
+  },
+  "wipePrompt": {
+    "message": "Type $WORD$ to confirm",
+    "description": "Delete all data dialog: label of the confirmation field.",
+    "placeholders": {
+      "word": {
+        "content": "$1",
+        "example": "DELETE"
+      }
+    }
+  },
+  "wipeButton": {
+    "message": "Delete Everything",
+    "description": "Delete all data dialog: destructive primary button."
+  },
+  "wipeDone": {
+    "message": "All data deleted.",
+    "description": "Delete all data dialog: notification afterwards."
+  },
+  "popupSplit": {
+    "message": "Split Now",
+    "description": "Toolbar popup: button that ends the running entry now and starts a new one on the same task."
+  },
+  "popupSearchPlaceholder": {
+    "message": "Search open tasks",
+    "description": "Toolbar popup: placeholder of the task search field."
+  },
+  "restoreReasonTooLarge": {
+    "message": "it’s larger than 10 MB",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonJson": {
+    "message": "it isn’t valid JSON",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonFormat": {
+    "message": "it isn’t a Time Tracker backup",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonVersion": {
+    "message": "it was made by a newer version of Time Tracker",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonRunning": {
+    "message": "a running timer would be on a done task",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonMultipleRunning": {
+    "message": "both have a running timer",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "restoreReasonContents": {
+    "message": "its contents don’t match the backup format",
+    "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
   }
 }

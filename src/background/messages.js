@@ -1,5 +1,5 @@
-/** Change types that can change the timer status (running entry, or its task's name). */
-const STATUS_TYPES = new Set(['entries', 'tasks']);
+/** Change types that can change the timer status (running entry, its task's name, a restore). */
+const STATUS_TYPES = new Set(['entries', 'tasks', 'reset']);
 
 /**
  * Handles runtime messages from extension pages. Pages read and write `db/` themselves; their

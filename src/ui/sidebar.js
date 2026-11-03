@@ -60,9 +60,11 @@ const isSelection = (value) =>
  *   run: (command: ProjectCommand, id: string | null, value?: string) => unknown,
  *   drop: (id: string, target: {parentId: string | null, beforeId: string | null}) => unknown,
  *   onSelect: (selection: Selection) => void,
+ *   openSettings: () => unknown,
+ *   exportCsv: () => unknown,
  * }} options
  */
-export function createSidebar({ data, run, drop, onSelect }) {
+export function createSidebar({ data, run, drop, onSelect, openSettings, exportCsv }) {
   /** @param {string} name */
   const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
   const viewsTree = /** @type {TtTree} */ (document.getElementById('views-tree'));
@@ -89,11 +91,12 @@ export function createSidebar({ data, run, drop, onSelect }) {
     const value = await showMenu(ref('more'), [
       { label: t('menuNewProject'), value: 'new' },
       'separator',
-      // Placeholders until M6.
-      { label: t('menuSettings'), value: 'settings', disabled: true },
-      { label: t('menuExport'), value: 'export', disabled: true },
+      { label: t('menuExport'), value: 'export' },
+      { label: t('menuSettings'), value: 'settings' },
     ]);
     if (value === 'new') run('new', null);
+    else if (value === 'settings') openSettings();
+    else if (value === 'export') exportCsv();
   });
 
   projectsMore.addEventListener('click', async () => {

@@ -1,10 +1,12 @@
 // Spike stage only: loaded after tracker.js in the staged ui/tracker.html. Publishes in
 // document.title (readable from chrome) the first project row's box, whether menus.onClicked
 // reached this page, and the dialog it opened (M3 risk: native context menu in our tab).
+// M6: then saves a small file through an <a download> click (backup and CSV export).
 import { createProject, openDB } from '../../db/index.js';
+import { download } from '../../ui/data-commands.js';
 
 /** @type {Record<string, unknown>} */
-const state = { row: null, clicked: null, dialog: null };
+const state = { row: null, clicked: null, dialog: null, download: null };
 const publish = () => {
   document.title = `TT-PROBE ${JSON.stringify(state)}`;
 };
@@ -53,6 +55,16 @@ setInterval(() => {
   if (heading && !state.dialog) {
     state.dialog = heading.textContent;
     /** @type {HTMLDialogElement} */ (heading.closest('dialog')).close();
+    // M6: does an <a download> blob click save a file in Thunderbird (no downloads API)?
+    setTimeout(() => {
+      try {
+        download('{"probe":true}\n', 'tt-probe.json', 'application/json');
+        state.download = 'clicked';
+      } catch (error) {
+        state.download = `error: ${error}`;
+      }
+      publish();
+    }, 500);
   }
   publish();
 }, 100);

@@ -118,6 +118,23 @@ export function ancestorPath(projects, id) {
   return path;
 }
 
+/** Separator of project names in a path (the CSV `project` column). */
+export const PATH_SEPARATOR = ' / ';
+
+/**
+ * Project names from the root down to `id`, e.g. `Client work / Harbor Coffee / Build`.
+ * @param {Project[]} projects
+ * @param {string} id
+ * @param {string} [separator]
+ */
+export function projectPathName(projects, id, separator = PATH_SEPARATOR) {
+  const byId = new Map(projects.map((p) => [p.id, p.name]));
+  return ancestorPath(projects, id)
+    .reverse()
+    .map((projectId) => byId.get(projectId))
+    .join(separator);
+}
+
 /**
  * Badge style of a project row, like Thunderbird's new-mail folders: `new` on the running
  * project, `outlined` on a collapsed ancestor of it, none otherwise.
@@ -217,4 +234,14 @@ export function viewTotals(tasks, totalsOf) {
     if (task.starred && task.status === 'open') starred += 1;
   }
   return { today, week, starred };
+}
+
+/**
+ * Whether the project or one of its ancestors is archived (the UI hides the whole subtree).
+ * @param {Project[]} projects
+ * @param {string} id
+ */
+export function isArchived(projects, id) {
+  const byId = new Map(projects.map((p) => [p.id, p]));
+  return ancestorPath(projects, id).some((projectId) => byId.get(projectId)?.archived);
 }
