@@ -4,7 +4,9 @@ import { handleMessage } from './messages.js';
 import { TICK_ALARM, syncTimerStatus, toggleTimer } from './timer-status.js';
 import { openDB, purgeDeleted } from '../db/index.js';
 
-// Event page: listeners are registered synchronously at top level, no state in memory.
+// Event page: listeners are registered synchronously at top level, no state in memory. APIs that
+// need a permission (`alarms`, `menus`, `notifications`) may be missing; everything else still
+// works without them.
 
 /** @param {unknown} error */
 const logSpaceError = (error) => console.error('time tracker: space setup failed', error);
@@ -62,7 +64,7 @@ messenger.runtime.onStartup.addListener(async () => {
 
 messenger.runtime.onMessage.addListener((message) => handleMessage(message, { syncStatus }));
 
-messenger.alarms.onAlarm.addListener((alarm) => {
+messenger.alarms?.onAlarm.addListener((alarm) => {
   if (alarm.name === TICK_ALARM) syncStatus();
 });
 

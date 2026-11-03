@@ -28,7 +28,7 @@
     "description": "Heading of the toolbar popup."
   },
   "trackerLoadError": {
-    "message": "Could not load your data. Try reopening this tab.",
+    "message": "Could not load your data. Reload, or restart Thunderbird.",
     "description": "Shown in the tracker tab when the database cannot be opened or read."
   },
   "tableColumnPicker": {
@@ -370,6 +370,18 @@
   "deleteCascadeNote": {
     "message": "Everything in it is deleted too. This can’t be undone.",
     "description": "Delete dialog: shown under the list of what goes with the project."
+  },
+  "errorBlocked": {
+    "message": "Another Time Tracker tab or window is blocking an update. Close it, then reload.",
+    "description": "The database upgrade waits for an older open page"
+  },
+  "errorNewerVersion": {
+    "message": "Your data comes from a newer version of Time Tracker. Update the add-on to open it.",
+    "description": "The stored database is newer than this version"
+  },
+  "errorQuota": {
+    "message": "Not enough storage space. Free up disk space, then try again.",
+    "description": "Disk or storage quota full"
   },
   "errorSave": {
     "message": "Could not save the change. Try again.",

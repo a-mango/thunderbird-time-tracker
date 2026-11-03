@@ -10,6 +10,7 @@ import { showMenu } from './menu.js';
 import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
 import { settingsDialog } from './settings-dialog.js';
+import { storageMessage } from './storage-errors.js';
 import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
@@ -29,10 +30,24 @@ const SECOND_MS = 1000;
 const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
 const notification = /** @type {TtNotificationBar} */ (ref('notification'));
 
+/**
+ * A storage failure as an error bar with its recovery hint (and Reload where that helps).
+ * @param {unknown} error
+ * @param {'open' | 'write'} phase
+ */
+function showStorageError(error, phase) {
+  const { message, reload } = storageMessage(error, phase);
+  notification.show({
+    type: 'error',
+    message,
+    actions: reload ? [{ label: t('notificationReload'), onClick: () => location.reload() }] : [],
+  });
+}
+
 /** @param {unknown} error */
 function showError(error) {
   console.error('time tracker: write failed', error);
-  notification.show({ type: 'error', message: t('errorSave') });
+  showStorageError(error, 'write');
 }
 
 /**
@@ -67,8 +82,21 @@ async function main() {
     data = await TrackerData.open();
   } catch (error) {
     console.error('time tracker: opening the database failed', error);
-    notification.show({ type: 'error', message: t('trackerLoadError') });
+    showStorageError(error, 'open');
     notification.setAttribute('persistent', '');
+    // Only the error bar under the tab's name: the empty panes would offer nothing that works.
+    ref('list-title').textContent = t('extensionName');
+    const list = /** @type {HTMLElement} */ (document.getElementById('list'));
+    for (const pane of document.querySelectorAll('.tracker > *')) {
+      if (pane !== list) /** @type {HTMLElement} */ (pane).hidden = true;
+    }
+    const title = ref('list-title');
+    for (const part of [...list.children, ...(title.parentElement?.children ?? [])]) {
+      if (part !== notification && part !== title && !part.contains(title)) {
+        /** @type {HTMLElement} */ (part).hidden = true;
+      }
+    }
+    document.documentElement.dataset.ready = '';
     return;
   }
   applySettings(data.settings);

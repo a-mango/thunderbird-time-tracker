@@ -37,3 +37,25 @@ export class VersionError extends TrackerError {}
 
 /** A backup file was rejected; `code` says why, `details.path` where. */
 export class ImportError extends TrackerError {}
+
+/**
+ * @typedef {'blocked' | 'version' | 'quota' | 'unknown'} StorageErrorKind
+ */
+
+/**
+ * What kind of storage failure `error` is, for the recovery hint the UI shows.
+ * - `blocked`: an older connection keeps a schema upgrade waiting (close the other tab);
+ * - `version`: the stored database is newer than this code (update the add-on);
+ * - `quota`: the disk or the origin's storage is full (`QuotaExceededError`, also as the cause of
+ *   an aborted transaction);
+ * - `unknown`: anything else (reload, restart).
+ * @param {unknown} error
+ * @returns {StorageErrorKind}
+ */
+export function storageErrorKind(error) {
+  if (error instanceof BlockedError) return 'blocked';
+  if (error instanceof VersionError) return 'version';
+  const name = /** @type {{name?: unknown} | null} */ (error)?.name;
+  if (name === 'QuotaExceededError' || name === 'NS_ERROR_DOM_QUOTA_REACHED') return 'quota';
+  return 'unknown';
+}

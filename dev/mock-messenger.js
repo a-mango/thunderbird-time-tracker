@@ -8,6 +8,7 @@
 // items, and before the page script runs it seeds IndexedDB with fixtures (see `ready`).
 
 import { registerMenus } from '../src/background/menus.js';
+import { DB_NAME } from '../src/db/schema.js';
 import { generateFixtures } from './fixtures.js';
 import { databaseExists, deleteDatabase, seedDatabase, seedSettings } from './seed.js';
 
@@ -490,7 +491,9 @@ export function createMessenger({
  * - `?seed=N`: re-seed with seed N; `?fixtures=empty`: delete everything; `?fixtures=bulk`:
  *   re-seed with 2,000 extra tasks in Support retainer (M4 performance fixture);
  *   `?fixtures=large`: re-seed with 300 tasks and 50,000 entries over 3 years (M7);
- * - `?density=` / `?accent=`: store those settings (for screenshots).
+ * - `?density=` / `?accent=`: store those settings (for screenshots);
+ * - `?fail=newer`: the stored database gets a newer schema version (VersionError on open);
+ *   `?fail=quota`: every later IndexedDB write throws QuotaExceededError (M7 error bars).
  * @param {URLSearchParams} params
  */
 export async function prepareDatabase(params) {
@@ -513,6 +516,30 @@ export async function prepareDatabase(params) {
     if (value) settings[name] = value;
   }
   if (Object.keys(settings).length > 0) await seedSettings(settings);
+  const fail = params.get('fail');
+  if (fail === 'newer') await bumpVersion();
+  if (fail === 'quota') failWrites();
+}
+
+/** Upgrades the stored database to a version this code doesn't know. */
+function bumpVersion() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, 1000);
+    request.onsuccess = () => {
+      request.result.close();
+      resolve(undefined);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/** Makes every IndexedDB write fail like a full disk. */
+function failWrites() {
+  for (const method of /** @type {const} */ (['put', 'add', 'delete', 'clear'])) {
+    IDBObjectStore.prototype[method] = () => {
+      throw new DOMException('The disk is full (dev ?fail=quota)', 'QuotaExceededError');
+    };
+  }
 }
 
 /**
