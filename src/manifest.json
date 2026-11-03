@@ -13,7 +13,7 @@
       }
     }
   },
-  "permissions": ["menus", "menus.overrideContext"],
+  "permissions": ["alarms", "menus", "menus.overrideContext", "notifications"],
   "background": {
     "scripts": ["background/main.js"],
     "type": "module"
@@ -26,7 +26,7 @@
   "commands": {
     "toggle-timer": {
       "suggested_key": {
-        "default": "Alt+Shift+T"
+        "default": "Alt+Shift+K"
       },
       "description": "__MSG_commandToggleTimer__"
     },

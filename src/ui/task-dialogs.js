@@ -20,7 +20,7 @@ import { tagsOf } from '../lib/task-list.js';
 const INDENT = ' ';
 
 /** @param {string} prefix */
-const uid = (prefix) => `${prefix}-${crypto.randomUUID()}`;
+export const uid = (prefix) => `${prefix}-${crypto.randomUUID()}`;
 
 /**
  * A <select> of projects in tree order. A task in an archived project keeps that project as
@@ -49,7 +49,7 @@ function projectSelect(projects, selected) {
  * @param {HTMLElement} field
  * @param {string} [hint]
  */
-function labelled(labelText, field, hint) {
+export function labelled(labelText, field, hint) {
   const hintEl = hint ? el('p', { class: 'dialog-hint', id: uid('tt-hint'), text: hint }) : null;
   if (hintEl) field.setAttribute('aria-describedby', hintEl.id);
   return el(

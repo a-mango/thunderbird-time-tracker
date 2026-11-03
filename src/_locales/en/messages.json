@@ -700,5 +700,331 @@
   "doneHiddenOne": {
     "message": "1 done task hidden",
     "description": "doneHidden when exactly one done task is hidden."
+  },
+  "notificationNoLastTask": {
+    "message": "No open task tracked yet. Start a task in Time Tracker once; then this shortcut starts it again.",
+    "description": "Notification when the toggle-timer shortcut is pressed but no open task has any time entry."
+  },
+  "detailBreadcrumb": {
+    "message": "Project",
+    "description": "Accessible name of the project path above the task title."
+  },
+  "timerBoxLabel": {
+    "message": "Timer",
+    "description": "Accessible name of the timer box in the details pane."
+  },
+  "timerBoxStop": {
+    "message": "Stop",
+    "description": "Timer box button: stop the running timer."
+  },
+  "timerBoxSplit": {
+    "message": "Split…",
+    "description": "Timer box button: split the running entry."
+  },
+  "timerBoxStart": {
+    "message": "Start",
+    "description": "Timer box button: start the timer on this task."
+  },
+  "timerBoxResume": {
+    "message": "Resume Last Entry",
+    "description": "Timer box button: start again with the last entry’s note."
+  },
+  "timerSince": {
+    "message": "Running since $TIME$",
+    "description": "Under the running time.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "13:40"
+      }
+    }
+  },
+  "timerSinceNote": {
+    "message": "Running since $TIME$ · $NOTE$",
+    "description": "Under the running time, with the entry note.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "13:40"
+      },
+      "note": {
+        "content": "$2",
+        "example": "Inline errors"
+      }
+    }
+  },
+  "timerLast": {
+    "message": "Last entry $RANGE$",
+    "description": "Under the idle timer.",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "09:00 – 10:00"
+      }
+    }
+  },
+  "timerIdle": {
+    "message": "Not tracked yet",
+    "description": "Under the idle timer when the task has no entries."
+  },
+  "detailAddEntry": {
+    "message": "Add Entry",
+    "description": "Detail action: add a time entry."
+  },
+  "detailMarkDone": {
+    "message": "Mark Done",
+    "description": "Detail action."
+  },
+  "detailReopen": {
+    "message": "Reopen",
+    "description": "Detail action for a done task."
+  },
+  "detailEdit": {
+    "message": "Edit",
+    "description": "Detail action: task properties."
+  },
+  "detailMore": {
+    "message": "More actions",
+    "description": "Detail action menu button."
+  },
+  "statToday": {
+    "message": "Today",
+    "description": "Stat strip cell."
+  },
+  "statWeek": {
+    "message": "This week",
+    "description": "Stat strip cell."
+  },
+  "statTotal": {
+    "message": "Total",
+    "description": "Stat strip cell."
+  },
+  "statEstimate": {
+    "message": "Estimate",
+    "description": "Stat strip cell without estimate."
+  },
+  "entriesTitle": {
+    "message": "Time entries",
+    "description": "Section heading in the details pane."
+  },
+  "entriesEmpty": {
+    "message": "No time entries in this range.",
+    "description": "Empty entry list."
+  },
+  "rangeToday": {
+    "message": "Today",
+    "description": "Entry range."
+  },
+  "rangeWeek": {
+    "message": "This week",
+    "description": "Entry range."
+  },
+  "rangeLastWeek": {
+    "message": "Last week",
+    "description": "Entry range."
+  },
+  "rangeMonth": {
+    "message": "This month",
+    "description": "Entry range."
+  },
+  "rangeAll": {
+    "message": "All",
+    "description": "Entry range."
+  },
+  "rangeLabel": {
+    "message": "Show entries: $RANGE$",
+    "description": "Accessible name of the range button.",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "This week"
+      }
+    }
+  },
+  "dayToday": {
+    "message": "Today · $DAY$",
+    "description": "Day group heading for today.",
+    "placeholders": {
+      "day": {
+        "content": "$1",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "sourceTimer": {
+    "message": "From timer",
+    "description": "Entry source icon."
+  },
+  "sourceSplit": {
+    "message": "Split from a timer entry",
+    "description": "Entry source icon."
+  },
+  "sourceIdle": {
+    "message": "From the idle prompt",
+    "description": "Entry source icon."
+  },
+  "sourceManual": {
+    "message": "Manual entry",
+    "description": "Entry source icon."
+  },
+  "sourceRunning": {
+    "message": "Running",
+    "description": "Entry source icon of the running entry."
+  },
+  "entryNow": {
+    "message": "now",
+    "description": "End of a running entry’s time range: “13:40 – now”."
+  },
+  "entryDialogNew": {
+    "message": "New Time Entry",
+    "description": "Dialog title."
+  },
+  "entryDialogEdit": {
+    "message": "Edit Time Entry",
+    "description": "Dialog title."
+  },
+  "entryDate": {
+    "message": "Date",
+    "description": "Entry dialog field."
+  },
+  "entryStart": {
+    "message": "Start",
+    "description": "Entry dialog field."
+  },
+  "entryEnd": {
+    "message": "End",
+    "description": "Entry dialog field."
+  },
+  "entryEndRunningHint": {
+    "message": "Leave empty to keep the timer running.",
+    "description": "Entry dialog hint for the running entry."
+  },
+  "entryDuration": {
+    "message": "Duration",
+    "description": "Entry dialog field."
+  },
+  "entryDurationInvalid": {
+    "message": "Enter a duration like 90m, 1.5h or 1h30.",
+    "description": "Entry dialog validation."
+  },
+  "entryNextDay": {
+    "message": "Ends the next day.",
+    "description": "Entry dialog hint when the end is after midnight."
+  },
+  "entryNote": {
+    "message": "Note",
+    "description": "Entry dialog field."
+  },
+  "entryTask": {
+    "message": "Task",
+    "description": "Entry dialog field."
+  },
+  "entryStartMissing": {
+    "message": "Enter a start date and time.",
+    "description": "Entry dialog validation."
+  },
+  "entryStartFuture": {
+    "message": "The running timer can’t start in the future.",
+    "description": "Entry dialog validation."
+  },
+  "entryEndMissing": {
+    "message": "Enter an end time or a duration.",
+    "description": "Entry dialog validation."
+  },
+  "entryEndBeforeStart": {
+    "message": "The end must be after the start.",
+    "description": "Entry dialog validation."
+  },
+  "entryEndFuture": {
+    "message": "The running timer can’t end in the future.",
+    "description": "Entry dialog validation."
+  },
+  "entryDeleted": {
+    "message": "Deleted a time entry of “$NAME$”.",
+    "description": "Notification after deleting an entry.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      }
+    }
+  },
+  "overlapTitle": {
+    "message": "Overlapping Time",
+    "description": "Overlap warning dialog title."
+  },
+  "overlapTextOne": {
+    "message": "This entry overlaps another entry:",
+    "description": "Overlap warning, one entry."
+  },
+  "overlapText": {
+    "message": "This entry overlaps $COUNT$ other entries:",
+    "description": "Overlap warning.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "overlapBack": {
+    "message": "Back",
+    "description": "Overlap warning: back to the editor."
+  },
+  "overlapSave": {
+    "message": "Save Anyway",
+    "description": "Overlap warning: save regardless."
+  },
+  "splitTitle": {
+    "message": "Split Time Entry",
+    "description": "Split dialog title."
+  },
+  "splitText": {
+    "message": "Split the entry",
+    "description": "Split dialog text before the time range."
+  },
+  "splitWhen": {
+    "message": "Split at",
+    "description": "Split dialog field."
+  },
+  "splitAtNow": {
+    "message": "Now",
+    "description": "Split dialog choice."
+  },
+  "splitAtTime": {
+    "message": "At",
+    "description": "Split dialog choice, followed by a time field."
+  },
+  "splitTime": {
+    "message": "Split time",
+    "description": "Accessible name of the split time field."
+  },
+  "splitOutside": {
+    "message": "Choose a time inside the entry.",
+    "description": "Split dialog validation."
+  },
+  "splitTask": {
+    "message": "Second part goes to",
+    "description": "Split dialog task field."
+  },
+  "splitButton": {
+    "message": "Split",
+    "description": "Split dialog primary button."
+  },
+  "menuEntryEdit": {
+    "message": "Edit Entry…",
+    "description": "Entry context menu."
+  },
+  "menuEntrySplit": {
+    "message": "Split Here…",
+    "description": "Entry context menu."
+  },
+  "menuEntryDuplicate": {
+    "message": "Duplicate…",
+    "description": "Entry context menu."
+  },
+  "menuEntryDelete": {
+    "message": "Delete Entry",
+    "description": "Entry context menu."
   }
 }

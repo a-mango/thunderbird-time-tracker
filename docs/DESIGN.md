@@ -12,7 +12,7 @@ The mockups show the whole window. Only the **content of our tab** is ours.
 
 | Mockup element | Implemented as |
 |---|---|
-| Spaces toolbar button (clock, green dot) | `spaces.create()` button; `badgeText` while a timer runs |
+| Spaces toolbar button (clock, green dot) | `spaces.create()` button; no badge while a timer runs (the action label shows the time, M5) |
 | Tab "Time Tracker" | the space's tab (Thunderbird chrome) |
 | Running-timer pill in the toolbar | `action` button, `allowed_spaces: []` (all spaces), label via `action.setLabel()`, popup on click |
 | Unified toolbar search (B) | not possible in Thunderbird's chrome; in-tab search field instead |

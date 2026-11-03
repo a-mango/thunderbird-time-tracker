@@ -1,7 +1,10 @@
-// Tracker tab (docs/DESIGN.md, Layout A): the three-pane shell with the project pane and the task
-// list. The details pane (M5) is a placeholder.
+// Tracker tab (docs/DESIGN.md, Layout A): the three-pane shell with the project pane, the task
+// list and the details pane.
 import './components/index.js';
 import { installContextMenu } from './context-menu.js';
+import { createDetail } from './detail.js';
+import { createEntryCommands } from './entry-commands.js';
+import { showMenu } from './menu.js';
 import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
 import { createSidebar } from './sidebar.js';
@@ -14,8 +17,10 @@ import { TrackerData } from './tracker-data.js';
  * @typedef {import('./sidebar.js').Selection} Selection
  */
 
-/** Badges advance while a timer runs; Thunderbird's own tick is a minute (alarms, M5). */
+/** Badges and totals advance once a minute while a timer runs, like the background's alarm. */
 const TICK_MS = 60_000;
+/** The detail pane's running time ticks every second (only while the page is visible). */
+const SECOND_MS = 1000;
 
 /** @param {string} name */
 const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
@@ -79,26 +84,59 @@ async function main() {
     reveal: (id) => sidebar.reveal(id),
     onError: showError,
   });
-  const taskCommands = createTaskCommands({
-    data,
-    onError: showError,
-    announce,
-    offerUndo: (message, undo) =>
-      notification.show({
-        type: 'info',
-        message,
-        actions: [
-          {
-            label: t('undo'),
-            onClick: () => {
-              notification.dismiss();
-              undo();
-            },
+  /** @param {string} message @param {() => Promise<void>} undo */
+  const offerUndo = (message, undo) =>
+    notification.show({
+      type: 'info',
+      message,
+      actions: [
+        {
+          label: t('undo'),
+          onClick: () => {
+            notification.dismiss();
+            undo();
           },
-        ],
-      }),
-  });
+        },
+      ],
+    });
+  const taskCommands = createTaskCommands({ data, onError: showError, announce, offerUndo });
+  const entryCommands = createEntryCommands({ data, onError: showError, announce, offerUndo });
   const taskList = createTaskList({ data, commands: taskCommands });
+  const addEntryButton = /** @type {HTMLButtonElement} */ (ref('add-entry'));
+  const detail = createDetail({
+    data,
+    root: ref('detail'),
+    taskCommands,
+    entryCommands,
+    moreTask: async (id, anchor) => {
+      const task = data.tasks.get(id);
+      if (!task) return;
+      const value = await showMenu(anchor, [
+        { label: t(task.starred ? 'menuTaskUnstar' : 'menuTaskStar'), value: 'star' },
+        { label: t('menuTaskRename'), value: 'rename' },
+        { label: t('menuTaskMove'), value: 'move' },
+        'separator',
+        { label: t('menuTaskDelete'), value: 'delete' },
+      ]);
+      if (value) {
+        taskCommands.run(
+          /** @type {import('./task-commands.js').TaskCommand} */ (value),
+          id,
+          taskList,
+        );
+      }
+    },
+  });
+  /** The detail pane follows the task list's selection. */
+  const syncDetail = () => {
+    detail.show(taskList.selectedId);
+    addEntryButton.disabled = detail.taskId === null;
+  };
+  taskList.table.addEventListener('tt-select', syncDetail);
+  const addEntry = () => {
+    if (detail.taskId) entryCommands.add(detail.taskId);
+  };
+  addEntryButton.addEventListener('click', addEntry);
   const newTaskButton = /** @type {HTMLButtonElement} */ (ref('new-task'));
 
   /** The project New Task adds to: the selected project, if it is active. */
@@ -126,6 +164,7 @@ async function main() {
     drop: commands.drop,
     onSelect: (selection) => {
       taskList.setScope(scopeOf(data, selection));
+      syncDetail();
       if (sidebar) syncNewTask();
     },
   });
@@ -138,6 +177,10 @@ async function main() {
     run: commands.run,
     runTask: (command, id) => taskCommands.run(command, id, taskList),
     focusTask: (id) => taskList.focusTask(id),
+    entries: detail.list,
+    entryAt: (element) => detail.entryAt(element),
+    runEntry: (command, id) => entryCommands.run(command, id),
+    focusEntry: (id) => detail.focusEntry(id),
   });
 
   data.addEventListener('change', (event) => {
@@ -146,6 +189,8 @@ async function main() {
     sidebar.render();
     taskList.render();
     syncNewTask();
+    detail.update(types);
+    syncDetail();
   });
   data.addEventListener('closed', () => {
     notification.setAttribute('persistent', '');
@@ -159,9 +204,11 @@ async function main() {
   document.addEventListener('keydown', (event) => {
     if (document.querySelector('dialog[open]') || event.altKey || event.metaKey) return;
     if (!event.ctrlKey) return;
-    // docs/SPEC.md, Keyboard: Ctrl+Shift+N new project, Ctrl+N new task, Ctrl+Shift+K filter.
+    // docs/SPEC.md, Keyboard: Ctrl+Shift+N new project, Ctrl+N new task, Ctrl+Shift+K filter,
+    // Ctrl+E add a time entry.
     if (event.shiftKey && event.code === 'KeyN') commands.run('new', null);
     else if (!event.shiftKey && event.code === 'KeyN') newTask();
+    else if (!event.shiftKey && event.code === 'KeyE') addEntry();
     else if (event.shiftKey && event.code === 'KeyK') taskList.focusFilter();
     else return;
     event.preventDefault();
@@ -169,10 +216,15 @@ async function main() {
 
   /** @type {ReturnType<typeof setInterval> | undefined} */
   let ticker;
+  /** @type {ReturnType<typeof setInterval> | undefined} */
+  let secondTicker;
   const syncTicker = () => {
     clearInterval(ticker);
-    ticker = document.hidden ? undefined : setInterval(() => data.tick(), TICK_MS);
-    if (!document.hidden) data.tick();
+    clearInterval(secondTicker);
+    const visible = document.visibilityState === 'visible';
+    ticker = visible ? setInterval(() => data.tick(), TICK_MS) : undefined;
+    secondTicker = visible ? setInterval(() => detail.tick(), SECOND_MS) : undefined;
+    if (visible) data.tick();
   };
   document.addEventListener('visibilitychange', syncTicker);
   syncTicker();

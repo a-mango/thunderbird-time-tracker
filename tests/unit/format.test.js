@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatClock,
+  formatDay,
+  formatTimeRange,
+  formatTimerLabel,
   formatDuration,
   formatElapsed,
   formatEstimate,
@@ -139,5 +143,51 @@ describe('formatRelative, locale defaults', () => {
     expect(plain(formatRelative(monday, { now, locale: 'en-US', todayLabel: 'Today' }))).toBe(
       'Mon 5:30 PM',
     );
+  });
+});
+
+describe('formatClock', () => {
+  it.each([
+    [0, '0:00'],
+    [min(9) + 59_000, '0:09'],
+    [min(65), '1:05'],
+    [min(25 * 60), '25:00'],
+    [-1, '0:00'],
+  ])('%d ms -> %s', (ms, text) => {
+    expect(formatClock(ms)).toBe(text);
+  });
+});
+
+describe('formatTimeRange', () => {
+  const start = new Date(2026, 9, 20, 13, 40).getTime();
+  const end = new Date(2026, 9, 20, 15, 25).getTime();
+  it('joins start and end, or start and the now label', () => {
+    expect(formatTimeRange(start, end, { locale: 'en-GB', nowLabel: 'now' })).toBe('13:40 – 15:25');
+    expect(formatTimeRange(start, null, { locale: 'en-GB', nowLabel: 'now' })).toBe('13:40 – now');
+    expect(plain(formatTimeRange(start, end, { locale: 'en-US', nowLabel: 'now' }))).toBe(
+      '1:40 PM – 3:25 PM',
+    );
+  });
+});
+
+describe('formatDay', () => {
+  const now = new Date(2026, 9, 20, 12).getTime();
+  it('shows weekday, day and month, and the year for other years', () => {
+    expect(formatDay(new Date(2026, 9, 19, 9).getTime(), { now, locale: 'en-GB' })).toBe(
+      'Mon 19 Oct',
+    );
+    expect(formatDay(new Date(2025, 9, 16).getTime(), { now, locale: 'en-GB' })).toBe(
+      'Thu, 16 Oct 2025',
+    );
+  });
+});
+
+describe('formatTimerLabel', () => {
+  it('keeps short labels and cuts long ones to the limit', () => {
+    expect(formatTimerLabel(min(65), 'Bookkeeping')).toBe('1:05 · Bookkeeping');
+    const long = formatTimerLabel(min(65), 'Checkout form validation');
+    expect(long).toBe('1:05 · Checkout form va…');
+    expect([...long]).toHaveLength(24);
+    expect(formatTimerLabel(0, 'Task name here', { max: 12 })).toBe('0:00 · Task…');
   });
 });

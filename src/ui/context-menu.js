@@ -1,9 +1,9 @@
-// Native context menu on project rows and task rows (docs/DESIGN.md, Components; M1 spike): the
-// background owns hidden items (background/menus.js). A right-click on a row overrides
+// Native context menu on project, task and entry rows (docs/DESIGN.md, Components; M1 spike):
+// the background owns hidden items (background/menus.js). A right-click on a row overrides
 // Thunderbird's menu, and onShown makes the items for that row visible. onShown/onClicked fire in
 // every extension page, so each page acts only when the menu's target element is in its own
 // document.
-import { COLOR_ITEM_PREFIX, MENU, TASK_MENU } from '../background/menus.js';
+import { COLOR_ITEM_PREFIX, ENTRY_MENU, MENU, TASK_MENU } from '../background/menus.js';
 import { PALETTE } from '../lib/palette.js';
 import { commandsFor, projectPlace } from './project-commands.js';
 
@@ -12,7 +12,8 @@ import { commandsFor, projectPlace } from './project-commands.js';
  * @typedef {import('./tracker-data.js').TrackerData} TrackerData
  * @typedef {import('./project-commands.js').ProjectCommand} ProjectCommand
  * @typedef {import('./task-commands.js').TaskCommand} TaskCommand
- * @typedef {{kind: 'project' | 'task', id: string}} MenuTarget
+ * @typedef {import('./entry-commands.js').EntryCommand} EntryCommand
+ * @typedef {{kind: 'project' | 'task' | 'entry', id: string}} MenuTarget
  */
 
 /** @type {Record<string, ProjectCommand>} */
@@ -40,6 +41,14 @@ const TASK_COMMANDS = {
   [TASK_MENU.delete]: 'delete',
 };
 
+/** @type {Record<string, EntryCommand>} */
+const ENTRY_COMMANDS = {
+  [ENTRY_MENU.edit]: 'edit',
+  [ENTRY_MENU.split]: 'split',
+  [ENTRY_MENU.duplicate]: 'duplicate',
+  [ENTRY_MENU.delete]: 'delete',
+};
+
 /**
  * @param {{
  *   tree: TtTree,
@@ -49,9 +58,25 @@ const TASK_COMMANDS = {
  *   run: (command: ProjectCommand, id: string, value?: string) => unknown,
  *   runTask: (command: TaskCommand, id: string) => unknown,
  *   focusTask: (id: string) => void,
+ *   entries: HTMLElement,
+ *   entryAt: (element: Element) => string | null,
+ *   runEntry: (command: EntryCommand, id: string) => unknown,
+ *   focusEntry: (id: string) => void,
  * }} options
  */
-export function installContextMenu({ tree, table, taskAt, data, run, runTask, focusTask }) {
+export function installContextMenu({
+  tree,
+  table,
+  taskAt,
+  data,
+  run,
+  runTask,
+  focusTask,
+  entries,
+  entryAt,
+  runEntry,
+  focusEntry,
+}) {
   const menus = messenger.menus;
 
   /**
@@ -64,6 +89,8 @@ export function installContextMenu({ tree, table, taskAt, data, run, runTask, fo
     if (projectId && data.project(projectId)) return { kind: 'project', id: projectId };
     const taskId = table.contains(element) ? taskAt(element) : null;
     if (taskId && data.tasks.has(taskId)) return { kind: 'task', id: taskId };
+    const entryId = entries.contains(element) ? entryAt(element) : null;
+    if (entryId) return { kind: 'entry', id: entryId };
     return null;
   };
 
@@ -112,6 +139,9 @@ export function installContextMenu({ tree, table, taskAt, data, run, runTask, fo
       ...Object.values(TASK_MENU).map((item) =>
         menus.update(item, { visible: taskItems.has(item) }),
       ),
+      ...Object.values(ENTRY_MENU).map((item) =>
+        menus.update(item, { visible: target?.kind === 'entry' }),
+      ),
       ...PALETTE.map((p) =>
         menus.update(`${COLOR_ITEM_PREFIX}${p.color}`, { checked: p.color === color }),
       ),
@@ -123,13 +153,15 @@ export function installContextMenu({ tree, table, taskAt, data, run, runTask, fo
     const target = rowOf(/** @type {Element} */ (event.target));
     if (!target) return;
     if (target.kind === 'project') tree.focusItem(target.id);
-    else focusTask(target.id);
+    else if (target.kind === 'task') focusTask(target.id);
+    else focusEntry(target.id);
     // Must run during the event; only the menu that opens next is affected.
     menus.overrideContext({ showDefaults: false });
     sync(target).catch(logMenuError);
   };
   tree.addEventListener('contextmenu', onContextMenu);
   table.addEventListener('contextmenu', onContextMenu);
+  entries.addEventListener('contextmenu', onContextMenu);
 
   menus.onShown.addListener((info) => {
     const target = targetOf(info);
@@ -143,6 +175,11 @@ export function installContextMenu({ tree, table, taskAt, data, run, runTask, fo
     const target = targetOf(info);
     if (!target) return;
     const item = String(info.menuItemId);
+    if (target.kind === 'entry') {
+      const command = ENTRY_COMMANDS[item];
+      if (command) runEntry(command, target.id);
+      return;
+    }
     if (target.kind === 'task') {
       const command = TASK_COMMANDS[item];
       if (command) runTask(command, target.id);

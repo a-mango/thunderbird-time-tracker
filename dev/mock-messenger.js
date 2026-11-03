@@ -290,6 +290,8 @@ export function createMessenger({
 
   /** @type {Map<string, messenger.alarms.Alarm>} */
   const alarms = new Map();
+  /** @type {Map<string, any>} */
+  const notifications = new Map();
   /** @type {Map<string | number, messenger.menus.CreateProperties>} */
   const menuItems = new Map();
   let nextMenuId = 1;
@@ -349,6 +351,19 @@ export function createMessenger({
         return had;
       },
       onAlarm: createEvent(),
+    },
+    notifications: {
+      /** @param {string | object} idOrOptions @param {object} [options] */
+      async create(idOrOptions, options) {
+        const id = typeof idOrOptions === 'string' ? idOrOptions : `n${notifications.size + 1}`;
+        notifications.set(id, typeof idOrOptions === 'string' ? options : idOrOptions);
+        return id;
+      },
+      /** @param {string} id */
+      clear: async (id) => notifications.delete(id),
+      getAll: async () => Object.fromEntries(notifications),
+      onClicked: createEvent(),
+      onClosed: createEvent(),
     },
     commands: {
       getAll: async () =>

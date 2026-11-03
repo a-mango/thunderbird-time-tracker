@@ -5,6 +5,8 @@ import {
   adjustRunningStart,
   discardRunning,
   getRunning as getRunningEntry,
+  lastTrackedTask,
+  listEntriesByTask,
   splitRunning,
   startEntry,
   stopRunning,
@@ -43,6 +45,19 @@ export function stop(db, { now = Date.now() } = {}) {
 }
 
 /**
+ * Stops the running entry at an earlier time ("I stopped at 17:30").
+ * @param {IDBDatabase} db
+ * @param {number} at in `(running.start, now]`: never in the future
+ * @param {TimerOptions & {id?: string}} [options] `id`: only if that entry still runs
+ * @returns {Promise<TimerStop | null>} `null` when nothing was running
+ * @throws {import('./errors.js').ValidationError} `end`
+ * @throws {import('./errors.js').NotFoundError} `running` when `id` no longer runs
+ */
+export function stopAt(db, at, { now = Date.now(), id } = {}) {
+  return stopRunning(db, { now, at, id });
+}
+
+/**
  * Switches tracking to another task (same-instant handoff). Same as `start`; named for the UI
  * action that has a timer running.
  * @param {IDBDatabase} db
@@ -55,17 +70,50 @@ export function switchTo(db, taskId, options) {
 }
 
 /**
- * Splits the running entry at `at`: the current entry ends at `at` and a new running entry for
- * the same task (source `split`) starts at `at`.
+ * Splits the running entry at `at`: the current entry ends at `at` and a new running entry
+ * (source `split`) starts at `at`, for the same task or for `taskId`.
  * @param {IDBDatabase} db
  * @param {number} at in `(running.start, now]`
- * @param {TimerOptions} [options]
+ * @param {TimerOptions & {taskId?: string, id?: string}} [options] `id`: only if that entry
+ *   still runs
  * @returns {Promise<SplitResult>}
  * @throws {import('./errors.js').ValidationError} `split-at`
- * @throws {import('./errors.js').NotFoundError} `running`
+ * @throws {import('./errors.js').NotFoundError} `running`, `task`
+ * @throws {import('./errors.js').TaskDoneError} `task-done` when `taskId` is done
  */
-export function split(db, at, { now = Date.now() } = {}) {
-  return splitRunning(db, at, { now });
+export function split(db, at, { now = Date.now(), taskId, id } = {}) {
+  return splitRunning(db, at, { now, taskId, id });
+}
+
+/**
+ * "Resume last entry": starts the task again with the note of its latest entry. Stopped entries
+ * are never reopened (`start < end` holds for them), so this is a new entry.
+ * @param {IDBDatabase} db
+ * @param {string} taskId
+ * @param {TimerOptions} [options]
+ * @returns {Promise<StartResult>}
+ * @throws {import('./errors.js').TaskDoneError} `task-done`
+ * @throws {import('./errors.js').NotFoundError} `task`
+ */
+export async function resume(db, taskId, { now = Date.now() } = {}) {
+  const entries = await listEntriesByTask(db, taskId);
+  const last = entries.filter((entry) => entry.end !== null).at(-1);
+  return start(db, taskId, { now, note: last?.note ?? '' });
+}
+
+/**
+ * The `toggle-timer` command: stops the running entry, else starts the open task tracked last.
+ * @param {IDBDatabase} db
+ * @param {TimerOptions} [options]
+ * @returns {Promise<{action: 'stopped', stop: TimerStop} | {action: 'started', start: StartResult}
+ *   | {action: 'none'}>} `none` when nothing runs and no open task was ever tracked
+ */
+export async function toggle(db, { now = Date.now() } = {}) {
+  const stopped = await stop(db, { now });
+  if (stopped) return { action: 'stopped', stop: stopped };
+  const task = await lastTrackedTask(db);
+  if (!task) return { action: 'none' };
+  return { action: 'started', start: await start(db, task.id, { now }) };
 }
 
 /**
