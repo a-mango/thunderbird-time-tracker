@@ -8,7 +8,10 @@
 3. Release-candidate check: the checklists below on fresh profiles, on Thunderbird 157 and on the
    current Release (`npm run tb:rc`, then `TB_BIN=<release>/thunderbird npm run tb:rc`; the
    tarball from thunderbird.net runs without installing). Record the results in the PR.
-4. After merging: `git tag vX.Y.Z && git push origin vX.Y.Z`. `.github/workflows/release.yml`
+4. After merging: `git tag vX.Y.Z && git push origin vX.Y.Z`. For a beta, tag
+   `vX.Y.Z-beta.N` instead: the same checks and build, published as a GitHub pre-release titled
+   "Time Tracker X.Y.Z-beta.N" (the manifest keeps `X.Y.Z`; Thunderbird accepts only numbers).
+   Betas don't go to ATN. `.github/workflows/release.yml`
    checks that the tag matches the manifest, runs the checks and UI tests, builds, and publishes a
    GitHub Release with `time-tracker-X.Y.Z.xpi` and the CHANGELOG section.
 5. ATN: upload the same XPI (checklist below).
