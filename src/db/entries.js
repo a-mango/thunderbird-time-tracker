@@ -596,19 +596,34 @@ export async function splitEntry(db, id, at, { now = Date.now(), taskId } = {}) 
 
 /**
  * The open task with the most recently ended live entry (what `toggle-timer` starts), or `null`.
- * Walks the `end` index backwards, so it reads only as far as the first open task.
  * @param {IDBDatabase} db
  * @returns {Promise<Task | null>}
  */
-export function lastTrackedTask(db) {
+export async function lastTrackedTask(db) {
+  const [task] = await recentTasks(db, { limit: 1 });
+  return task ?? null;
+}
+
+/**
+ * Tasks by their most recently ended live entry, newest first (the popup's recent list). Walks
+ * the `end` index backwards and stops after `limit` accepted tasks.
+ * @param {IDBDatabase} db
+ * @param {{limit: number, accept?: (task: Task) => boolean}} options `accept` defaults to open
+ *   tasks
+ * @returns {Promise<Task[]>}
+ */
+export function recentTasks(db, { limit, accept = (task) => task.status === 'open' }) {
   return tx(db, [STORES.tasks, STORES.entries], 'readonly', ({ tasks, entries }) => {
     const seen = new Set();
+    /** @type {Task[]} */
+    const found = [];
     return new Promise((resolve, reject) => {
+      if (limit <= 0) return resolve(found);
       const cursorRequest = entries.index(INDEXES.entryEnd).openCursor(null, 'prev');
       cursorRequest.onerror = () => reject(cursorRequest.error);
       cursorRequest.onsuccess = async () => {
         const cursor = cursorRequest.result;
-        if (!cursor) return resolve(null);
+        if (!cursor) return resolve(found);
         /** @type {Entry} */
         const entry = cursor.value;
         if (isLive(entry) && !seen.has(entry.taskId)) {
@@ -616,7 +631,10 @@ export function lastTrackedTask(db) {
           try {
             /** @type {Task | undefined} */
             const task = await req(tasks.get(entry.taskId));
-            if (task && task.status === 'open') return resolve(task);
+            if (task && accept(task)) {
+              found.push(task);
+              if (found.length >= limit) return resolve(found);
+            }
           } catch (error) {
             return reject(error);
           }

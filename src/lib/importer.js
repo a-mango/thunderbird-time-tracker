@@ -304,6 +304,17 @@ export function parseBackup(text, { maxBytes = MAX_IMPORT_BYTES } = {}) {
   } catch {
     fail('json', '', 'malformed JSON');
   }
+  return validateBackup(parsed);
+}
+
+/**
+ * Validates an already parsed backup (or a database snapshot in backup form, see db/backup.js)
+ * with the same checks as `parseBackup`, minus the size limit.
+ * @param {unknown} parsed
+ * @returns {Backup}
+ * @throws {ImportError} the codes of `parseBackup` except `too-large` and `json`
+ */
+export function validateBackup(parsed) {
   const root = object(parsed, '');
   if (root.format !== BACKUP_FORMAT) fail('format', 'format', 'not a time tracker backup');
   if (root.version !== BACKUP_VERSION) fail('version', 'version', 'unsupported version');
