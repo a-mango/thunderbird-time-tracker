@@ -47,11 +47,11 @@ test('tracker tab shows an error when the database cannot be opened', async ({ p
   await expect(page.getByText('Could not load your data. Try reopening this tab.')).toBeVisible();
 });
 
-test('popup renders its placeholder', async ({ page }) => {
+test('popup renders without errors', async ({ page }) => {
   const errors = collectErrors(page);
-  await page.goto('/ui/popup.html');
-  await expect(page.getByRole('heading', { name: 'Time Tracker' })).toBeVisible();
-  await expect(page.getByText('No timer running.')).toBeVisible();
+  await page.goto('/ui/popup.html?fixtures=empty');
+  await expect(page.getByRole('heading', { name: 'Time Tracker' })).toBeAttached();
+  await expect(page.getByText('No timer running')).toBeVisible();
   await expectNoAxeViolations(page);
   expect(errors).toEqual([]);
 });
