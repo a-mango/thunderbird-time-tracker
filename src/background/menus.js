@@ -45,7 +45,9 @@ export const COLOR_ITEM_PREFIX = `${MENU.color}:`;
 
 /**
  * Swatch icon of a palette colour: `src/icons/colors/rrggbb.svg`, or `rrggbb-current.svg` (with
- * a check mark) for the project's current colour.
+ * a check mark) for the project's current colour. Pass it through `runtime.getURL`: the menus
+ * schema resolves a relative icon path against the calling script (`background/`, `ui/`), not
+ * the extension root.
  * @param {string} color `#rrggbb`
  * @param {{current?: boolean}} [options]
  */
@@ -105,7 +107,7 @@ export async function registerMenus(api = messenger) {
       // Normal items: Thunderbird draws a radio item's check in place of its icon, so the
       // current colour is a swatch with a check mark instead (set by the page in onShown).
       title: t(label),
-      icons: { 16: colorIconPath(color) },
+      icons: { 16: api.runtime.getURL(colorIconPath(color)) },
       visible: true,
     });
   }

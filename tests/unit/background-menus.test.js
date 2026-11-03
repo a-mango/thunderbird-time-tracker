@@ -52,7 +52,9 @@ describe('registerMenus', () => {
     // Each shows a swatch file whose fill is that colour.
     for (const [index, item] of colors.entries()) {
       const { color } = PALETTE[index];
-      expect(item.icons).toEqual({ 16: colorIconPath(color) });
+      // Absolute: a relative path would resolve against background/ (broken image in TB).
+      expect(item.icons).toEqual({ 16: api.runtime.getURL(colorIconPath(color)) });
+      expect(item.icons[16]).toMatch(/^moz-extension:\/\/[^/]+\/icons\/colors\//);
       const svg = readFileSync(
         new URL(`../../src/${colorIconPath(color)}`, import.meta.url),
         'utf8',

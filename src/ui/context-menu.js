@@ -154,7 +154,7 @@ export function installContextMenu({
         return menus.update(`${COLOR_ITEM_PREFIX}${p.color}`, {
           // The title says it too: screen readers don't see the icon.
           title: current ? t('menuColorCurrent', t(p.label)) : t(p.label),
-          icons: { 16: colorIconPath(p.color, { current }) },
+          icons: { 16: messenger.runtime.getURL(colorIconPath(p.color, { current })) },
         });
       }),
     ]);
