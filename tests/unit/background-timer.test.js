@@ -32,12 +32,12 @@ async function setup() {
     spaceBadge: api.spaces._props(space.id).button.badgeText,
     alarm: (await api.alarms.get(TICK_ALARM)) ?? null,
   });
-  return { api, db, tasks, status };
+  return { api, db, tasks, status, space };
 }
 
 describe('syncTimerStatus', () => {
   it('shows label, badges and a minute alarm while a timer runs', async () => {
-    const { api, db, tasks, status } = await setup();
+    const { api, db, tasks, status, space } = await setup();
     await start(db, tasks.checkout.id, { now: T0 });
     const now = T0 + 65 * MIN + 30_000;
     expect(await syncTimerStatus(db, { api, now })).toBe('running');
@@ -47,6 +47,8 @@ describe('syncTimerStatus', () => {
       spaceBadge: '1:05',
       alarm: { name: TICK_ALARM, scheduledTime: T0 + 66 * MIN, periodInMinutes: 1 },
     });
+    // The space keeps its URL (Thunderbird rebuilds tab properties from update()).
+    expect(api.spaces._props(space.id).url).toBe('moz-extension://test/ui/tracker.html');
   });
 
   it('clears all three and the alarm when stopped', async () => {

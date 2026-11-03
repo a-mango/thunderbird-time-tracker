@@ -345,8 +345,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-base);
-  margin-block-start: 10px;
+  margin-block-start: calc(var(--space-step) * 3 + 1px);
 
+  & .more-button {
+    padding-inline: var(--space-base);
+  }
   & .spacer {
     flex: 1;
   }
@@ -362,7 +365,7 @@
     flex-direction: column;
     gap: 2px;
     min-inline-size: 0;
-    padding: 10px calc(var(--space-step) * 4);
+    padding: calc(var(--space-step) * 3 + 1px) calc(var(--space-step) * 5);
     border-inline-end: 1px solid var(--layout-border-0);
 
     &:last-child {
@@ -370,20 +373,36 @@
     }
   }
   & .stat-label {
+    overflow: hidden;
     color: var(--tt-text-muted);
     font-size: 0.85em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   & .stat-value {
     font-size: 1.14em;
     font-weight: 600;
   }
-  & .meter {
-    flex: none;
-    margin-block-start: 4px;
+  & .stat-bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-base);
+    margin-block-start: var(--space-step);
 
     &[hidden] {
       display: none;
     }
+    & > .meter {
+      min-inline-size: 0;
+    }
+  }
+  & .stat-percent {
+    color: var(--tt-text-muted);
+    font-size: 0.85em;
+  }
+  /* Over estimate: value and share in the critical colour, like the list's estimate cell. */
+  & .stat.over :is(.stat-value, .stat-percent) {
+    color: var(--tt-over-estimate);
   }
 }
 
@@ -431,13 +450,14 @@
 /* Entry rows are buttons (Enter or click opens the entry dialog). */
 .entry-row {
   display: grid;
-  grid-template-columns: 16px minmax(max-content, 7.5em) minmax(0, 1fr) auto;
+  /* Fixed time column (tabular digits) so notes line up; fits "10:30 AM – 11:05 AM". */
+  grid-template-columns: 16px 17ch minmax(0, 1fr) auto;
   gap: 10px;
   align-items: center;
   inline-size: 100%;
-  min-block-size: 30px;
+  min-block-size: calc(var(--list-item-min-height) + 4px);
   margin: 0;
-  padding: 5px calc(var(--space-step) * 5);
+  padding: var(--space-step) calc(var(--space-step) * 5);
   border: none;
   border-block-end: 1px solid color-mix(in srgb, var(--layout-border-0) 60%, transparent);
   background: transparent;
@@ -457,11 +477,11 @@
   & .entry-source {
     display: flex;
     justify-content: center;
+    color: var(--tt-text-muted);
 
     & > span:first-child {
       display: flex;
     }
-    color: var(--tt-text-muted);
 
     & .icon {
       inline-size: 14px;
@@ -476,8 +496,9 @@
   & .entry-duration {
     text-align: end;
   }
+  /* --link-color is AA on the pane in both schemes; AccentColor may not be. */
   &.running .entry-duration {
-    color: var(--selected-item-color);
+    color: var(--link-color);
     font-weight: 600;
   }
 }

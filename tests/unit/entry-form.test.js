@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { combine, dateInput, entryProblem, latestAt, timeInput } from '../../src/lib/entry-form.js';
+import {
+  combine,
+  dateInput,
+  endAfter,
+  entryProblem,
+  latestAt,
+  timeInput,
+} from '../../src/lib/entry-form.js';
 
 const at = (y, mo, d, h = 0, mi = 0, s = 0) => new Date(y, mo, d, h, mi, s).getTime();
 const NOW = at(2026, 9, 20, 12);
@@ -16,6 +23,20 @@ describe('input values', () => {
     expect(combine('', '13:40')).toBeNull();
     expect(combine('2026-10-20', '')).toBeNull();
     expect(combine('20.10.2026', '13:40')).toBeNull();
+  });
+});
+
+describe('endAfter', () => {
+  it('ends on the start day, or the next day when the time is not after the start', () => {
+    const start = at(2026, 9, 19, 23);
+    expect(endAfter('23:30', start)).toBe(at(2026, 9, 19, 23, 30));
+    expect(endAfter('01:30', start)).toBe(at(2026, 9, 20, 1, 30));
+    expect(endAfter('23:00', start)).toBe(at(2026, 9, 20, 23));
+    expect(endAfter('', start)).toBeNull();
+  });
+
+  it('crosses the DST change at the end of October', () => {
+    expect(endAfter('01:00', at(2026, 9, 24, 22))).toBe(at(2026, 9, 25, 1));
   });
 });
 

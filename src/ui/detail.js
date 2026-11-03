@@ -129,12 +129,12 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
   const moreButton = el(
     'button',
     {
-      class: 'icon-button',
+      class: 'button small more-button',
       type: 'button',
       attrs: { 'aria-label': t('detailMore'), 'aria-haspopup': 'menu' },
       on: { click: () => taskId && moreTask(taskId, moreButton) },
     },
-    icon('kebab'),
+    icon('more'),
   );
   const actions = el(
     'div',
@@ -159,7 +159,11 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
     total: stat(t('statTotal')),
     estimate: stat(t('statEstimate')),
   };
-  stats.estimate.cell.append(stats.estimate.meter);
+  // Estimate: the bar with the share used next to it, so the label stays one line.
+  const percent = el('span', { class: 'stat-percent num' });
+  const overText = el('span', { class: 'visually-hidden', text: t('estimateOver') });
+  const estimateBar = el('span', { class: 'stat-bar' }, stats.estimate.meter, percent, overText);
+  stats.estimate.cell.append(estimateBar);
   const strip = el('div', { class: 'stat-strip' }, ...Object.values(stats).map((s) => s.cell));
   const rangeButton = el(
     'button',
@@ -188,7 +192,7 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
   );
   const content = el(
     'div',
-    { class: 'detail', hidden: true, attrs: { 'aria-labelledby': 'detail-title' } },
+    { class: 'detail', hidden: true },
     el('header', { class: 'detail-header' }, crumb, title, tags, timerBox, actions),
     strip,
     entriesSection,
@@ -209,14 +213,34 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
     if (event.key === 'Delete') entryCommands.remove(row.dataset.id);
     else if (event.key === 'ArrowDown' || event.key === 'ArrowUp')
       moveFocus(row, event.key === 'ArrowDown' ? 1 : -1);
+    else if (event.key === 'Home' || event.key === 'End')
+      moveFocus(row, event.key === 'Home' ? -Infinity : Infinity);
     else return;
     event.preventDefault();
   });
 
-  /** @param {HTMLElement} row @param {1 | -1} step */
+  /** All entry rows, in order. */
+  const rowsOf = () => /** @type {HTMLElement[]} */ ([...list.querySelectorAll('.entry-row')]);
+
+  /**
+   * Roving tabindex: the entry list is one tab stop, like Thunderbird's lists.
+   * @param {HTMLElement | undefined} current
+   */
+  function setCurrent(current) {
+    const rows = rowsOf();
+    const target = current && rows.includes(current) ? current : rows[0];
+    for (const row of rows) row.tabIndex = row === target ? 0 : -1;
+  }
+  list.addEventListener('focusin', (event) => {
+    const row = /** @type {Element} */ (event.target).closest('.entry-row');
+    if (row) setCurrent(/** @type {HTMLElement} */ (row));
+  });
+
+  /** @param {HTMLElement} row @param {number} step */
   function moveFocus(row, step) {
-    const rows = /** @type {HTMLElement[]} */ ([...list.querySelectorAll('.entry-row')]);
-    rows[rows.indexOf(row) + step]?.focus();
+    const rows = rowsOf();
+    const index = Math.max(0, Math.min(rows.length - 1, rows.indexOf(row) + step));
+    rows[index]?.focus();
   }
 
   async function chooseRange() {
@@ -269,6 +293,7 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
     startButton.hidden = resumeButton.hidden = running !== null;
     const last = entries.filter((entry) => entry.end !== null).at(-1);
     resumeButton.disabled = !last;
+    since.title = '';
     if (running) {
       const time = formatTime(running.start, { locale });
       since.textContent = running.note
@@ -279,6 +304,8 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
         ? t('timerLast', formatTimeRange(last.start, last.end, { locale, nowLabel: '' }))
         : t('timerIdle');
     }
+    // The line is cut with an ellipsis; the tooltip shows a long note in full.
+    since.title = since.textContent ?? '';
     tickTimer();
   }
 
@@ -289,18 +316,21 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
     stats.total.value.textContent = duration(totals.total);
     const { estimate } = stats;
     if (task.estimateMin === null) {
-      estimate.name.textContent = t('statEstimate');
       estimate.value.textContent = '–';
-      estimate.meter.hidden = true;
+      estimateBar.hidden = true;
+      estimate.cell.classList.remove('over');
       return;
     }
     const ratio = totals.total / (task.estimateMin * MINUTE);
-    const percent = Math.round(ratio * 100);
-    estimate.name.textContent = t('statEstimatePercent', String(percent));
+    const used = Math.round(ratio * 100);
+    const over = ratio > 1;
     estimate.value.textContent = formatEstimate(task.estimateMin);
-    estimate.meter.hidden = false;
-    estimate.meter.classList.toggle('over', ratio > 1);
-    estimate.meter.style.setProperty('--value', `${Math.min(100, percent)}%`);
+    estimateBar.hidden = false;
+    percent.textContent = `${used}%`;
+    overText.hidden = !over;
+    estimate.cell.classList.toggle('over', over);
+    estimate.meter.classList.toggle('over', over);
+    estimate.meter.style.setProperty('--value', `${Math.min(100, used)}%`);
   }
 
   function renderEntries() {
@@ -338,8 +368,12 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
         (row) => row.entry.id,
         () => entryRow(),
         () => {},
-      ).forEach((rowNode, i) => fillRow(/** @type {HTMLElement} */ (rowNode), group.rows[i]));
+      ).forEach((rowNode, i) =>
+        fillRow(/** @type {HTMLElement} */ (rowNode), group.rows[i], group.day === today),
+      );
     });
+    const focused = /** @type {HTMLElement | null} */ (list.querySelector('.entry-row:focus'));
+    setCurrent(focused ?? rowsOf().find((row) => row.tabIndex === 0));
     emptyEntries.hidden = groups.length > 0;
     emptyEntries.textContent = t('entriesEmpty');
   }
@@ -360,9 +394,11 @@ export function createDetail({ data, root, taskCommands, entryCommands, moreTask
    * always matches what is shown, including the running time.
    * @param {HTMLElement} row
    * @param {import('../lib/entry-list.js').DayRow} item
+   * @param {boolean} isToday
    */
-  function fillRow(row, { entry, ms }) {
-    const running = entry.end === null;
+  function fillRow(row, { entry, ms }, isToday) {
+    // A running entry ticks in today's row; earlier days (overnight) show their own part.
+    const running = entry.end === null && isToday;
     row.dataset.id = entry.id;
     row.classList.toggle('running', running);
     const [source, time, note, length] = /** @type {HTMLElement[]} */ ([...row.children]);

@@ -32,6 +32,18 @@ export function combine(date, time) {
 }
 
 /**
+ * The end from an end-time input: on the start's day, or the next day when that time isn't
+ * after the start (23:00 – 01:00 ends the next day). `null` for a blank or malformed time.
+ * @param {string} time `HH:MM`
+ * @param {number} start
+ */
+export function endAfter(time, start) {
+  const sameDay = combine(dateInput(start), time);
+  if (sameDay === null || sameDay > start) return sameDay;
+  return combine(dateInput(addDays(startOfDay(start), 1)), time);
+}
+
+/**
  * The latest instant with local time `time` in `(after, before]`, or `null` (split points: a
  * time of day inside an entry that may cross midnight).
  * @param {string} time `HH:MM`

@@ -28,10 +28,15 @@ async function withDB(fn) {
 const spaceReady = ensureSpace().catch(logSpaceError);
 
 /** Label, badges and the tick alarm follow the running entry (after the space exists). */
-const syncStatus = () =>
-  spaceReady
-    .then(() => withDB((db) => syncTimerStatus(db)))
-    .catch((error) => console.error('time tracker: timer status update failed', error));
+const runSync = () =>
+  withDB((db) => syncTimerStatus(db)).catch((error) =>
+    console.error('time tracker: timer status update failed', error),
+  );
+// Syncs run one after another, so an older read ("stopped") never lands after a newer one
+// ("running"). Ordering of in-flight work only; nothing here must survive an unload.
+/** @type {Promise<unknown>} */
+let lastSync = spaceReady;
+const syncStatus = () => (lastSync = lastSync.then(runSync, runSync));
 
 // Restores the label and re-arms the alarm after a restart, and fixes them after a wake-up.
 syncStatus();
@@ -63,7 +68,7 @@ messenger.alarms.onAlarm.addListener((alarm) => {
 
 messenger.commands.onCommand.addListener((command) => {
   if (command !== 'toggle-timer') return;
-  spaceReady
+  lastSync = lastSync
     .then(() => withDB((db) => toggleTimer(db)))
     .catch((error) => console.error('time tracker: toggling the timer failed', error));
 });

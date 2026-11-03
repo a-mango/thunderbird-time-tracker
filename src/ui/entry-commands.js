@@ -108,7 +108,7 @@ export function createEntryCommands({ data, onError, announce, offerUndo }) {
       // The running entry: edit it, then stop it at the chosen end (never in the future).
       await updateEntry(data.db, id, patch, { now: now() });
       if (end !== null) {
-        await stopAt(data.db, end, { now: now() });
+        await stopAt(data.db, end, { now: now(), id });
         announce(t('timerStopped', data.tasks.get(draft.taskId)?.name ?? ''));
       }
     });
@@ -122,7 +122,7 @@ export function createEntryCommands({ data, onError, announce, offerUndo }) {
       const answer = await splitDialog({ entry, context: context(), now, locale });
       if (!answer) return;
       const taskId = answer.taskId === entry.taskId ? undefined : answer.taskId;
-      if (entry.end === null) await split(data.db, answer.at, { now: now(), taskId });
+      if (entry.end === null) await split(data.db, answer.at, { now: now(), taskId, id });
       else await splitEntry(data.db, id, answer.at, { now: now(), taskId });
     });
   }

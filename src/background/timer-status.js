@@ -5,7 +5,7 @@
 import { getRunning, getTask } from '../db/index.js';
 import { formatClock, formatTimerLabel } from '../lib/format.js';
 import { toggle } from '../lib/timer.js';
-import { SPACE_NAME } from './space.js';
+import { SPACE_NAME, TRACKER_PATH } from './space.js';
 
 export const TICK_ALARM = 'tt-tick';
 export const NOTIFICATION_ID = 'tt-no-last-task';
@@ -28,14 +28,16 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
   const running = await getRunning(db);
   const task = running ? await getTask(db, running.taskId) : null;
   const [space] = await api.spaces.query({ isSelfOwned: true, name: SPACE_NAME });
+  // Thunderbird rebuilds the tab properties from what update() gets, so the URL goes along.
+  const tab = { url: api.runtime.getURL(TRACKER_PATH) };
   if (running && task) {
     const elapsed = Math.max(0, now - running.start);
     const nextMinute = running.start + (Math.floor(elapsed / MINUTE) + 1) * MINUTE;
-    api.alarms.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 });
     await Promise.all([
+      api.alarms.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 }),
       api.action.setLabel({ label: formatTimerLabel(elapsed, task.name) }),
       api.action.setBadgeText({ text: RUNNING_BADGE }),
-      space && api.spaces.update(space.id, {}, { badgeText: formatClock(elapsed) }),
+      space && api.spaces.update(space.id, tab, { badgeText: formatClock(elapsed) }),
     ]);
     return 'running';
   }
@@ -43,7 +45,7 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
     api.alarms.clear(TICK_ALARM),
     api.action.setLabel({ label: null }),
     api.action.setBadgeText({ text: null }),
-    space && api.spaces.update(space.id, {}, { badgeText: null }),
+    space && api.spaces.update(space.id, tab, { badgeText: null }),
   ]);
   return 'stopped';
 }

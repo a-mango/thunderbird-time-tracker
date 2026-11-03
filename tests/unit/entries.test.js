@@ -426,6 +426,23 @@ describe('stop at, split to another task, split a stopped entry', () => {
     expect(await stopRunning(db, { now: T0 + 40 * MIN, at: T0 + 35 * MIN })).toBeNull();
   });
 
+  it('stops or splits only the expected running entry', async () => {
+    const { db } = await freshDB();
+    const { checkout, pipeline } = await seed(db);
+    const first = await startEntry(db, checkout.id, { now: T0 });
+    const second = await startEntry(db, pipeline.id, { now: T0 + 5 * MIN });
+    const opts = { now: T0 + 10 * MIN, id: first.entry.id };
+    await expect(stopRunning(db, { ...opts, at: T0 + 8 * MIN })).rejects.toMatchObject({
+      constructor: NotFoundError,
+      code: 'running',
+    });
+    await expect(splitRunning(db, T0 + 8 * MIN, opts)).rejects.toMatchObject({ code: 'running' });
+    expect((await getRunning(db))?.id).toBe(second.entry.id);
+    const stop = await stopRunning(db, { ...opts, id: second.entry.id, at: T0 + 8 * MIN });
+    expect(stop?.entry).toMatchObject({ id: second.entry.id, end: T0 + 8 * MIN });
+    await expect(stopRunning(db, opts)).rejects.toMatchObject({ code: 'running' });
+  });
+
   it('splits the running entry to another open task', async () => {
     const { db } = await freshDB();
     const { checkout, pipeline, bookkeeping } = await seed(db);

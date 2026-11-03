@@ -702,8 +702,8 @@
     "description": "doneHidden when exactly one done task is hidden."
   },
   "notificationNoLastTask": {
-    "message": "No task to start yet. Open Time Tracker and start a task once; then this shortcut starts it again.",
-    "description": "Notification when the toggle-timer shortcut is pressed but no task was ever tracked."
+    "message": "No open task tracked yet. Start a task in Time Tracker once; then this shortcut starts it again.",
+    "description": "Notification when the toggle-timer shortcut is pressed but no open task has any time entry."
   },
   "detailBreadcrumb": {
     "message": "Project",
@@ -802,16 +802,6 @@
   "statEstimate": {
     "message": "Estimate",
     "description": "Stat strip cell without estimate."
-  },
-  "statEstimatePercent": {
-    "message": "Estimate · $PERCENT$%",
-    "description": "Stat strip cell with the share of the estimate used.",
-    "placeholders": {
-      "percent": {
-        "content": "$1",
-        "example": "72"
-      }
-    }
   },
   "entriesTitle": {
     "message": "Time entries",

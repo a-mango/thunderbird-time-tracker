@@ -455,14 +455,20 @@ export async function startEntry(
  * Without `at`, an entry that would be zero-length is discarded; an explicit `at` must be in
  * `(running.start, now]`, so a running entry never gets an end in the future.
  * @param {IDBDatabase} db
- * @param {WriteOptions & {at?: number}} [options]
+ * With `id`, only that entry is stopped: a dialog opened on it must not stop another one that
+ * started meanwhile.
+ * @param {WriteOptions & {at?: number, id?: string}} [options]
  * @returns {Promise<TimerStop | null>} `null` when nothing was running
  * @throws {ValidationError} `end` when `at` is outside `(running.start, now]`
+ * @throws {NotFoundError} `running` when `id` is given and isn't the running entry
  */
-export async function stopRunning(db, { now = Date.now(), at } = {}) {
+export async function stopRunning(db, { now = Date.now(), at, id } = {}) {
   if (at !== undefined) checkTime(at, 'end');
   const stop = await tx(db, [STORES.entries, STORES.meta], 'readwrite', async (stores) => {
     const running = await readRunning(stores);
+    if (id !== undefined && running?.id !== id) {
+      throw new NotFoundError('running', 'that entry is no longer running', { id });
+    }
     if (!running) return null;
     if (at === undefined) return stopRunningIn(stores, running, now);
     if (at <= running.start || at > now) {
@@ -482,13 +488,14 @@ export async function stopRunning(db, { now = Date.now(), at } = {}) {
  * the same task or for `taskId` (which must be open).
  * @param {IDBDatabase} db
  * @param {number} at must be in `(running.start, now]`
- * @param {WriteOptions & {taskId?: string}} [options]
+ * @param {WriteOptions & {taskId?: string, id?: string}} [options] with `id`, only if that entry
+ *   is still the running one
  * @returns {Promise<SplitResult>}
  * @throws {NotFoundError} `running`, `task`
  * @throws {ValidationError} `split-at`
  * @throws {TaskDoneError} `task-done` when `taskId` is done
  */
-export async function splitRunning(db, at, { now = Date.now(), taskId } = {}) {
+export async function splitRunning(db, at, { now = Date.now(), taskId, id } = {}) {
   checkTime(at, 'split-at');
   if (taskId !== undefined) checkId(taskId, 'taskId');
   const result = await tx(
@@ -497,7 +504,9 @@ export async function splitRunning(db, at, { now = Date.now(), taskId } = {}) {
     'readwrite',
     async (stores) => {
       const running = await readRunning(stores);
-      if (!running) throw new NotFoundError('running', 'no timer is running');
+      if (!running || (id !== undefined && running.id !== id)) {
+        throw new NotFoundError('running', 'no timer is running', { id });
+      }
       if (at <= running.start || at > now) {
         throw new ValidationError('split-at', 'split point must be after the start and not later than now', { at }); // prettier-ignore
       }

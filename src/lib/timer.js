@@ -48,12 +48,13 @@ export function stop(db, { now = Date.now() } = {}) {
  * Stops the running entry at an earlier time ("I stopped at 17:30").
  * @param {IDBDatabase} db
  * @param {number} at in `(running.start, now]`: never in the future
- * @param {TimerOptions} [options]
+ * @param {TimerOptions & {id?: string}} [options] `id`: only if that entry still runs
  * @returns {Promise<TimerStop | null>} `null` when nothing was running
  * @throws {import('./errors.js').ValidationError} `end`
+ * @throws {import('./errors.js').NotFoundError} `running` when `id` no longer runs
  */
-export function stopAt(db, at, { now = Date.now() } = {}) {
-  return stopRunning(db, { now, at });
+export function stopAt(db, at, { now = Date.now(), id } = {}) {
+  return stopRunning(db, { now, at, id });
 }
 
 /**
@@ -73,14 +74,15 @@ export function switchTo(db, taskId, options) {
  * (source `split`) starts at `at`, for the same task or for `taskId`.
  * @param {IDBDatabase} db
  * @param {number} at in `(running.start, now]`
- * @param {TimerOptions & {taskId?: string}} [options]
+ * @param {TimerOptions & {taskId?: string, id?: string}} [options] `id`: only if that entry
+ *   still runs
  * @returns {Promise<SplitResult>}
  * @throws {import('./errors.js').ValidationError} `split-at`
  * @throws {import('./errors.js').NotFoundError} `running`, `task`
  * @throws {import('./errors.js').TaskDoneError} `task-done` when `taskId` is done
  */
-export function split(db, at, { now = Date.now(), taskId } = {}) {
-  return splitRunning(db, at, { now, taskId });
+export function split(db, at, { now = Date.now(), taskId, id } = {}) {
+  return splitRunning(db, at, { now, taskId, id });
 }
 
 /**

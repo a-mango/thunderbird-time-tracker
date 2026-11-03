@@ -4,7 +4,14 @@ import { TtDialog } from './components/tt-dialog.js';
 import { t } from './i18n.js';
 import { el } from './render.js';
 import { labelled, uid } from './task-dialogs.js';
-import { combine, dateInput, entryProblem, latestAt, timeInput } from '../lib/entry-form.js';
+import {
+  combine,
+  dateInput,
+  endAfter,
+  entryProblem,
+  latestAt,
+  timeInput,
+} from '../lib/entry-form.js';
 import { formatDuration, formatTimeRange } from '../lib/format.js';
 import { LIMITS } from '../lib/limits.js';
 import { parseEstimate } from '../lib/parse.js';
@@ -112,7 +119,11 @@ export async function entryDialog({ heading, draft, running, context, now, confi
     autocomplete: 'off',
     size: 8,
   });
-  const nextDay = el('span', { class: 'dialog-hint entry-next-day', text: t('entryNextDay') });
+  const nextDay = el('span', {
+    class: 'dialog-hint entry-next-day',
+    id: uid('tt-next-day'),
+    text: t('entryNextDay'),
+  });
   const note = el('input', {
     class: 'field',
     id: uid('tt-note'),
@@ -138,7 +149,7 @@ export async function entryDialog({ heading, draft, running, context, now, confi
   /** The end on the start's day (or a running entry's empty end). */
   const endFromField = () => {
     if (endField.value === '') return null;
-    return combine(dateInput(start ?? draft.start), endField.value);
+    return endAfter(endField.value, start ?? draft.start);
   };
   const onStartChange = () => {
     const kept = start !== null && end !== null ? end - start : null;
@@ -194,6 +205,11 @@ export async function entryDialog({ heading, draft, running, context, now, confi
     nextDay,
     labelled(t('entryNote'), note),
     labelled(t('entryTask'), task),
+  );
+  // The End field's own hint (running entry) comes first.
+  endField.setAttribute(
+    'aria-describedby',
+    [endField.getAttribute('aria-describedby'), nextDay.id].filter(Boolean).join(' '),
   );
   for (;;) {
     const value = await TtDialog.show({

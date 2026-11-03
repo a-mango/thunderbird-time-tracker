@@ -27,20 +27,32 @@ test('the running task shows breadcrumb, live time, stats and entries by day', a
   await page.goto('/ui/tracker.html');
   await page.locator('html[data-ready]').waitFor();
   await selectTask(page, 'Checkout form validation');
+  // Freeze 30 s after NOW (loading takes a few seconds of fake time).
+  await page.clock.pauseAt(NOW.getTime() + 30_000);
   await expect(detail(page).getByRole('navigation', { name: 'Project' })).toHaveText(
     'Client work›Harbor Coffee — website›Build',
   );
   const box = timerBox(page);
-  // The fixture started the entry 85 minutes before NOW.
-  await expect(box.locator('.timer-elapsed')).toHaveText('1:25:00');
+  // The fixture started the entry 85 minutes before it seeded (just after NOW).
+  const elapsed = box.locator('.timer-elapsed');
+  await expect(elapsed).toHaveText(/^1:25:[23]\d$/);
   await expect(box).toContainText('Running since');
   await expect(box.getByRole('button', { name: 'Stop' })).toBeVisible();
   await expect(box.getByRole('button', { name: 'Start' })).toBeHidden();
+  const seconds = (/** @type {string} */ text) =>
+    text.split(':').reduce((sum, part) => sum * 60 + Number(part), 0);
+  const before = seconds(await elapsed.innerText());
   await page.clock.runFor(65_000);
-  await expect(box.locator('.timer-elapsed')).toHaveText('1:26:05');
-  await expect(detail(page).locator('.entry-row.running .entry-duration')).toHaveText('1:26:05');
+  const after = (s) =>
+    `${Math.floor(s / 3600)}:${String(Math.floor(s / 60) % 60).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  await expect(elapsed).toHaveText(after(before + 65));
+  await expect(detail(page).locator('.entry-row.running .entry-duration')).toHaveText(
+    after(before + 65),
+  );
   await expect(detail(page).locator('.stat-value').first()).toHaveText(/^1h 2\dm$/);
   await expect(detail(page).locator('.day-header').first()).toContainText('Today · ');
+  // axe waits on timers, which a paused clock never fires.
+  await page.clock.resume();
   await expectNoAxeViolations(page);
 });
 
