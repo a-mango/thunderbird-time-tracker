@@ -18,6 +18,7 @@
     "shots": "node scripts/shots.mjs",
     "tb": "node scripts/tb.mjs",
     "tb:spike": "node scripts/tb-spike.mjs",
+    "tb:rc": "node scripts/tb-rc.mjs",
     "build": "web-ext build --source-dir src --artifacts-dir dist --ignore-files types 'types/**' --filename time-tracker-{version}.xpi --overwrite-dest",
     "icons": "node scripts/import-icons.mjs",
     "icon:png": "node scripts/icon-png.mjs",
