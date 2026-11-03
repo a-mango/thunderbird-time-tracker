@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   NOTIFICATION_ID,
-  RUNNING_BADGE,
   TICK_ALARM,
   syncTimerStatus,
   toggleTimer,
@@ -43,7 +42,7 @@ describe('syncTimerStatus', () => {
     expect(await syncTimerStatus(db, { api, now })).toBe('running');
     expect(await status()).toEqual({
       label: '1:05 · Checkout form va…',
-      badge: RUNNING_BADGE,
+      badge: '',
       spaceBadge: '1:05',
       alarm: { name: TICK_ALARM, scheduledTime: T0 + 66 * MIN, periodInMinutes: 1 },
     });
@@ -84,7 +83,7 @@ describe('syncTimerStatus', () => {
   });
 });
 
-describe('toggleTimer (Alt+Shift+T)', () => {
+describe('toggleTimer (Alt+Shift+K)', () => {
   it('stops the running timer, then starts the task tracked last', async () => {
     const { api, db, tasks, status } = await setup();
     await start(db, tasks.pipeline.id, { now: T0 });
@@ -95,7 +94,7 @@ describe('toggleTimer (Alt+Shift+T)', () => {
       action: 'started',
       start: { entry: { taskId: tasks.pipeline.id } },
     });
-    expect((await status()).badge).toBe(RUNNING_BADGE);
+    expect((await status()).label).toBe('0:00 · Product image pi…');
     expect(await api.notifications.getAll()).toEqual({});
   });
 

@@ -31,7 +31,7 @@
 | Page data access (M3) | The tracker page reads and writes `db/` directly; `tt:summary` and `?fixtures=none` are gone | One data path for page, popup and background; `TrackerData` applies its own writes and other pages' `BroadcastChannel` changes |
 | Context menus (M3) | The background creates hidden items (`background/menus.js`); the page calls `overrideContext` on a project row, shows the right items in `menus.onShown`, and acts in `menus.onClicked` only if `menus.getTargetElement()` finds the element in its own document | `onShown`/`onClicked` fire in every extension page. Every command also has a keyboard path: F2, Delete, Enter/double-click, Ctrl+Shift+N, the Projects ⋮ menu |
 | In-TB measurements | `npm run tb:spike`: stage copy + `web-ext run --marionette -remote-allow-system-access`, chrome-scope scripts | Reproducible spike evidence without hand steps; nothing changes in `src/` or the shipped manifest |
-| Timer status (M5) | `background/timer-status.js` derives the action label (`h:mm · task`, max 24 chars), the action badge (`●`) and the space `badgeText` (`h:mm`) from the database on every background start, `tt:changed` (entries/tasks), `tt-tick` alarm and command | No state in the event page; restart and wake-up use the same path. The alarm's `when` is aligned to whole running minutes, so `h:mm` turns over on time |
+| Timer status (M5) | `background/timer-status.js` derives the action label (`h:mm · task`, max 24 chars) and the space `badgeText` (`h:mm`); no action badge (the label already shows the time, and a `●` badge sat oddly next to it in Thunderbird) from the database on every background start, `tt:changed` (entries/tasks), `tt-tick` alarm and command | No state in the event page; restart and wake-up use the same path. The alarm's `when` is aligned to whole running minutes, so `h:mm` turns over on time |
 | Stopping at a time (M5) | `stopRunning(db, {at})` (lib `stopAt`): `at` in `(start, now]`; the entry dialog uses it to give the running entry an end | `updateEntry` keeps refusing an end on the running entry, so the pointer is only cleared inside the timer transaction |
 | Resume last entry (M5) | Starts a new timer entry on the task with the note of its latest stopped entry | Stopped entries are never reopened (`start < end` stays an invariant) |
 | Duplicate (M5) | Opens the entry dialog prefilled as a new entry | An exact copy would always overlap the original |
@@ -109,7 +109,7 @@
 - Timer operations (start, stop, switch, split, discard, adjust start).
 - Detail pane: breadcrumb, timer box, stats, entries grouped by day.
 - Entry dialog with an overlap warning; delete with undo.
-- Background: 1-minute alarm, action label and badge, space badge, `Alt+Shift+T` command.
+- Background: 1-minute alarm, action label and badge, space badge, `Alt+Shift+K` command (was `Alt+Shift+T`, which opens the Tools menu).
 - ✅ Unit tests for every timer operation.
 - ✅ Manual check in Thunderbird: the timer survives a restart, badges update, and the command works.
 

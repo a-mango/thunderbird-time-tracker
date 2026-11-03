@@ -1,5 +1,5 @@
 // Timer side effects in Thunderbird's chrome (docs/SPEC.md, Architecture: Timer): while an entry
-// runs, the action button shows `h:mm · task` and a badge, the space button shows `h:mm`, and the
+// runs, the action button shows `h:mm · task`, the space button shows `h:mm`, and the
 // alarm `tt-tick` refreshes them every minute. Everything is derived from the database on each
 // call, so it works the same after a restart or an event-page wake-up.
 import { getRunning, getTask } from '../db/index.js';
@@ -9,8 +9,6 @@ import { SPACE_NAME, TRACKER_PATH } from './space.js';
 
 export const TICK_ALARM = 'tt-tick';
 export const NOTIFICATION_ID = 'tt-no-last-task';
-/** Action badge while running: a dot, so the elapsed time isn't shown twice next to the label. */
-export const RUNNING_BADGE = '●';
 const MINUTE = 60_000;
 
 /**
@@ -36,7 +34,6 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
     await Promise.all([
       api.alarms.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 }),
       api.action.setLabel({ label: formatTimerLabel(elapsed, task.name) }),
-      api.action.setBadgeText({ text: RUNNING_BADGE }),
       space && api.spaces.update(space.id, tab, { badgeText: formatClock(elapsed) }),
     ]);
     return 'running';
@@ -44,6 +41,7 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
   await Promise.all([
     api.alarms.clear(TICK_ALARM),
     api.action.setLabel({ label: null }),
+    // No badge while running either; clearing removes one set by an earlier version.
     api.action.setBadgeText({ text: null }),
     space && api.spaces.update(space.id, tab, { badgeText: null }),
   ]);

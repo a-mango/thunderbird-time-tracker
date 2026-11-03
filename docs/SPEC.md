@@ -38,7 +38,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 | `storage` | small settings and state mirror (`storage.local`) | Deferred from M2: settings live in IndexedDB `meta`; add it with the first feature that needs a `storage.local` mirror |
 | `alarms` | 1-minute tick while running (badge and label refresh) | M5 (added) |
 | `menus`, `menus.overrideContext` | native context menus on project and task rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded); task rows in M4 |
-| `notifications` | `Alt+Shift+T` with no task tracked yet: says how to start one (the command has no other UI) | M5 (added) |
+| `notifications` | `Alt+Shift+K` with no task tracked yet: says how to start one (the command has no other UI) | M5 (added) |
 | `idle` | idle prompt | S2 |
 | `messagesRead` | read headers for linking | S1 |
 | `accountsRead` | folder → project mapping | S1+ |
@@ -104,7 +104,7 @@ Mirror Thunderbird where an equivalent exists. Before claiming a global shortcut
 
 | Key | Action |
 |---|---|
-| `Alt+Shift+T` (manifest `commands`) | start the last task / stop the running timer |
+| `Alt+Shift+K` (manifest `commands`) | start the last task / stop the running timer. Not `Alt+Shift+T`: on Linux the menu bar takes Alt+letter as an access key even with Shift (T = Tools) |
 | `Alt+Shift+O` (`_execute_action`) | open the popup |
 | `Ctrl+N` / `Ctrl+Shift+N` (in tab) | new task / new project |
 | `Space` on a task row | start/stop |
