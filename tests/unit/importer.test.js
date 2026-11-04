@@ -145,7 +145,7 @@ describe('parseBackup accepts', () => {
 
   it('a project without hourlyRate (a backup from before S3) as hourlyRate null', () => {
     const backup = validBackup();
-    delete /** @type {any} */ (backup.projects[0]).hourlyRate;
+    delete (/** @type {any} */ (backup.projects[0]).hourlyRate);
     expect(parseBackup(JSON.stringify(backup)).projects[0].hourlyRate).toBeNull();
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../../src/lib/errors.js';
-import { parseEstimate } from '../../src/lib/parse.js';
+import { parseDayTotal, parseEstimate } from '../../src/lib/parse.js';
 
 describe('parseEstimate', () => {
   it.each([
@@ -36,4 +36,28 @@ describe('parseEstimate', () => {
       expect(() => parseEstimate(text)).toThrow(ValidationError);
     },
   );
+});
+
+describe('parseDayTotal', () => {
+  it.each([
+    ['1:30', 90],
+    ['1.5h', 90],
+    ['90m', 90],
+    ['90', 90],
+    ['2', 120],
+    ['24h', 1440],
+    ['', 0],
+    ['  ', 0],
+    ['0', 0],
+    ['0m', 0],
+    ['0h', 0],
+    ['0:00', 0],
+    ['0,0', 0],
+  ])('reads %j as %i minutes', (text, minutes) => {
+    expect(parseDayTotal(text)).toBe(minutes);
+  });
+
+  it.each(['abc', '25h', '1441m', '-1h', '1:75'])('refuses %j', (text) => {
+    expect(() => parseDayTotal(text)).toThrow(expect.objectContaining({ code: 'duration' }));
+  });
 });
