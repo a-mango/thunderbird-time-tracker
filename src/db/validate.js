@@ -136,3 +136,21 @@ export function checkId(value, code) {
   }
   return value;
 }
+
+/**
+ * An hourly rate (S3): `null` for none, else a finite number in `[0, LIMITS.hourlyRate]`, stored
+ * rounded to cents.
+ * @param {unknown} value
+ * @returns {number | null}
+ */
+export function checkRate(value) {
+  if (value === null) return null;
+  const n = /** @type {number} */ (value);
+  if (typeof value !== 'number' || !Number.isFinite(n) || n < 0 || n > LIMITS.hourlyRate) {
+    throw new ValidationError(
+      'hourlyRate',
+      `hourlyRate must be null or in [0, ${LIMITS.hourlyRate}]`,
+    );
+  }
+  return Math.round(n * 100) / 100;
+}

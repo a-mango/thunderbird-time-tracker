@@ -1,10 +1,11 @@
 // Seeded generator of fictional projects, tasks and time entries for the dev harness.
 // Every name comes from design/reference/*.html. Never add real names here.
-// Shapes follow the schema v1 typedefs in docs/SPEC.md (Data model).
+// Shapes follow the schema v2 typedefs in docs/SPEC.md (Data model).
 
 /**
  * @typedef {{id:string, parentId:string|null, name:string, color:string, order:number,
- *            archived:boolean, createdAt:number, updatedAt:number}} Project
+ *            archived:boolean, hourlyRate:number|null, createdAt:number,
+ *            updatedAt:number}} Project
  * @typedef {{id:string, projectId:string, name:string, status:'open'|'done', starred:boolean,
  *            estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *            order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task
@@ -35,6 +36,10 @@ const PROJECTS = [
 ];
 
 const ARCHIVED = new Set(['fern-discovery']);
+
+/** Fictional hourly rates (S3); the other projects inherit their parent's. */
+/** @type {Record<string, number>} */
+const RATES = { client: 95, harbor: 120, support: 80 };
 
 /** Tasks: [projectKey, name, status, starred, estimateMin, tags, entryCount]. */
 /** @type {[string, string, 'open'|'done', boolean, number|null, string[], number][]} */
@@ -110,6 +115,7 @@ export function generateFixtures(
       color,
       order,
       archived: ARCHIVED.has(key),
+      hourlyRate: RATES[key] ?? null,
       createdAt: created,
       updatedAt: created,
     };
@@ -135,7 +141,9 @@ export function generateFixtures(
       status,
       starred,
       estimateMin,
-      billable: projectKey !== 'bookkeeping' && projectKey !== 'training',
+      // Call notes are internal overhead: the report's non-billable sample (S3).
+      billable:
+        projectKey !== 'bookkeeping' && projectKey !== 'training' && name !== 'Client call notes',
       tags: [...tags],
       notes: '',
       order,

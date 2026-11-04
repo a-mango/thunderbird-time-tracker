@@ -2,7 +2,9 @@
 
 /**
  * @typedef {{id:string, parentId:string|null, name:string, color:string, order:number,
- *            archived:boolean, createdAt:number, updatedAt:number}} Project
+ *            archived:boolean, hourlyRate:number|null, createdAt:number,
+ *            updatedAt:number}} Project
+ *   `hourlyRate` (S3, schema v2): per hour, in the user's currency; `null` = the parent's rate.
  * @typedef {{id:string, projectId:string, name:string, status:'open'|'done', starred:boolean,
  *            estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *            order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task

@@ -34,4 +34,18 @@ export const MIGRATIONS = Object.freeze([
       db.createObjectStore(STORES.meta);
     },
   },
+  {
+    // v2 (S3): every project gets `hourlyRate: null` (no rate of its own).
+    version: 2,
+    up(_db, tx) {
+      const cursorRequest = tx.objectStore(STORES.projects).openCursor();
+      cursorRequest.onsuccess = () => {
+        const cursor = cursorRequest.result;
+        if (!cursor) return;
+        if (cursor.value.hourlyRate === undefined)
+          cursor.update({ ...cursor.value, hourlyRate: null });
+        cursor.continue();
+      };
+    },
+  },
 ]);
