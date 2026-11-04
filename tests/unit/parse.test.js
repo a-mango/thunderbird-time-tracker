@@ -43,9 +43,12 @@ describe('parseDayTotal', () => {
     ['1:30', 90],
     ['1.5h', 90],
     ['90m', 90],
-    ['90', 90],
     ['2', 120],
+    ['1.5', 90],
+    ['10', 600], // a bare number is hours: never 10 minutes
+    ['12,5', 750],
     ['24h', 1440],
+    ['25h', 1500], // the long DST day; the page checks the day's own length
     ['', 0],
     ['  ', 0],
     ['0', 0],
@@ -57,7 +60,7 @@ describe('parseDayTotal', () => {
     expect(parseDayTotal(text)).toBe(minutes);
   });
 
-  it.each(['abc', '25h', '1441m', '-1h', '1:75'])('refuses %j', (text) => {
+  it.each(['abc', '26h', '1501m', '90', '-1h', '1:75'])('refuses %j', (text) => {
     expect(() => parseDayTotal(text)).toThrow(expect.objectContaining({ code: 'duration' }));
   });
 });

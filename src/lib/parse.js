@@ -28,8 +28,9 @@ export function parseEstimate(text) {
 }
 
 /**
- * Minutes of a timesheet cell (S3): the estimate formats, plus `0` or blank for none.
- * At most 24 h: a day can't hold more.
+ * Minutes of a timesheet cell (S3): the estimate formats, plus `0` or blank for none. A bare
+ * number is hours (`10` = 10 h): a day's total is never 10+ minutes typed without a unit.
+ * At most 25 h (the long DST day); the caller checks the day's own length.
  * @param {string} text
  * @returns {number} whole minutes (rounded)
  * @throws {ValidationError} `duration` when it can't be read or is out of range
@@ -37,8 +38,11 @@ export function parseEstimate(text) {
 export function parseDayTotal(text) {
   const value = text.trim();
   if (value === '' || /^0+(?:[.,]0+)?\s*[hm]?$/iu.test(value)) return 0;
-  const rounded = Math.round(readMinutes(value, 'duration'));
-  if (!Number.isFinite(rounded) || rounded < 0 || rounded > 24 * 60) {
+  const bare = /^\d+(?:[.,]\d+)?$/u.test(value);
+  const rounded = Math.round(
+    bare ? Number(value.replace(',', '.')) * 60 : readMinutes(value, 'duration'),
+  );
+  if (!Number.isFinite(rounded) || rounded < 0 || rounded > 25 * 60) {
     throw new ValidationError('duration', `duration out of range: ${value}`);
   }
   return rounded;

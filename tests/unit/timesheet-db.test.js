@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addEntry, listEntriesByTask, startEntry } from '../../src/db/entries.js';
+import { addEntry, listEntriesByTask, startEntry, updateEntry } from '../../src/db/entries.js';
 import { getAggregates } from '../../src/db/aggregates.js';
 import { setDayTotal, undoDayTotal } from '../../src/db/timesheet.js';
 import { InvariantError, NotFoundError, ValidationError } from '../../src/lib/errors.js';
@@ -124,6 +124,31 @@ describe('setDayTotal', () => {
     ]);
     expect((await listEntriesByTask(db, task))[1].note).toBe('Call');
     expect((await getAggregates(db)).tasks[task].ms).toBe(3 * HOUR);
+  });
+
+  it('undo leaves entries changed since the edit alone', async () => {
+    const { db, task } = await setup();
+    const kept = await addEntry(
+      db,
+      { taskId: task, start: at(9), end: at(10), source: 'timer' },
+      { now: NOW },
+    );
+    await addEntry(db, { taskId: task, start: at(13), end: at(14), source: 'timer' }, { now: NOW });
+    const result = await setDayTotal(
+      db,
+      { taskId: task, day: DAY, ms: 30 * MIN },
+      { replace: true, now: NOW },
+    );
+    // The new entry gets a note (another page) before the undo: undo leaves it.
+    const [added] = result.undo.added;
+    await updateEntry(db, added, { note: 'Agenda' }, { now: NOW + 5 });
+    await undoDayTotal(db, result.undo, { now: NOW + 10 });
+    const live = await listEntriesByTask(db, task);
+    expect(live.map((e) => e.id)).toContain(added);
+    expect(live.map((e) => e.id)).toContain(kept.id);
+    await expect(
+      undoDayTotal(db, { added: [], previous: [{ ...kept, end: null }], at: NOW }),
+    ).rejects.toBeInstanceOf(ValidationError);
   });
 
   it('0 with replace clears the day, trimming entries that cross midnight', async () => {

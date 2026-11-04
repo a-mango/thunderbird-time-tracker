@@ -156,7 +156,7 @@ test('Escape cancels an edit; an unreadable value keeps the field open', async (
   await input.fill('lots');
   await input.press('Enter');
   await expect(page.locator('[data-ref="report-notification"]')).toContainText(
-    'Enter a duration such as 1:30, 1.5h or 90m, at most a day.',
+    'Enter a duration such as 1:30, 1.5 (hours) or 90m, at most a day.',
   );
   await expect(input).toBeFocused();
   await input.press('Escape');
@@ -375,4 +375,23 @@ test('the project dialog sets an hourly rate that the summary uses', async ({ pa
   await page.getByRole('treeitem', { name: 'Timesheet' }).click();
   const summary = page.getByRole('table', { name: 'Summary' });
   await expect(summary.getByRole('row', { name: /^Support retainer / })).toContainText('100.50');
+});
+
+test('leaving Reports mid-edit drops the edit; the grid works when coming back', async ({
+  page,
+}) => {
+  const grid = await openReport(page);
+  const mon = cell(grid, 'Weekly client sync', 1);
+  await mon.dblclick();
+  await mon.getByRole('textbox').fill('lots');
+  // Clicking elsewhere drops an unreadable value instead of pulling focus back.
+  await page.getByRole('treeitem', { name: /^Today/ }).click();
+  await expect(page.locator('#report')).toBeHidden();
+  await page.getByRole('treeitem', { name: 'Timesheet' }).click();
+  await expect(grid.getByRole('textbox')).toHaveCount(0);
+  await expect(mon).toHaveText('1h 13m');
+  await mon.click();
+  await page.keyboard.type('2');
+  await page.keyboard.press('Enter');
+  await expect(mon).toHaveText('2h 00m');
 });

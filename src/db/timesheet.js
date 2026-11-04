@@ -17,6 +17,7 @@ import { checkId, checkInteger, checkTime, newId } from './validate.js';
  * @typedef {object} DayTotalUndo what `undoDayTotal` puts back
  * @property {string[]} added entries the edit created (soft-deleted again by undo)
  * @property {Entry[]} previous entries as they were before the edit changed or deleted them
+ * @property {number} at the edit's time: entries whose `updatedAt` differs changed since
  * @typedef {{undo: DayTotalUndo, ids: string[]}} DayTotalResult `ids`: every entry touched
  */
 
@@ -67,7 +68,7 @@ export async function setDayTotal(db, input, { replace = false, now = Date.now()
         0,
       );
       /** @type {DayTotalUndo} */
-      const undo = { added: [], previous: [] };
+      const undo = { added: [], previous: [], at: now };
       const delta = target - current;
       if (Math.abs(delta) < SECOND) return { undo, ids: [] };
 
@@ -163,20 +164,33 @@ export async function undoDayTotal(db, undo, { now = Date.now() } = {}) {
   if (!Array.isArray(undo?.added) || !Array.isArray(undo?.previous)) {
     throw new ValidationError('undo', 'not a timesheet undo');
   }
+  for (const before of undo.previous) {
+    // Only stopped entries are ever saved for undo; anything else isn't ours.
+    if (typeof before?.id !== 'string' || before.end === null || !(before.start < before.end)) {
+      throw new ValidationError('undo', 'not a timesheet undo');
+    }
+  }
   const ids = [...undo.added, ...undo.previous.map((e) => e.id)];
   if (ids.length === 0) return;
+  /** Still as the edit left it: nothing (another page, an entry dialog) changed it since. */
+  const untouched = (/** @type {Entry | undefined} */ entry) =>
+    entry !== undefined && (undo.at === undefined || entry.updatedAt === undo.at);
   await tx(db, [STORES.entries, STORES.meta], 'readwrite', async ({ entries, meta }) => {
     /** @type {Set<string>} */
     const taskIds = new Set();
     for (const id of undo.added) {
       /** @type {Entry | undefined} */
       const entry = await req(entries.get(id));
-      if (!entry || entry.deletedAt !== null || entry.end === null) continue;
+      if (!untouched(entry) || !entry || entry.deletedAt !== null || entry.end === null) continue;
       taskIds.add(entry.taskId);
       await req(entries.put({ ...entry, deletedAt: now, updatedAt: now }));
     }
     for (const before of undo.previous) {
+      /** @type {Entry | undefined} */
+      const current = await req(entries.get(before.id));
+      if (!untouched(current) || !current) continue;
       taskIds.add(before.taskId);
+      taskIds.add(current.taskId);
       await req(entries.put(before));
     }
     await touchTasks({ entries, meta }, [...taskIds]);

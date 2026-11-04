@@ -51,6 +51,13 @@ export const MAX_RANGE_DAYS = 31;
 
 const HOUR = 3_600_000;
 
+/** One cell's amount, rounded to cents like its CSV row, so the rows add up to the totals. */
+const amountOf = (/** @type {number} */ ms, /** @type {number} */ rate) =>
+  Math.round((ms / HOUR) * rate * 100) / 100;
+
+/** A task row's amount: the sum of its rounded cells. @param {ReportRow} row @param {number} rate */
+const rowAmount = (row, rate) => row.cells.reduce((sum, ms) => sum + amountOf(ms, rate), 0);
+
 /**
  * The range of a preset around `now`.
  * @param {Exclude<RangePreset, 'custom'>} preset
@@ -272,7 +279,7 @@ export function buildReport(
     for (const row of group.rows) {
       if (row.total === 0) continue;
       const billable = row.billable ? row.total : 0;
-      const amount = row.billable && rate !== null ? (billable / HOUR) * rate : null;
+      const amount = row.billable && rate !== null ? rowAmount(row, rate) : null;
       const seen = new Set();
       for (let id = /** @type {string | null} */ (group.projectId); id !== null && !seen.has(id);) {
         seen.add(id);
@@ -320,7 +327,7 @@ export function buildReport(
       total += row.total;
       if (!row.billable || row.total === 0) continue;
       billable += row.total;
-      if (rate !== null) amount = (amount ?? 0) + (row.total / HOUR) * rate;
+      if (rate !== null) amount = (amount ?? 0) + rowAmount(row, rate);
     }
   }
   return {
@@ -375,7 +382,7 @@ export function reportCsv(report, { projects, tasks, headers }) {
           Math.round(ms / 60_000),
           hours.toFixed(2),
           rate === null ? null : rate.toFixed(2),
-          row.billable && rate !== null ? (hours * rate).toFixed(2) : null,
+          row.billable && rate !== null ? amountOf(ms, rate).toFixed(2) : null,
         ]);
       }
     }

@@ -1315,7 +1315,7 @@
     "message": "Le chronomètre tourne ce jour-là : arrêtez-le pour modifier la journée."
   },
   "reportBadDuration": {
-    "message": "Saisissez une durée comme 1:30, 1,5h ou 90m, une journée au plus."
+    "message": "Saisissez une durée comme 1:30, 1,5 (heures) ou 90m, une journée au plus."
   },
   "reportReplaceTitle": {
     "message": "Remplacer les saisies ?"

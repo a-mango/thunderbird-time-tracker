@@ -126,7 +126,7 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
   let generation = 0;
   /** @type {CellPos} */
   let current = { row: '', col: 1 };
-  /** @type {{pos: CellPos, input: HTMLInputElement} | null} */
+  /** @type {{pos: CellPos, input: HTMLInputElement, cancel: () => void} | null} */
   let editing = null;
 
   const save = () => setLayout(STATE_KEY, state);
@@ -748,52 +748,62 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
         autocomplete: 'off',
       },
     });
-    editing = { pos, input };
+    let done = false;
+    // Hiding the pane (another sidebar row) drops the edit, so the grid never stays frozen.
+    const cancel = () => {
+      done = true;
+      editing = null;
+    };
+    editing = { pos, input, cancel };
     cell.replaceChildren(input);
     input.focus();
     if (initial === undefined) input.select();
-    let done = false;
-    const finish = async (/** @type {boolean} */ commit) => {
+    /** @param {'enter' | 'blur' | 'escape'} how */
+    const finish = async (how) => {
       if (done) return;
       done = true;
-      const text = input.value;
-      if (commit) {
-        const ok = await commitEdit(pos, row.taskId, row.name, raw, text);
+      if (how !== 'escape') {
+        // Enter keeps the field open on an unreadable value; leaving the field drops it.
+        const ok = await commitEdit(pos, row.taskId, row.name, raw, input.value, how === 'enter');
         if (!ok) {
           done = false;
           input.focus();
           return;
         }
       }
+      if (editing?.input !== input) return; // cancelled meanwhile
       editing = null;
       render();
-      focusCell(pos);
+      // After a blur the focus went elsewhere on purpose: leave it there.
+      if (how !== 'blur') focusCell(pos);
     };
     input.addEventListener('keydown', (event) => {
       event.stopPropagation();
       if (event.key === 'Enter') {
         event.preventDefault();
-        finish(true);
+        finish('enter');
       } else if (event.key === 'Escape') {
         event.preventDefault();
-        finish(false);
+        finish('escape');
       }
     });
     input.addEventListener('blur', () => {
       // A dialog (replace confirmation) takes focus while committing: not a blur commit.
-      if (!done && !document.querySelector('dialog[open]')) finish(true);
+      if (!done && !document.querySelector('dialog[open]')) finish('blur');
     });
   }
 
   /**
-   * Writes a cell. Returns false to keep editing (unreadable value).
+   * Writes a cell. Returns false to keep editing: an unreadable value when `keepOnError`;
+   * otherwise (the field lost focus) an unreadable value is dropped.
    * @param {CellPos} pos
    * @param {string} taskId
    * @param {string} taskName
    * @param {number} raw the cell's exact time before the edit
    * @param {string} text
+   * @param {boolean} keepOnError
    */
-  async function commitEdit(pos, taskId, taskName, raw, text) {
+  async function commitEdit(pos, taskId, taskName, raw, text, keepOnError) {
     if (!report) return true;
     /** @type {number} */
     let minutes;
@@ -802,14 +812,14 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
     } catch (error) {
       if (!(error instanceof ValidationError)) throw error;
       notify({ type: 'warning', message: t('reportBadDuration') });
-      return false;
+      return !keepOnError;
     }
     const ms = minutes * MINUTE;
     if (Math.floor(raw / MINUTE) === minutes) return true;
     const day = report.days[pos.col - 1];
     if (ms > startOfDay(day, 1) - day) {
       notify({ type: 'warning', message: t('reportBadDuration') });
-      return false;
+      return !keepOnError;
     }
     try {
       let result;
@@ -914,6 +924,7 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
     setVisible(show) {
       visible = show;
       root.hidden = !show;
+      if (!show) editing?.cancel();
       if (show) load();
       else generation++;
     },
