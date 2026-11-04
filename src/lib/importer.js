@@ -24,6 +24,7 @@ const MAX_TEXT = LIMITS.text;
 const MAX_TAG = LIMITS.tag;
 const MAX_TAGS = LIMITS.tags;
 const MAX_ESTIMATE_MIN = LIMITS.estimateMin;
+const MAX_RATE = LIMITS.hourlyRate;
 const MAX_TIME = LIMITS.time;
 const FORBIDDEN_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 
@@ -77,6 +78,12 @@ const estimate = (v, path) => {
     : fail('type', path, 'bad estimate');
 };
 
+/** @type {Check} */
+const rate = (v, path) =>
+  typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= MAX_RATE
+    ? Math.round(v * 100) / 100
+    : fail('type', path, 'bad rate');
+
 /**
  * @param {unknown[]} values
  * @returns {Check}
@@ -118,9 +125,14 @@ const PROJECT = {
   color,
   order: finite,
   archived: boolean,
+  hourlyRate: nullable(rate),
   createdAt: time,
   updatedAt: time,
 };
+
+/** Fields a backup may leave out, with the value they get (older backups predate them). */
+/** @type {Record<string, Record<string, unknown>>} */
+const OPTIONAL = { projects: { hourlyRate: null } };
 
 /** @type {Record<keyof Task, Check>} */
 const TASK = {
@@ -192,10 +204,11 @@ function rejectUnknown(record, known, path) {
  * @param {unknown} value
  * @param {Record<string, Check>} schema
  * @param {string} path
+ * @param {Record<string, unknown>} [defaults] values of optional fields a record leaves out
  * @returns {T}
  */
-function record(value, schema, path) {
-  const input = object(value, path);
+function record(value, schema, path, defaults = {}) {
+  const input = { ...defaults, ...object(value, path) };
   rejectUnknown(input, schema, path);
   /** @type {Record<string, unknown>} */
   const out = {};
@@ -216,7 +229,7 @@ function record(value, schema, path) {
  */
 function collection(value, schema, name) {
   if (!Array.isArray(value)) fail('shape', name, 'not an array');
-  return value.map((item, i) => record(item, schema, `${name}[${i}]`));
+  return value.map((item, i) => record(item, schema, `${name}[${i}]`, OPTIONAL[name]));
 }
 
 /**

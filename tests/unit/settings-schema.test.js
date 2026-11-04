@@ -50,6 +50,8 @@ describe('settings schema', () => {
     ['idleThresholdMin', 7.5],
     ['idleThresholdMin', 241],
     ['roundingMin', 10],
+    ['roundingMode', 'week'],
+    ['roundingMode', null],
   ])('rejects %s = %j', (key, value) => {
     expect(() => validateSettings({ [key]: value })).toThrow(
       expect.objectContaining({ code: 'settings', details: { key } }),
@@ -63,6 +65,8 @@ describe('settings schema', () => {
     ['idleThresholdMin', 240],
     ['idleThresholdMin', 0],
     ['roundingMin', 15],
+    ['roundingMode', 'day'],
+    ['roundingMode', 'entry'],
   ])('accepts %s = %j', (key, value) => {
     expect(validateSettings({ [key]: value })).toEqual({ [key]: value });
   });

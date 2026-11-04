@@ -68,11 +68,12 @@ tests/ui           Playwright (Firefox engine) against the dev harness
 - **Startup**: on `runtime.onStartup`/`onInstalled`, ensure the space exists (`spaces.query({isSelfOwned:true})` → create if missing), restore the action label, and re-arm the alarm when a timer is running.
 - **UI**: vanilla custom elements, a small render helper (DOM + `<template>`), and keyed list updates. No framework.
 
-## Data model (schema v1)
+## Data model (schema v2)
 
 ```js
 /** @typedef {{id:string, parentId:string|null, name:string, color:string, order:number,
- *             archived:boolean, createdAt:number, updatedAt:number}} Project */
+ *             archived:boolean, hourlyRate:number|null, createdAt:number,
+ *             updatedAt:number}} Project  (hourlyRate: S3, v2; null = the parent's rate) */
 /** @typedef {{id:string, projectId:string, name:string, status:'open'|'done', starred:boolean,
  *             estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *             order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task */
@@ -93,11 +94,12 @@ tests/ui           Playwright (Firefox engine) against the dev harness
   - Deleting a project that has tasks or subprojects, or a task that has entries, requires an explicit cascade.
   - A project can't be moved under itself or one of its descendants.
 - `meta.aggregates` caches per-task `{count, ms, last}` (M7). Every write that touches entries updates the touched tasks in the same transaction; readers rebuild it when its counts don't add up to the number of stored entries. Pages read it plus the entries of the last 7 days instead of every entry.
-- Migrations live in `db/migrations.js`, are versioned, and each has a test.
+- Migrations live in `db/migrations.js`, are versioned, and each has a test. v2 (S3) sets `hourlyRate: null` on every project; backups without the field import as `null`.
+- Timesheet edits (S3) go through `db/timesheet.js` `setDayTotal` in one transaction: more time extends the task's last manual entry of the day or adds one (from 09:00, after the day's entries); less time only shortens that manual entry. Anything else (removing or trimming entries, 0) throws `replace-needed` until the page has asked and passes `replace`. A day the running entry touches can't be edited. `undoDayTotal` puts every touched entry back.
 
 ## Settings
 
-Density, accent, week start (default Monday), daily target (8h), duration format, show done tasks, confirm before deleting, idle threshold (S2), rounding for reports (S3).
+Density, accent, week start (default Monday), daily target (8h), duration format, show done tasks, confirm before deleting, idle threshold (S2), rounding for reports (S3: `roundingMin` 0/5/6/15, `roundingMode` per entry or per task and day; durations round up, only in the Reports pane and its CSV, never stored).
 
 They're edited in the Settings dialog (M6) and apply live in every open page. Backup, restore (merge by id or replace) and CSV export are in its Data section; backups and CSV files are saved through `<a download>`, so no `downloads` permission is needed. **Delete All Data** removes every record and the settings.
 
@@ -116,6 +118,8 @@ Mirror Thunderbird where an equivalent exists. Before claiming a global shortcut
 | `Ctrl+Shift+K` | focus the quick filter |
 | `Ctrl+E` | add a time entry |
 | Arrows, Home/End, type-ahead | tree and table navigation |
+| Timesheet: arrows, Home/End, Ctrl+Home/End | move between cells |
+| Timesheet: Enter/F2, typing a number, Delete | edit a day (Enter saves, Esc cancels) |
 
 ## Privacy
 

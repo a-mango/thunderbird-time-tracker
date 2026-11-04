@@ -32,6 +32,7 @@ describe('projects', () => {
       color: DEFAULT_PROJECT_COLOR,
       order: 0,
       archived: false,
+      hourlyRate: null,
       createdAt: T0,
       updatedAt: T0,
     });
@@ -90,6 +91,21 @@ describe('projects', () => {
     expect(updated.createdAt).toBe(build.createdAt);
     expect(await getProject(db, build.id)).toEqual(updated);
     expect(notify).toHaveBeenLastCalledWith({ type: 'projects', ids: [build.id] });
+  });
+
+  it('sets, rounds and clears the hourly rate, and rejects bad rates', async () => {
+    const { db } = await freshDB();
+    const { build } = await seed(db);
+    const created = await createProject(db, { name: 'Retainer', hourlyRate: 85 }, { now: T0 });
+    expect(created.hourlyRate).toBe(85);
+    expect((await updateProject(db, build.id, { hourlyRate: 92.456 })).hourlyRate).toBe(92.46);
+    expect((await updateProject(db, build.id, { hourlyRate: 0 })).hourlyRate).toBe(0);
+    expect((await updateProject(db, build.id, { hourlyRate: null })).hourlyRate).toBeNull();
+    for (const hourlyRate of [-1, Number.NaN, Number.POSITIVE_INFINITY, 1e7, '90']) {
+      await expect(
+        updateProject(db, build.id, /** @type {any} */ ({ hourlyRate })),
+      ).rejects.toBeInstanceOf(ValidationError);
+    }
   });
 
   it('rejects unknown fields, bad values and unknown ids on update', async () => {

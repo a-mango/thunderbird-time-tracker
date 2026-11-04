@@ -23,6 +23,7 @@
     "build": "web-ext build --source-dir src --artifacts-dir dist --ignore-files types 'types/**' --filename time-tracker-{version}.xpi --overwrite-dest",
     "icons": "node scripts/import-icons.mjs",
     "icon:png": "node scripts/icon-png.mjs",
+    "demo": "node scripts/demo-backup.mjs",
     "ref": "sh scripts/ref.sh"
   },
   "devDependencies": {

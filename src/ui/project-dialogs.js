@@ -3,14 +3,17 @@
 import { TtDialog } from './components/tt-dialog.js';
 import { t } from './i18n.js';
 import { el } from './render.js';
+import { labelled as labelledWithHint } from './task-dialogs.js';
 import { DEFAULT_PROJECT_COLOR } from '../db/projects.js';
 import { LIMITS } from '../lib/limits.js';
+import { parseRate } from '../lib/parse.js';
 import { PALETTE, colorValue, paletteColor } from '../lib/palette.js';
 import { moveTargets } from '../lib/sidebar.js';
 
 /**
  * @typedef {import('../lib/types.js').Project} Project
- * @typedef {{name: string, color: string, parentId: string | null}} ProjectInput
+ * @typedef {{name: string, color: string, parentId: string | null, hourlyRate: number | null}}
+ *   ProjectInput
  */
 
 /** Indent for nested options: native <select> options can't be padded. */
@@ -105,12 +108,30 @@ export async function projectDialog(projects, { project, parentId = null, archiv
   });
   const colors = colorChoices(project?.color ?? DEFAULT_PROJECT_COLOR);
   const parent = parentSelect(projects, project?.id ?? null, project ? project.parentId : parentId);
+  const rate = el('input', {
+    class: 'field rate',
+    id: uid('tt-rate'),
+    type: 'text',
+    inputMode: 'decimal',
+    maxLength: 12,
+    value: project?.hourlyRate == null ? '' : String(project.hourlyRate),
+    autocomplete: 'off',
+  });
+  rate.addEventListener('input', () => {
+    try {
+      parseRate(rate.value);
+      rate.setCustomValidity('');
+    } catch {
+      rate.setCustomValidity(t('projectRateInvalid'));
+    }
+  });
   const body = el(
     'div',
     { class: 'project-form' },
     labelled(t('projectName'), name),
     colors,
     archived ? null : labelled(t(project ? 'projectParentEdit' : 'projectParent'), parent),
+    labelledWithHint(t('projectRate'), rate, t('projectRateHint')),
   );
   const value = await TtDialog.show({
     heading: t(project ? 'projectDialogEdit' : 'projectDialogNew'),
@@ -126,6 +147,7 @@ export async function projectDialog(projects, { project, parentId = null, archiv
     name: name.value.trim(),
     color: checked?.value ?? DEFAULT_PROJECT_COLOR,
     parentId: archived ? (project?.parentId ?? null) : parent.value || null,
+    hourlyRate: parseRate(rate.value),
   };
 }
 

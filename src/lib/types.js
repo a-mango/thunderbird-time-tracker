@@ -2,7 +2,9 @@
 
 /**
  * @typedef {{id:string, parentId:string|null, name:string, color:string, order:number,
- *            archived:boolean, createdAt:number, updatedAt:number}} Project
+ *            archived:boolean, hourlyRate:number|null, createdAt:number,
+ *            updatedAt:number}} Project
+ *   `hourlyRate` (S3, schema v2): per hour, in the user's currency; `null` = the parent's rate.
  * @typedef {{id:string, projectId:string, name:string, status:'open'|'done', starred:boolean,
  *            estimateMin:number|null, billable:boolean, tags:string[], notes:string,
  *            order:number, createdAt:number, updatedAt:number, doneAt:number|null}} Task
@@ -16,8 +18,10 @@
  * @typedef {'system'|'thunderbird'|'purple'|'orange'|'pink'|'ink'|'teal'} Accent
  * @typedef {{density:Density, accent:Accent, weekStart:0|1, dailyTargetMin:number,
  *            durationFormat:'hm'|'decimal', showDone:boolean, confirmDelete:boolean,
- *            idleThresholdMin:number, roundingMin:0|5|6|15}} Settings
+ *            idleThresholdMin:number, roundingMin:0|5|6|15,
+ *            roundingMode:'entry'|'day'}} Settings
  *   `weekStart`: 0 = Sunday, 1 = Monday (the `Date#getDay` numbering). `idleThresholdMin`: 0 = off.
+ *   `roundingMin`/`roundingMode` (S3): report-time rounding up, per entry or per task and day.
  * @typedef {{format:'thunderbird-time-tracker', version:1, exportedAt:number,
  *            projects:Project[], tasks:Task[], entries:Entry[],
  *            settings?:Partial<Settings>}} Backup

@@ -103,3 +103,266 @@ body {
     color: var(--color-text-critical);
   }
 }
+
+/* Reports mode (S3): the report pane takes the task list's and the details pane's place. */
+#report {
+  grid-column: 2 / -1;
+}
+
+.report-pane {
+  & .report-scroll {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: calc(var(--space-step) * 4);
+    padding-block-end: calc(var(--space-step) * 4);
+  }
+  /* The grid scrolls sideways on its own; vertically the whole pane scrolls. */
+  & .report-scroll > * {
+    flex: none;
+  }
+  & .report-filters {
+    flex-wrap: wrap;
+
+    & .spacer {
+      flex: 1;
+    }
+    & .field {
+      inline-size: auto;
+    }
+    & .report-project {
+      max-inline-size: 22em;
+    }
+  }
+  & .report-custom {
+    display: inline-flex;
+    gap: var(--space-base);
+
+    & label {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-step);
+    }
+  }
+  & .report-actions {
+    display: flex;
+    align-items: center;
+    gap: calc(var(--space-step) * 4);
+    /* Lines up with the tables' cell text (tt-table's 6px cell padding). */
+    padding-inline: 6px;
+  }
+  & .report-rounding,
+  & .report-print-filters {
+    margin: 0;
+    color: var(--tt-text-muted);
+  }
+  & .report-print-filters {
+    display: none;
+  }
+  & .report-empty {
+    margin-block: calc(var(--space-step) * 8);
+  }
+  & .report-heading {
+    margin: 0 0 var(--space-base);
+    padding-inline: 6px;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+}
+
+/* The timesheet and summary tables share tt-table's look (header cells, row height, borders). */
+.tt-grid {
+  overflow-x: auto;
+
+  & table {
+    inline-size: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    table-layout: fixed;
+    line-height: 1;
+  }
+  & thead th {
+    block-size: var(--tree-header-table-height);
+    padding: var(--tree-header-cell-padding);
+    padding-inline-start: calc(var(--tree-header-cell-padding) + var(--tree-header-cell-indent));
+    border-block-end: 1px solid var(--sidebar-border);
+    border-inline-end: 1px solid var(--layout-border-0);
+    background-color: var(--layout-background-1);
+    font-weight: normal;
+    text-align: start;
+    white-space: nowrap;
+
+    &:last-child {
+      border-inline-end: none;
+    }
+    &.today {
+      font-weight: 600;
+    }
+  }
+  & tbody tr,
+  & tfoot tr {
+    block-size: var(--tree-row-height);
+  }
+  & th,
+  & td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & tbody th,
+  & tbody td,
+  & tfoot th,
+  & tfoot td {
+    padding: 0 6px;
+    font-weight: normal;
+    text-align: start;
+  }
+  & [data-align='end'] {
+    text-align: end;
+    font-variant-numeric: tabular-nums;
+  }
+  & tbody tr.group > * {
+    border-block-start: 1px solid var(--layout-border-0);
+    background-color: var(--layout-background-1);
+    font-weight: 600;
+  }
+  & tfoot > tr > * {
+    border-block-start: 1px solid var(--sidebar-border);
+    font-weight: 600;
+  }
+  & tbody tr:not(.group):hover {
+    background-color: var(--listbox-hover);
+  }
+  & td.today {
+    background-color: color-mix(in srgb, var(--selected-item-color) 6%, transparent);
+  }
+  & [tabindex]:focus-visible {
+    outline: 2px solid var(--selected-item-color);
+    outline-offset: -2px;
+  }
+  /* The running day ticks and can't be edited: bold like the task list's running row. */
+  & td.running {
+    font-weight: 600;
+  }
+  & .cell-input {
+    inline-size: 100%;
+    min-block-size: 0;
+    block-size: calc(var(--tree-row-height) - 2px);
+    padding-inline: var(--space-step);
+    text-align: end;
+  }
+}
+
+.timesheet {
+  /* Day columns keep their width; a month (31 columns) scrolls sideways. */
+  min-inline-size: calc(16em + var(--days, 7) * 5.5em + 6.5em);
+
+  & .name-col {
+    inline-size: auto;
+  }
+  & .day-col {
+    inline-size: 5.5em;
+  }
+  & .total-col {
+    inline-size: 6.5em;
+  }
+  /* Task names stay in view while a month scrolls sideways. */
+  & :is(tbody tr:not(.group), tfoot tr) > :first-child,
+  & thead tr > th:first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background-color: var(--tree-view-bg);
+  }
+  & thead tr > th:first-child {
+    z-index: 2;
+    background-color: var(--layout-background-1);
+  }
+  /* The sticky name cell is opaque: it takes the row's hover too. */
+  & tbody tr:not(.group):hover > :first-child {
+    background-image: linear-gradient(var(--listbox-hover), var(--listbox-hover));
+  }
+}
+
+.summary {
+  & tbody th {
+    padding-inline-start: calc(6px + var(--depth, 0) * var(--tt-indent-step));
+  }
+  & tbody tr.root th {
+    font-weight: 600;
+  }
+  & thead th:not(:first-child),
+  & tbody td,
+  & tfoot td {
+    inline-size: 8em;
+  }
+  & thead th:first-child {
+    inline-size: auto;
+  }
+}
+
+/* Print / Save as PDF: only the report, on white, every row. */
+@media print {
+  :root {
+    color-scheme: light;
+  }
+  html,
+  body {
+    block-size: auto;
+    overflow: visible;
+  }
+  html,
+  body,
+  .report-pane,
+  .report-header,
+  .tt-grid thead th,
+  .tt-grid tbody tr.group > *,
+  .timesheet :is(tbody tr, tfoot tr, thead tr) > :first-child,
+  .tt-grid td.today {
+    /* Print plain: the screen's header and sticky-cell backgrounds win on specificity. */
+    background: Canvas !important;
+  }
+  .report-header {
+    padding-inline-start: 6px;
+  }
+  .tracker {
+    display: block;
+  }
+  #sidebar,
+  #list,
+  #detail,
+  tt-splitter,
+  tt-notification-bar,
+  .report-filters,
+  .quick-filter-tags,
+  .report-header button,
+  .report-actions button {
+    display: none !important;
+  }
+  .report-pane {
+    display: block;
+
+    & .report-scroll {
+      overflow: visible;
+    }
+    & .report-print-filters:not(:empty) {
+      display: block;
+      padding-inline: 6px;
+    }
+  }
+  .tt-grid {
+    & table {
+      table-layout: auto;
+      min-inline-size: 0 !important;
+    }
+    & thead {
+      display: table-header-group;
+    }
+    & tr {
+      break-inside: avoid;
+    }
+    & thead th.today {
+      font-weight: normal;
+    }
+  }
+}

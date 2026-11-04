@@ -15,6 +15,7 @@ import {
   checkFinite,
   checkId,
   checkName,
+  checkRate,
   newId,
 } from './validate.js';
 
@@ -22,7 +23,7 @@ import {
  * @typedef {import('../lib/types.js').Project} Project
  * @typedef {{now?: number}} WriteOptions
  * @typedef {{name?: string, color?: string, order?: number, parentId?: string|null,
- *            archived?: boolean}} ProjectPatch
+ *            archived?: boolean, hourlyRate?: number|null}} ProjectPatch
  * @typedef {{project: Project, depth: number}} ProjectNode
  */
 
@@ -86,6 +87,7 @@ function checkPatch(fields) {
   if (fields.color !== undefined) patch.color = checkColor(fields.color);
   if (fields.order !== undefined) patch.order = checkFinite(fields.order, 'order');
   if (fields.archived !== undefined) patch.archived = checkBoolean(fields.archived, 'archived');
+  if (fields.hourlyRate !== undefined) patch.hourlyRate = checkRate(fields.hourlyRate);
   if (fields.parentId !== undefined) {
     patch.parentId = fields.parentId === null ? null : checkId(fields.parentId, 'parentId');
   }
@@ -145,14 +147,15 @@ async function checkNoCycle(projects, id, parentId) {
 /**
  * Creates a project at the end of its siblings.
  * @param {IDBDatabase} db
- * @param {{name: string, parentId?: string|null, color?: string, order?: number}} input
+ * @param {{name: string, parentId?: string|null, color?: string, order?: number,
+ *          hourlyRate?: number|null}} input
  * @param {WriteOptions} [options]
  * @returns {Promise<Project>}
  * @throws {ValidationError}
  * @throws {NotFoundError} `project` (parent)
  */
 export async function createProject(db, input, { now = Date.now() } = {}) {
-  const fields = checkFields(input, ['name', 'parentId', 'color', 'order']);
+  const fields = checkFields(input, ['name', 'parentId', 'color', 'order', 'hourlyRate']);
   const patch = checkPatch({ ...fields, name: checkName(fields.name) });
   const parentId = patch.parentId ?? null;
   const project = await tx(db, STORES.projects, 'readwrite', async ({ projects }) => {
@@ -165,6 +168,7 @@ export async function createProject(db, input, { now = Date.now() } = {}) {
       color: patch.color ?? DEFAULT_PROJECT_COLOR,
       order: patch.order ?? (await nextOrder(projects, parentId)),
       archived: false,
+      hourlyRate: patch.hourlyRate ?? null,
       createdAt: now,
       updatedAt: now,
     };
@@ -214,7 +218,9 @@ export async function listProjects(db) {
  * @throws {InvariantError} `cycle`
  */
 export async function updateProject(db, id, patch, { now = Date.now() } = {}) {
-  const clean = checkPatch(checkFields(patch, ['name', 'parentId', 'color', 'order', 'archived']));
+  const clean = checkPatch(
+    checkFields(patch, ['name', 'parentId', 'color', 'order', 'archived', 'hourlyRate']),
+  );
   const project = await tx(db, STORES.projects, 'readwrite', async ({ projects }) => {
     const current = await requireProject(projects, id);
     const next = { ...current, ...clean, updatedAt: now };

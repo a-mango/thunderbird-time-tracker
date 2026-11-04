@@ -77,3 +77,25 @@ test('50k entries: badges recompute under 50 ms after a change', async ({ page }
   );
   for (const { render } of timings) expect(render).toBeLessThan(50);
 });
+
+test('50k entries: a month report loads and renders under 300 ms', async ({ page }) => {
+  await openLarge(page);
+  await page.getByRole('treeitem', { name: 'Timesheet' }).click();
+  await page.getByRole('grid').waitFor();
+  /** @type {number[]} */
+  const runs = [];
+  for (const preset of ['month', 'last-month', 'month']) {
+    await page.evaluate(() => performance.clearMarks());
+    await page.getByRole('combobox', { name: 'Range' }).selectOption(preset);
+    await expect
+      .poll(() => page.evaluate(() => performance.getEntriesByName('tt-report-ready').length))
+      .toBe(1);
+    runs.push(
+      await page.evaluate(
+        () => performance.measure('report', 'tt-report-start', 'tt-report-ready').duration,
+      ),
+    );
+  }
+  console.log(`perf: month report ${runs.map((v) => v.toFixed(0)).join(' / ')} ms (50k entries)`);
+  expect(Math.min(...runs)).toBeLessThan(300);
+});

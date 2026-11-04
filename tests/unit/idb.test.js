@@ -71,20 +71,23 @@ function layout(db) {
   });
 }
 
-/** A test-only v2 migration that counts its runs. */
-function v2Migration() {
+/** Version of the test-only migration after the shipped ones. */
+const NEXT = LATEST_VERSION + 1;
+
+/** A test-only migration after the shipped ones that counts its runs. */
+function nextMigration() {
   const up = vi.fn((/** @type {IDBDatabase} */ _db, /** @type {IDBTransaction} */ t) => {
     t.objectStore('tasks').createIndex('status', 'status');
   });
-  return { migration: { version: 2, up }, up };
+  return { migration: { version: NEXT, up }, up };
 }
 
 describe('openDB', () => {
   it('creates the v1 stores and indexes on a fresh database', async () => {
     const factory = new IDBFactory();
     const db = await openDB({ factory });
-    expect(db.version).toBe(1);
-    expect(LATEST_VERSION).toBe(1);
+    expect(db.version).toBe(2);
+    expect(LATEST_VERSION).toBe(2);
     const fixtureFactory = new IDBFactory();
     await buildV1Fixture(fixtureFactory);
     const fixture = await opened(fixtureFactory.open(NAME));
@@ -97,7 +100,7 @@ describe('openDB', () => {
       'tasks',
     ]);
     expect(await tx(db, ['meta'], 'readonly', ({ meta }) => req(meta.get('schemaVersion')))).toBe(
-      1,
+      2,
     );
     db.close();
     fixture.close();
@@ -118,25 +121,43 @@ describe('openDB', () => {
     db.close();
   });
 
+  it('v2 gives every v1 project hourlyRate null and keeps the rest', async () => {
+    const factory = new IDBFactory();
+    await buildV1Fixture(factory);
+    const db = await openDB({ factory });
+    const projects = await listProjects(db);
+    expect(projects.map((p) => [p.id, p.hourlyRate, p.name])).toEqual([
+      ['p1', null, 'Client work'],
+      ['p2', null, 'Fern & Co — branding'],
+    ]);
+    expect(projects[0]).toMatchObject({
+      color: '#2493ef',
+      order: 0,
+      archived: false,
+      updatedAt: T,
+    });
+    db.close();
+  });
+
   it('upgrades the v1 fixture through a later migration exactly once', async () => {
     const factory = new IDBFactory();
     await buildV1Fixture(factory);
-    const { migration, up } = v2Migration();
+    const { migration, up } = nextMigration();
     const migrations = [...MIGRATIONS, migration];
     const db = await openDB({ factory, migrations });
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(NEXT);
     expect(up).toHaveBeenCalledTimes(1);
     expect([...db.transaction('tasks').objectStore('tasks').indexNames]).toContain('status');
     expect((await listTasks(db)).map((t) => t.id)).toEqual(['t1']);
     expect((await listEntriesByTask(db, 't1')).map((e) => e.id)).toEqual(['e1', 'e2']);
     expect(await tx(db, ['meta'], 'readonly', ({ meta }) => req(meta.get('schemaVersion')))).toBe(
-      2,
+      NEXT,
     );
     db.close();
 
     const again = await openDB({ factory, migrations });
     expect(up).toHaveBeenCalledTimes(1);
-    expect(again.version).toBe(2);
+    expect(again.version).toBe(NEXT);
     again.close();
   });
 
@@ -169,7 +190,7 @@ describe('openDB', () => {
     const migrations = [
       ...MIGRATIONS,
       {
-        version: 2,
+        version: NEXT,
         /** @param {IDBDatabase} _db @param {IDBTransaction} t */
         up(_db, t) {
           t.objectStore('tasks').createIndex('status', 'status');
@@ -178,8 +199,12 @@ describe('openDB', () => {
       },
     ];
     await expect(openDB({ factory, migrations })).rejects.toBe(boom);
+    // The whole upgrade aborted, the shipped v2 included.
+    const raw = await opened(factory.open(NAME));
+    expect(raw.version).toBe(1);
+    raw.close();
     const db = await openDB({ factory });
-    expect(db.version).toBe(1);
+    expect(db.version).toBe(LATEST_VERSION);
     expect([...db.transaction('tasks').objectStore('tasks').indexNames]).toEqual(['projectId']);
     expect((await listTasks(db)).map((t) => t.id)).toEqual(['t1']);
     db.close();
@@ -189,9 +214,9 @@ describe('openDB', () => {
     const factory = new IDBFactory();
     const onVersionChange = vi.fn();
     const old = await openDB({ factory, onVersionChange });
-    const { migration } = v2Migration();
+    const { migration } = nextMigration();
     const db = await openDB({ factory, migrations: [...MIGRATIONS, migration] });
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(NEXT);
     expect(onVersionChange).toHaveBeenCalledTimes(1);
     expect(() => old.transaction('meta')).toThrow();
     db.close();
@@ -200,9 +225,9 @@ describe('openDB', () => {
   it('rejects with BlockedError when an old connection never closes', async () => {
     const factory = new IDBFactory();
     (await openDB({ factory })).close();
-    const stubborn = await opened(factory.open(NAME, 1)); // no onversionchange handler
+    const stubborn = await opened(factory.open(NAME)); // no onversionchange handler
     const onBlocked = vi.fn();
-    const { migration, up } = v2Migration();
+    const { migration, up } = nextMigration();
     const result = openDB({
       factory,
       migrations: [...MIGRATIONS, migration],
@@ -218,28 +243,28 @@ describe('openDB', () => {
     stubborn.close();
     await vi.waitFor(() => expect(up).toHaveBeenCalledTimes(1));
     const db = await openDB({ factory, migrations: [...MIGRATIONS, migration] });
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(NEXT);
     db.close();
   });
 
   it('continues when the blocking connection closes before the timeout', async () => {
     const factory = new IDBFactory();
     (await openDB({ factory })).close();
-    const stubborn = await opened(factory.open(NAME, 1));
-    const { migration } = v2Migration();
+    const stubborn = await opened(factory.open(NAME));
+    const { migration } = nextMigration();
     const db = await openDB({
       factory,
       migrations: [...MIGRATIONS, migration],
       onBlocked: () => stubborn.close(),
       blockedTimeoutMs: 1000,
     });
-    expect(db.version).toBe(2);
+    expect(db.version).toBe(NEXT);
     db.close();
   });
 
   it('rejects with VersionError when the stored database is newer than the code', async () => {
     const factory = new IDBFactory();
-    const { migration } = v2Migration();
+    const { migration } = nextMigration();
     (await openDB({ factory, migrations: [...MIGRATIONS, migration] })).close();
     const result = openDB({ factory });
     await expect(result).rejects.toBeInstanceOf(VersionError);

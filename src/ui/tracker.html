@@ -39,6 +39,10 @@
           </div>
           <tt-tree id="views-tree" aria-labelledby="mode-views"></tt-tree>
           <div class="mode-header">
+            <h2 class="mode-name" id="mode-reports" data-i18n="modeReports"></h2>
+          </div>
+          <tt-tree id="reports-tree" aria-labelledby="mode-reports"></tt-tree>
+          <div class="mode-header">
             <h2 class="mode-name" id="mode-projects" data-i18n="modeProjects"></h2>
             <button
               class="icon-button"
@@ -122,6 +126,39 @@
           </button>
         </div>
         <div class="visually-hidden" role="status" aria-live="polite" data-ref="live"></div>
+      </main>
+      <main id="report" class="list-pane report-pane" aria-labelledby="report-title" hidden>
+        <tt-notification-bar data-ref="report-notification" hidden></tt-notification-bar>
+        <div class="list-header report-header">
+          <h1 id="report-title" class="list-title" data-i18n="reportTitle"></h1>
+          <span class="list-count num" data-ref="report-range"></span>
+          <span class="spacer"></span>
+          <button class="button small" type="button" data-ref="report-export">
+            <span data-i18n="reportExport"></span>
+          </button>
+          <button class="button small" type="button" data-ref="report-print">
+            <span data-i18n="reportPrint"></span>
+          </button>
+        </div>
+        <div class="quick-filter-bar report-filters" data-ref="report-filters"></div>
+        <div class="quick-filter-tags" role="group" data-ref="report-tags" hidden></div>
+        <div class="report-scroll scroll">
+          <p class="report-print-filters" data-ref="report-print-filters"></p>
+          <div class="tt-grid" data-ref="report-grid"></div>
+          <p
+            class="report-empty pane-placeholder"
+            data-ref="report-empty"
+            data-i18n="reportEmpty"
+            hidden
+          ></p>
+          <div class="report-actions">
+            <button class="button small" type="button" data-ref="report-add-task">
+              <span data-i18n="reportAddTask"></span>
+            </button>
+            <p class="report-rounding" data-ref="report-rounding" hidden></p>
+          </div>
+          <section class="report-summary" data-ref="report-summary" hidden></section>
+        </div>
       </main>
       <section id="detail" class="detail-pane" data-ref="detail" data-i18n-label="detailLabel">
         <tt-splitter

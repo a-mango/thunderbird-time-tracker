@@ -32,31 +32,31 @@ Requires **Thunderbird 157** or later.
 
 Shortcuts follow Thunderbird where it has an equivalent. In the tab:
 
-| Keys | Where | Action |
-|---|---|---|
-| `Alt+Shift+K` | anywhere in Thunderbird | Stop the running timer, or start the task tracked last |
-| `Alt+Shift+O` | anywhere in Thunderbird | Open the Time Tracker popup |
-| `Ctrl+N` | tab | New task in the selected project |
-| `Ctrl+Shift+N` | tab | New project |
-| `Ctrl+E` | tab | Add a time entry to the selected task |
-| `Ctrl+Shift+K` | tab | Quick filter: show it and focus the text field |
-| `Tab` / `Shift+Tab` | tab | Move between the panes and controls |
-| `↑` `↓` `Home` `End` | trees, task list, time entries | Move the selection |
-| `←` `→` | project tree | Collapse or expand, go to the parent or first child |
-| Letters | trees | Type-ahead: select the next row starting with them |
-| `PageUp` / `PageDown` | task list | Move a page |
-| `Enter` | project tree | Select the project |
-| `Enter` | task list, time entries | Open the properties or entry dialog |
-| `Space` | task list | Start or stop the task's timer |
-| `S` | task list | Star or unstar |
-| `F2` | project tree, task list | Rename |
-| `Delete` | project tree, task list, time entries | Delete (tasks and entries can be undone) |
-| `Shift+F10` or the Menu key | rows | Context menu |
-| `Esc` | quick filter text | Clear the text |
-| `↓` or `Enter` | quick filter text | Go to the task list |
-| `←` `→` `Home` `End` | pane splitters, column edges | Resize |
-| `Enter` / `Esc` | dialogs | Confirm / cancel |
-| `↑` `↓` `Home` `End`, `Enter` | popup | Choose a task and start it |
+| Keys                          | Where                                 | Action                                                 |
+| ----------------------------- | ------------------------------------- | ------------------------------------------------------ |
+| `Alt+Shift+K`                 | anywhere in Thunderbird               | Stop the running timer, or start the task tracked last |
+| `Alt+Shift+O`                 | anywhere in Thunderbird               | Open the Time Tracker popup                            |
+| `Ctrl+N`                      | tab                                   | New task in the selected project                       |
+| `Ctrl+Shift+N`                | tab                                   | New project                                            |
+| `Ctrl+E`                      | tab                                   | Add a time entry to the selected task                  |
+| `Ctrl+Shift+K`                | tab                                   | Quick filter: show it and focus the text field         |
+| `Tab` / `Shift+Tab`           | tab                                   | Move between the panes and controls                    |
+| `↑` `↓` `Home` `End`          | trees, task list, time entries        | Move the selection                                     |
+| `←` `→`                       | project tree                          | Collapse or expand, go to the parent or first child    |
+| Letters                       | trees                                 | Type-ahead: select the next row starting with them     |
+| `PageUp` / `PageDown`         | task list                             | Move a page                                            |
+| `Enter`                       | project tree                          | Select the project                                     |
+| `Enter`                       | task list, time entries               | Open the properties or entry dialog                    |
+| `Space`                       | task list                             | Start or stop the task's timer                         |
+| `S`                           | task list                             | Star or unstar                                         |
+| `F2`                          | project tree, task list               | Rename                                                 |
+| `Delete`                      | project tree, task list, time entries | Delete (tasks and entries can be undone)               |
+| `Shift+F10` or the Menu key   | rows                                  | Context menu                                           |
+| `Esc`                         | quick filter text                     | Clear the text                                         |
+| `↓` or `Enter`                | quick filter text                     | Go to the task list                                    |
+| `←` `→` `Home` `End`          | pane splitters, column edges          | Resize                                                 |
+| `Enter` / `Esc`               | dialogs                               | Confirm / cancel                                       |
+| `↑` `↓` `Home` `End`, `Enter` | popup                                 | Choose a task and start it                             |
 
 `Alt+Shift+K` and `Alt+Shift+O` can be changed in **Add-ons and Themes → gear → Manage Extension
 Shortcuts**.
@@ -87,14 +87,14 @@ npm run build              # → dist/time-tracker-0.1.0.xpi
 
 ## Development
 
-| Command | What it does |
-|---|---|
-| `npm run dev` | Serve `src/` at http://localhost:5173/ with a mock `messenger` and fictional data |
-| `npm run check` | Lint, type check, unit tests, `web-ext lint` |
-| `npm run test:ui` | Playwright UI tests (Firefox) |
-| `npm run shots` | Screenshots of the dev harness into `artifacts/shots/` |
-| `npm run tb` | Thunderbird with an isolated dev profile (`.tb-profile/`) and the extension loaded |
-| `npm run tb:rc` | Fresh profile (`.tb-rc/<version>/`) with the built XPI installed |
+| Command           | What it does                                                                       |
+| ----------------- | ---------------------------------------------------------------------------------- |
+| `npm run dev`     | Serve `src/` at http://localhost:5173/ with a mock `messenger` and fictional data  |
+| `npm run check`   | Lint, type check, unit tests, `web-ext lint`                                       |
+| `npm run test:ui` | Playwright UI tests (Firefox)                                                      |
+| `npm run shots`   | Screenshots of the dev harness into `artifacts/shots/`                             |
+| `npm run tb`      | Thunderbird with an isolated dev profile (`.tb-profile/`) and the extension loaded |
+| `npm run tb:rc`   | Fresh profile (`.tb-rc/<version>/`) with the built XPI installed                   |
 
 Dev harness options: `?seed=N` re-seeds, `?fixtures=empty` starts empty, `?fixtures=large` loads
 50,000 entries, `?locale=fr` shows French, `?density=compact|relaxed`.

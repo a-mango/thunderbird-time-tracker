@@ -18,6 +18,7 @@ function validBackup() {
         color: '#2493ef',
         order: 0,
         archived: false,
+        hourlyRate: 120.5,
         createdAt: T0,
         updatedAt: T0,
       },
@@ -28,6 +29,7 @@ function validBackup() {
         color: '#AE55F7',
         order: 1.5,
         archived: true,
+        hourlyRate: null,
         createdAt: T0,
         updatedAt: T0,
       },
@@ -141,6 +143,18 @@ describe('parseBackup accepts', () => {
     expect(Object.getPrototypeOf(result.settings)).toBe(Object.prototype);
   });
 
+  it('a project without hourlyRate (a backup from before S3) as hourlyRate null', () => {
+    const backup = validBackup();
+    delete (/** @type {any} */ (backup.projects[0]).hourlyRate);
+    expect(parseBackup(JSON.stringify(backup)).projects[0].hourlyRate).toBeNull();
+  });
+
+  it('an hourly rate rounded to cents', () => {
+    const backup = validBackup();
+    backup.projects[0].hourlyRate = 99.999;
+    expect(parseBackup(JSON.stringify(backup)).projects[0].hourlyRate).toBe(100);
+  });
+
   it('a backup without settings or records', () => {
     const backup = { ...validBackup(), projects: [], tasks: [], entries: [] };
     delete backup.settings;
@@ -231,6 +245,9 @@ describe('parseBackup rejects', () => {
     ['a numeric parent id', (b) => (b.projects[1].parentId = 1), 'projects[1].parentId'],
     ['an unknown status', (b) => (b.tasks[0].status = 'closed'), 'tasks[0].status'],
     ['a negative estimate', (b) => (b.tasks[0].estimateMin = -1), 'tasks[0].estimateMin'],
+    ['a negative rate', (b) => (b.projects[0].hourlyRate = -1), 'projects[0].hourlyRate'],
+    ['a text rate', (b) => (b.projects[0].hourlyRate = '90'), 'projects[0].hourlyRate'],
+    ['a huge rate', (b) => (b.projects[0].hourlyRate = 1e7), 'projects[0].hourlyRate'],
     ['a numeric tag', (b) => (b.tasks[0].tags = ['ok', 7]), 'tasks[0].tags[1]'],
     ['an overlong tag', (b) => (b.tasks[0].tags = ['x'.repeat(101)]), 'tasks[0].tags[0]'],
     ['too many tags', (b) => (b.tasks[0].tags = Array(51).fill('a')), 'tasks[0].tags'],

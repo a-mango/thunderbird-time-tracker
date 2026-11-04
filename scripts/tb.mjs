@@ -5,7 +5,7 @@
 //   npm run tb -- --manual     open Thunderbird on .tb-profile/ and print about:debugging steps
 //   TB_BIN=/path/to/thunderbird npm run tb    use a specific binary
 import { spawn, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -55,6 +55,39 @@ export function detect() {
 function version(bin) {
   const out = spawnSync(bin, ['--version'], { encoding: 'utf8' });
   return (out.stdout.match(/Thunderbird ([\d.]+\S*)/) ?? [])[1] ?? '?';
+}
+
+/**
+ * Exits when .tb-profile/ was last opened by a newer Thunderbird than `tb`. Thunderbird refuses
+ * such a profile (downgrade protection) and, started this way, falls back to creating a new
+ * profile in the real ~/.thunderbird: never start it on a newer dev profile.
+ * @param {{version: string}} tb
+ */
+export function refuseNewerProfile(tb) {
+  /** @type {string} */
+  let ini;
+  try {
+    ini = readFileSync(join(profile, 'compatibility.ini'), 'utf8');
+  } catch {
+    return; // a new profile
+  }
+  const last = ini.match(/^LastVersion=([\d.]+)/mu)?.[1];
+  if (!last || tb.version === '?') return;
+  const parts = (/** @type {string} */ v) => v.split('.').map(Number);
+  const [a, b] = [parts(last), parts(tb.version)];
+  for (let i = 0; i < Math.max(a.length, b.length); i += 1) {
+    const diff = (a[i] ?? 0) - (b[i] ?? 0);
+    if (diff < 0) return;
+    if (diff > 0) {
+      console.error(
+        `.tb-profile/ was last opened by Thunderbird ${last}, newer than ${tb.version}.\n` +
+          'Thunderbird would refuse it and create a new profile in ~/.thunderbird instead.\n' +
+          'Move .tb-profile/ aside (e.g. mv .tb-profile .tb-profile-' +
+          `${last}) for a fresh dev profile, or set TB_BIN to Thunderbird ${last}.`,
+      );
+      process.exit(1);
+    }
+  }
 }
 
 /**
@@ -121,6 +154,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const tb = detect();
   console.log(`Thunderbird ${tb.version} (${tb.kind}: ${tb.bin})`);
   console.log(`Profile: ${profile}`);
+  refuseNewerProfile(tb);
   if (process.argv.includes('--manual')) runManual(tb);
   else runWebExt(tb);
 }

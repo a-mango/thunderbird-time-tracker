@@ -50,6 +50,14 @@ The mockups show the whole window. Only the **content of our tab** is ours.
 - Time entries: a range dropdown, day group headers (bold 13px with the day total, faint background), and rows with the source icon (clock = timer, pencil = manual), time range, note, and duration right-aligned.
 - Linked messages (S1): mail icon, subject link (opens the message in Thunderbird), date.
 
+## Reports (S3)
+
+- Sidebar: a **Reports** mode section between Views and Projects with one row, **Timesheet**. Selecting it shows the report pane in place of the task list and details pane (one selection across the three trees).
+- Report pane: the list-header bar (title, range, Export CSV, Print), a quick-filter-style bar (range menu, previous/next, custom From/To, project, Billable and Tags toggles, then a tag toggle row), the timesheet, Add Task…, the rounding note and the Summary.
+- Timesheet: a `role="grid"` table styled like `tt-table` (`.tt-grid` in `tracker.css`: header cells, row height, cell borders). Rows are tasks under bold project-path group rows; day columns 5.5em, a month scrolls sideways with the task names sticky. Today's column has a 6% accent tint. One tab stop (roving tabindex); cells edit in place with a field showing the exact time, even when the report is rounded. The running day is bold and read-only.
+- Summary: the same table look, projects indented by `--tt-indent-step`, `–` for zero.
+- Print: `@media print` keeps only the title, range, filters line and both tables, on plain `Canvas`.
+
 ## Popup (action button)
 
 360px wide, 3–4 blocks. The running task shows elapsed time, Stop, and Split. Then a "Switch to…" search field with the 5 most recent tasks (Enter = start), then "Open Time Tracker". Use the same tokens and no new visual language.

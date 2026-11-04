@@ -13,6 +13,7 @@ import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
 import { settingsDialog } from './settings-dialog.js';
 import { storageMessage } from './storage-errors.js';
+import { createReport } from './report.js';
 import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
@@ -32,7 +33,10 @@ const SECOND_MS = 1000;
 
 /** @param {string} name */
 const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
-const notification = /** @type {TtNotificationBar} */ (ref('notification'));
+const listNotification = /** @type {TtNotificationBar} */ (ref('notification'));
+const reportNotification = /** @type {TtNotificationBar} */ (ref('report-notification'));
+/** The bar of the pane on screen: the task list's, or the report's. */
+let notification = listNotification;
 
 /**
  * A storage failure as an error bar with its recovery hint (and Reload where that helps).
@@ -61,6 +65,7 @@ function showError(error) {
  * @returns {import('../lib/task-list.js').TaskScope | null}
  */
 function scopeOf(data, selection) {
+  if (selection.tree === 'reports') return null;
   if (selection.tree === 'views') {
     return { type: 'view', id: /** @type {'today' | 'week' | 'starred'} */ (selection.id) };
   }
@@ -187,6 +192,24 @@ async function main() {
   };
   newTaskButton.addEventListener('click', newTask);
 
+  const report = createReport({
+    data,
+    root: /** @type {HTMLElement} */ (document.getElementById('report')),
+    notify: (message) => reportNotification.show(message),
+    offerUndo,
+    onError: showError,
+  });
+  /** Shows the report pane instead of the task list and details (Reports mode), or back. */
+  const showReport = (/** @type {boolean} */ show) => {
+    if (show === report.visible) return;
+    /** @type {HTMLElement} */ (document.getElementById('list')).hidden = show;
+    ref('detail').hidden = show;
+    listNotification.dismiss();
+    reportNotification.dismiss();
+    notification = show ? reportNotification : listNotification;
+    report.setVisible(show);
+  };
+
   const dataCommands = createDataCommands({ data });
   /** @param {import('./data-commands.js').DataMessage | null} message */
   const showDataMessage = (message) => {
@@ -203,6 +226,7 @@ async function main() {
     openSettings: () => settingsDialog({ data, commands: dataCommands, onError: showError }),
     exportCsv: () => dataCommands.exportCsv().then(showDataMessage, showError),
     onSelect: (selection) => {
+      showReport(selection.tree === 'reports');
       taskList.setScope(scopeOf(data, selection));
       syncDetail();
       if (sidebar) syncNewTask();
@@ -264,6 +288,7 @@ async function main() {
       }
     }
     sidebar.render();
+    report.refresh();
     taskList.render();
     syncNewTask();
     detail.update(types);

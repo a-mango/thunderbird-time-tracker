@@ -190,3 +190,42 @@ export function formatAwayRange(since, until, { locale, hourCycle }) {
     );
   return `${at(since)} – ${at(until)}`;
 }
+
+/**
+ * Timesheet column header: weekday and day of the month, `Mon 19` (`Mon 19` in en-US too).
+ * @param {number} ms
+ * @param {{locale: string}} options
+ */
+export function formatWeekdayDay(ms, { locale }) {
+  return dateTimeFormat(locale, { weekday: 'short', day: 'numeric' }).format(ms);
+}
+
+/**
+ * A report's range, last day included: `19 – 25 Oct 2026`, `28 Sept – 4 Oct 2026` (the
+ * locale's own range format).
+ * @param {{start: number, end: number}} range half-open, `end` at a local midnight
+ * @param {{locale: string}} options
+ */
+export function formatDateRange({ start, end }, { locale }) {
+  const last = startOfDay(end, -1);
+  return dateTimeFormat(locale, { dateStyle: 'medium' }).formatRange(start, Math.max(start, last));
+}
+
+/** @type {Map<string, Intl.NumberFormat>} */
+const numberFormats = new Map();
+
+/**
+ * A rate or amount with two decimals in the locale's digits and grouping (`1,250.00`,
+ * `1 250,00`), without a currency (S3 keeps none). `–` for null.
+ * @param {number | null} value
+ * @param {{locale: string}} options
+ */
+export function formatMoney(value, { locale }) {
+  if (value === null || !Number.isFinite(value)) return NO_VALUE;
+  let format = numberFormats.get(locale);
+  if (!format) {
+    format = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    numberFormats.set(locale, format);
+  }
+  return format.format(value);
+}
