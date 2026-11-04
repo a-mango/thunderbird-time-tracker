@@ -228,6 +228,25 @@ export function createMessenger({
     onStartup: createEvent(),
     onSuspend: createEvent(),
     onMessage,
+    /**
+     * Open extension pages. Tests set `runtime._contexts`; by default the page running the mock
+     * counts as an open tab.
+     * @param {{contextTypes?: string[], documentUrls?: string[]}} filter
+     */
+    async getContexts({ contextTypes, documentUrls } = {}) {
+      const all =
+        runtime._contexts ??
+        (globalThis.location
+          ? [{ contextType: 'TAB', documentUrl: globalThis.location.href, tabId: 1, windowId: 1 }]
+          : []);
+      return all.filter(
+        (c) =>
+          (!contextTypes || contextTypes.includes(c.contextType)) &&
+          (!documentUrls || documentUrls.includes(c.documentUrl?.split(/[?#]/)[0] ?? '')),
+      );
+    },
+    /** @type {messenger.runtime.ExtensionContext[] | null} */
+    _contexts: null,
   };
 
   /** @param {string} areaName */
@@ -367,6 +386,26 @@ export function createMessenger({
       getAll: async () => Object.fromEntries(notifications),
       onClicked: createEvent(),
       onClosed: createEvent(),
+    },
+    idle: {
+      /** The interval set last (seconds) and the current state; `_setState` fires the event. */
+      _interval: 60,
+      /** @type {messenger.idle.IdleState} */
+      _state: 'active',
+      /** @param {number} seconds */
+      setDetectionInterval(seconds) {
+        this._interval = seconds;
+      },
+      async queryState() {
+        return this._state;
+      },
+      /** @param {messenger.idle.IdleState} state */
+      _setState(state) {
+        if (state === this._state) return;
+        this._state = state;
+        this.onStateChanged.dispatch(state);
+      },
+      onStateChanged: createEvent(),
     },
     commands: {
       getAll: async () =>

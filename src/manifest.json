@@ -18,7 +18,7 @@
       }
     }
   },
-  "permissions": ["alarms", "menus", "menus.overrideContext", "notifications"],
+  "permissions": ["alarms", "idle", "menus", "menus.overrideContext", "notifications"],
   "background": {
     "scripts": ["background/main.js"],
     "type": "module"

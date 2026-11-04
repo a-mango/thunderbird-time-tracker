@@ -170,3 +170,20 @@ export function formatDate(ms, { locale, time = false }) {
     ...(time ? { timeStyle: 'short' } : {}),
   }).format(ms);
 }
+
+/**
+ * Time range of an absence (the idle prompt): `14:02 – 14:25` on one day; across midnight each
+ * end gets its weekday, `Mon 23:50 – Tue 00:20`.
+ * @param {number} since
+ * @param {number} until
+ * @param {{locale: string, hourCycle?: HourCycle}} options
+ */
+export function formatAwayRange(since, until, { locale, hourCycle }) {
+  if (startOfDay(since) === startOfDay(until)) {
+    return formatTimeRange(since, until, { locale, nowLabel: '', hourCycle });
+  }
+  const weekday = dateTimeFormat(locale, { weekday: 'short' });
+  /** @param {number} ms */
+  const at = (ms) => `${weekday.format(ms)} ${formatTime(ms, { locale, hourCycle })}`;
+  return `${at(since)} – ${at(until)}`;
+}
