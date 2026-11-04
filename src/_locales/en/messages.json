@@ -1532,5 +1532,379 @@
   "idleAssignInTracker": {
     "message": "Assign in Time Tracker…",
     "description": "Idle prompt in the popup: opens the tracker tab, where the time away can be assigned to a task."
+  },
+  "modeReports": {
+    "message": "Reports",
+    "description": "Sidebar: name of the Reports section (like a folder mode)."
+  },
+  "viewTimesheet": {
+    "message": "Timesheet",
+    "description": "Sidebar: the Reports row that opens the timesheet and summary."
+  },
+  "reportTitle": {
+    "message": "Timesheet",
+    "description": "Reports pane: title."
+  },
+  "reportRange": {
+    "message": "Range",
+    "description": "Reports pane: accessible name of the range menu."
+  },
+  "reportRangeWeek": {
+    "message": "This Week",
+    "description": "Reports pane: range menu item."
+  },
+  "reportRangeLastWeek": {
+    "message": "Last Week",
+    "description": "Reports pane: range menu item."
+  },
+  "reportRangeMonth": {
+    "message": "This Month",
+    "description": "Reports pane: range menu item."
+  },
+  "reportRangeLastMonth": {
+    "message": "Last Month",
+    "description": "Reports pane: range menu item."
+  },
+  "reportRangeCustom": {
+    "message": "Custom",
+    "description": "Reports pane: range menu item (two date fields)."
+  },
+  "reportPrevious": {
+    "message": "Previous Range",
+    "description": "Reports pane: button that shows the previous week, month or range."
+  },
+  "reportNext": {
+    "message": "Next Range",
+    "description": "Reports pane: button that shows the next week, month or range."
+  },
+  "reportFrom": {
+    "message": "From",
+    "description": "Reports pane: first day of a custom range."
+  },
+  "reportTo": {
+    "message": "To",
+    "description": "Reports pane: last day of a custom range."
+  },
+  "reportRangeTooLong": {
+    "message": "Choose up to 31 days, the last one not before the first.",
+    "description": "Reports pane: a custom range that can't be shown."
+  },
+  "reportProject": {
+    "message": "Project",
+    "description": "Reports pane: accessible name of the project filter."
+  },
+  "reportAllProjects": {
+    "message": "All Projects",
+    "description": "Reports pane: project filter item (no filter)."
+  },
+  "reportBillable": {
+    "message": "Billable",
+    "description": "Reports pane: filter toggle, only billable tasks."
+  },
+  "reportTags": {
+    "message": "Tags",
+    "description": "Reports pane: filter toggle that shows the tag list."
+  },
+  "reportTagsLabel": {
+    "message": "Tags to report",
+    "description": "Reports pane: accessible name of the tag toggles."
+  },
+  "reportExport": {
+    "message": "Export CSV",
+    "description": "Reports pane: button that saves the timesheet as a CSV file."
+  },
+  "reportPrint": {
+    "message": "Print",
+    "description": "Reports pane: button that prints the timesheet (or saves it as PDF)."
+  },
+  "reportGridLabel": {
+    "message": "Timesheet: time per task and day",
+    "description": "Reports pane: accessible name of the timesheet grid."
+  },
+  "reportTask": {
+    "message": "Task",
+    "description": "Timesheet: column header."
+  },
+  "reportTotal": {
+    "message": "Total",
+    "description": "Timesheet and summary: column header and the totals row."
+  },
+  "reportEmpty": {
+    "message": "No time tracked in this range.",
+    "description": "Timesheet: shown instead of the grid when nothing matches."
+  },
+  "reportAddTask": {
+    "message": "Add Task…",
+    "description": "Timesheet: button that adds a task row to fill in."
+  },
+  "reportAddTaskTitle": {
+    "message": "Add a Task to the Timesheet",
+    "description": "Timesheet: title of the dialog that adds a row."
+  },
+  "reportAddTaskButton": {
+    "message": "Add",
+    "description": "Timesheet: primary button of the add-task dialog."
+  },
+  "reportCellLabel": {
+    "message": "$TASK$, $DAY$",
+    "description": "Timesheet: accessible name of a cell's edit field.",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportEditHint": {
+    "message": "Enter or F2 to edit, Esc to cancel.",
+    "description": "Timesheet: tooltip of an editable cell."
+  },
+  "reportRunningCell": {
+    "message": "The timer is running on this day: stop it to edit the day.",
+    "description": "Timesheet: tooltip of a read-only cell."
+  },
+  "reportBadDuration": {
+    "message": "Enter a duration such as 1:30, 1.5 (hours) or 90m, at most a day.",
+    "description": "Timesheet: a cell value that can't be read."
+  },
+  "reportReplaceTitle": {
+    "message": "Replace Entries?",
+    "description": "Timesheet: title of the confirmation before replacing a day's entries."
+  },
+  "reportReplaceText": {
+    "message": "Replace the $COUNT$ entries of “$TASK$” on $DAY$ with one entry of $DURATION$?",
+    "description": "Timesheet: confirmation text.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "task": {
+        "content": "$2",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$3",
+        "example": "Tue 20 Oct"
+      },
+      "duration": {
+        "content": "$4",
+        "example": "1h 30m"
+      }
+    }
+  },
+  "reportReplaceTextOne": {
+    "message": "Replace the entry of “$TASK$” on $DAY$ with one entry of $DURATION$?",
+    "description": "Timesheet: confirmation text for one entry.",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      },
+      "duration": {
+        "content": "$3",
+        "example": "1h 30m"
+      }
+    }
+  },
+  "reportClearText": {
+    "message": "Delete the $COUNT$ entries of “$TASK$” on $DAY$?",
+    "description": "Timesheet: confirmation text when the cell is set to 0.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "task": {
+        "content": "$2",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$3",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportClearTextOne": {
+    "message": "Delete the entry of “$TASK$” on $DAY$?",
+    "description": "Timesheet: confirmation text when the cell is set to 0 (one entry).",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportReplaceButton": {
+    "message": "Replace",
+    "description": "Timesheet: confirms replacing a day's entries."
+  },
+  "reportClearButton": {
+    "message": "Delete",
+    "description": "Timesheet: confirms deleting a day's entries."
+  },
+  "reportEdited": {
+    "message": "Timesheet updated.",
+    "description": "Timesheet: notification after a cell edit, with Undo."
+  },
+  "reportRoundingEntry": {
+    "message": "Rounded up to $MINUTES$ min per entry.",
+    "description": "Reports pane: note when rounding is on (Settings).",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
+  },
+  "reportRoundingDay": {
+    "message": "Rounded up to $MINUTES$ min per task and day.",
+    "description": "Reports pane: note when rounding is on (Settings).",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
+  },
+  "reportSummary": {
+    "message": "Summary",
+    "description": "Reports pane: heading of the per-project summary."
+  },
+  "reportSummaryLabel": {
+    "message": "Summary per project",
+    "description": "Reports pane: accessible name of the summary table."
+  },
+  "summaryProject": {
+    "message": "Project",
+    "description": "Summary: column header."
+  },
+  "summaryBillable": {
+    "message": "Billable",
+    "description": "Summary: column header (billable time)."
+  },
+  "summaryNonBillable": {
+    "message": "Non-billable",
+    "description": "Summary: column header (non-billable time)."
+  },
+  "summaryRate": {
+    "message": "Rate",
+    "description": "Summary: column header (hourly rate)."
+  },
+  "summaryAmount": {
+    "message": "Amount",
+    "description": "Summary: column header (billable time × rate)."
+  },
+  "reportPrintFilters": {
+    "message": "Filters: $FILTERS$",
+    "description": "Printed timesheet: line listing the filters.",
+    "placeholders": {
+      "filters": {
+        "content": "$1",
+        "example": "Billable · Frontend"
+      }
+    }
+  },
+  "reportExported": {
+    "message": "Exported the timesheet as $NAME$.",
+    "description": "Reports pane: notification after the CSV export.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "time-tracker-report-2026-10-19.csv"
+      }
+    }
+  },
+  "csvTags": {
+    "message": "Tags",
+    "description": "Timesheet CSV: column header."
+  },
+  "csvHours": {
+    "message": "Hours",
+    "description": "Timesheet CSV: column header."
+  },
+  "csvRate": {
+    "message": "Rate",
+    "description": "Timesheet CSV: column header."
+  },
+  "csvAmount": {
+    "message": "Amount",
+    "description": "Timesheet CSV: column header."
+  },
+  "settingsReports": {
+    "message": "Reports",
+    "description": "Settings: section heading."
+  },
+  "settingsRounding": {
+    "message": "Round durations up to",
+    "description": "Settings: label of the report rounding step."
+  },
+  "settingsRoundingNone": {
+    "message": "Don’t round",
+    "description": "Settings: rounding step."
+  },
+  "settingsRounding5": {
+    "message": "5 minutes",
+    "description": "Settings: rounding step."
+  },
+  "settingsRounding6": {
+    "message": "6 minutes (0.1 h)",
+    "description": "Settings: rounding step."
+  },
+  "settingsRounding15": {
+    "message": "15 minutes",
+    "description": "Settings: rounding step."
+  },
+  "settingsRoundingMode": {
+    "message": "Round",
+    "description": "Settings: label of the rounding mode."
+  },
+  "settingsRoundingEntry": {
+    "message": "Each entry",
+    "description": "Settings: rounding mode."
+  },
+  "settingsRoundingDay": {
+    "message": "Each task’s day total",
+    "description": "Settings: rounding mode."
+  },
+  "settingsRoundingHint": {
+    "message": "Only reports and their exports are rounded; tracked time stays exact.",
+    "description": "Settings: hint under the rounding fields."
+  },
+  "projectRate": {
+    "message": "Hourly rate",
+    "description": "Project dialog: label of the rate field."
+  },
+  "projectRateHint": {
+    "message": "Leave empty to use the parent project’s rate.",
+    "description": "Project dialog: hint under the rate field."
+  },
+  "projectRateInvalid": {
+    "message": "Enter a rate such as 95 or 120.50.",
+    "description": "Project dialog: validation message."
+  },
+  "reportReplaceTitleOne": {
+    "message": "Replace Entry?",
+    "description": "Timesheet: title of the confirmation before replacing a day's only entry."
+  },
+  "reportClearTitle": {
+    "message": "Delete Entries?",
+    "description": "Timesheet: title of the confirmation before deleting a day's entries."
+  },
+  "reportClearTitleOne": {
+    "message": "Delete Entry?",
+    "description": "Timesheet: title of the confirmation before deleting a day's only entry."
   }
 }

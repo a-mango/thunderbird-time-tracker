@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ValidationError } from '../../src/lib/errors.js';
-import { parseEstimate } from '../../src/lib/parse.js';
+import { parseDayTotal, parseEstimate, parseRate } from '../../src/lib/parse.js';
 
 describe('parseEstimate', () => {
   it.each([
@@ -36,4 +36,49 @@ describe('parseEstimate', () => {
       expect(() => parseEstimate(text)).toThrow(ValidationError);
     },
   );
+});
+
+describe('parseDayTotal', () => {
+  it.each([
+    ['1:30', 90],
+    ['1.5h', 90],
+    ['90m', 90],
+    ['2', 120],
+    ['1.5', 90],
+    ['10', 600], // a bare number is hours: never 10 minutes
+    ['12,5', 750],
+    ['24h', 1440],
+    ['25h', 1500], // the long DST day; the page checks the day's own length
+    ['', 0],
+    ['  ', 0],
+    ['0', 0],
+    ['0m', 0],
+    ['0h', 0],
+    ['0:00', 0],
+    ['0,0', 0],
+  ])('reads %j as %i minutes', (text, minutes) => {
+    expect(parseDayTotal(text)).toBe(minutes);
+  });
+
+  it.each(['abc', '26h', '1501m', '90', '-1h', '1:75'])('refuses %j', (text) => {
+    expect(() => parseDayTotal(text)).toThrow(expect.objectContaining({ code: 'duration' }));
+  });
+});
+
+describe('parseRate', () => {
+  it.each([
+    ['95', 95],
+    ['120.50', 120.5],
+    ['120,5', 120.5],
+    [' 1 250 ', 1250],
+    ["1'250.75", 1250.75],
+    ['0', 0],
+    ['', null],
+  ])('reads %j as %j', (text, rate) => {
+    expect(parseRate(text)).toBe(rate);
+  });
+
+  it.each(['abc', '-5', '1.234', '1e3', '2000000', '12.'])('refuses %j', (text) => {
+    expect(() => parseRate(text)).toThrow(expect.objectContaining({ code: 'hourlyRate' }));
+  });
 });

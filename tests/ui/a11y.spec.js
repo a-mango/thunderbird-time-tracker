@@ -45,6 +45,20 @@ for (const [mode, media] of MODES) {
       await axe(page);
     });
 
+    test('reports: timesheet, an edited cell, the replace dialog', async ({ page }) => {
+      await openTracker(page, '?seed=42');
+      await page.getByRole('treeitem', { name: 'Timesheet' }).click();
+      const sheet = page.getByRole('grid', { name: 'Timesheet: time per task and day' });
+      await sheet.locator('tr[data-task] [data-col="1"]').first().dblclick();
+      await expect(sheet.getByRole('textbox')).toBeFocused();
+      await page.clock.resume();
+      await axe(page);
+      await page.keyboard.type('5m');
+      await page.keyboard.press('Enter');
+      await expect(page.getByRole('dialog', { name: /^Replace Entr/ })).toBeVisible();
+      await axe(page);
+    });
+
     test('tracker dialogs and menus', async ({ page }) => {
       await openTracker(page, '?seed=42');
       await project(page, 'Build').click();

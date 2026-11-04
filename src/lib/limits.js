@@ -8,6 +8,8 @@ export const LIMITS = Object.freeze({
   tag: 100,
   tags: 50,
   estimateMin: 10_000_000,
+  /** Hourly rate of a project (S3), in currency units. */
+  hourlyRate: 1_000_000,
   /** Largest valid `Date` time value. */
   time: 8.64e15,
 });

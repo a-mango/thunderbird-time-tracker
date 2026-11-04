@@ -151,6 +151,16 @@ S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timel
 - **Not covered**: quitting Thunderbird with a timer running while *not* idle (no event, alarms don't survive a restart). A tick heartbeat in `meta` could catch it at startup; left as a follow-up because closing Thunderbird doesn't mean the user stopped working.
 - **Manual check in Thunderbird**: pending (see the PR checklist).
 
+### S3 outcomes
+- **Reports mode**: a Reports section (one row, Timesheet) between Views and Projects; the report pane replaces the task list and details. Timesheet (tasks × days, project groups, totals), Summary (per project, rolled up: total, billable, non-billable, rate, amount), filters (week / last week / month / last month / custom up to 31 days, project subtree, billable, tags), CSV, print. Filters and a custom range persist in `layout-store`.
+- **Grid**: its own `role="grid"` table, not `tt-table`: `tt-table` is a treegrid where rows take focus, and the timesheet needs cell focus and in-place editing. It reuses `tt-table`'s look (`.tt-grid`). A month scrolls sideways with sticky task names.
+- **Cell edits** (`db/timesheet.js`, one transaction): more time extends the task's last manual entry of the day or adds one from 09:00 after the day's entries; less time only shortens that manual entry; everything else (removing or trimming entries, 0) asks first, then replaces the day with one manual entry (entries crossing midnight are trimmed, one spanning the whole day is split). Undo puts every touched entry back. A day with the running entry is read-only.
+- **Rounding**: up, to 5/6/15 min, per entry (each entry's part of a day) or per task and day; applied in the grid, totals, summary, amounts and CSV, never stored. The cell editor shows the exact time. Leftover sub-second milliseconds are dropped first.
+- **Rates**: `hourlyRate` per project (schema v2, migration sets `null`); `null` inherits the nearest ancestor's rate. No currency (plain numbers with the locale's separators). Amount = rounded billable time × rate.
+- **Performance** (`?fixtures=large`, 50k entries): a month report loads and renders in 48–124 ms (`tt-report-start` → `tt-report-ready`).
+- **Print**: `window.print()` from the tab. `npm run tb:spike` now calls it in the tracker tab and records Thunderbird's tab-modal print dialog (`print` in `spike.json`); not run yet, because the real Thunderbird held Marionette's port. Manual check in the PR checklist.
+- **Not covered**: a currency setting; ranges over 31 days; New Task from Reports mode (it stays disabled: no project is selected).
+
 ## Known risks (resolved by spikes)
 
 - Auto-loading an unpacked add-on into Thunderbird (fallback: manual `about:debugging` → Load Temporary Add-on).

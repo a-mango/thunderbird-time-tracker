@@ -12,6 +12,7 @@ Read only the sections the current task needs.
 - `npm run tb`: Thunderbird with the isolated dev profile `.tb-profile/`, extension loaded
 - `npm run build`: XPI into `dist/` (copy-only zip of `src/`)
 - `npm run tb:rc`: fresh profile `.tb-rc/<version>/` with the built XPI installed (`TB_BIN=` for another Thunderbird, `-- --keep` to reuse, `-- --headless`)
+- `npm run demo`: fictional demo data dated around today → `artifacts/demo-backup.json`; load it in Thunderbird with Settings… › Data › Restore… (Replace)
 - `npm run icon:png`: render `src/icons/time-tracker.svg` to `design/icon/*.png` (ATN listing)
 - `npm run tb:spike`: Thunderbird via Marionette on a stage copy (`.tb-stage/`): mail tab vs. gallery metrics, context menus → `artifacts/tb/`
 - Primitives gallery: `/dev/gallery.html` (`?density=compact|relaxed`, `?accent=…`); components in `src/ui/components/`, icons via `icon()` in `src/ui/render.js`
@@ -49,4 +50,5 @@ Read only the sections the current task needs.
 - Port 5173 may be taken by another app (Playwright then reuses it and every test times out): run `PORT=5199 npm run test:ui`.
 - Unit tests run in `TZ=Europe/Zurich` (`vitest.config.js`). db tests use `freshDB()` from `tests/unit/db-helpers.js` (own `IDBFactory`, sets the `IDBKeyRange` global Node lacks).
 - `npm test -- --coverage` fails below 90% lines in `src/lib/**` or `src/db/**`.
+- A `.tb-profile/` last opened by a newer Thunderbird makes Thunderbird create a new profile in `~/.thunderbird`: `npm run tb`/`tb:spike` refuse it (move it aside). Marionette always listens on 2828 (the pref is ignored), so quit any other Thunderbird with Marionette on before `tb:spike`.
 - Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).

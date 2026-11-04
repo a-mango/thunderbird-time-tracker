@@ -1,5 +1,6 @@
 // The project pane (docs/DESIGN.md, Layout A: Sidebar): header buttons, the Views and Projects
-// trees with live time badges, one selection across both trees, drag and drop and shortcuts.
+// trees with live time badges, the Reports row (S3), one selection across the trees, drag and drop
+// and shortcuts.
 import { formatDuration } from '../lib/format.js';
 import { colorValue } from '../lib/palette.js';
 import {
@@ -24,7 +25,7 @@ import { TASK_DRAG_TYPE } from './task-list.js';
  * @typedef {import('./components/tt-tree.js').TreeNode} TreeNode
  * @typedef {import('./tracker-data.js').TrackerData} TrackerData
  * @typedef {import('./project-commands.js').ProjectCommand} ProjectCommand
- * @typedef {{tree: 'views' | 'projects', id: string}} Selection
+ * @typedef {{tree: 'views' | 'reports' | 'projects', id: string}} Selection
  */
 
 const SELECTION_KEY = 'tracker.selection';
@@ -36,6 +37,9 @@ const VIEWS = /** @type {const} */ ([
   { id: 'week', label: 'viewThisWeek', icon: 'calendar' },
   { id: 'starred', label: 'viewStarred', icon: 'star' },
 ]);
+
+/** Rows of the Reports section. */
+const REPORTS = /** @type {const} */ ([{ id: 'timesheet', label: 'viewTimesheet', icon: 'clock' }]);
 
 /** Menu labels of the project commands (Projects menu). */
 /** @type {Partial<Record<ProjectCommand, string>>} */
@@ -52,7 +56,7 @@ const COMMAND_LABELS = {
 const isSelection = (value) =>
   typeof value === 'object' &&
   value !== null &&
-  ['views', 'projects'].includes(/** @type {any} */ (value).tree) &&
+  ['views', 'reports', 'projects'].includes(/** @type {any} */ (value).tree) &&
   typeof (/** @type {any} */ (value).id) === 'string';
 
 /**
@@ -71,6 +75,9 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
   const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
   const viewsTree = /** @type {TtTree} */ (document.getElementById('views-tree'));
   const projectsTree = /** @type {TtTree} */ (document.getElementById('projects-tree'));
+  const reportsTree = /** @type {TtTree} */ (document.getElementById('reports-tree'));
+  /** @type {Record<Selection['tree'], TtTree>} */
+  const trees = { views: viewsTree, reports: reportsTree, projects: projectsTree };
   const stored = getLayout(SELECTION_KEY);
   /** @type {Selection} */
   let selection = isSelection(stored) ? stored : DEFAULT_SELECTION;
@@ -136,6 +143,15 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
         }),
       );
     }
+  };
+
+  // ---- Reports ----
+  reportsTree.renderRow = (node, content) => {
+    const report = REPORTS.find((r) => r.id === node.id);
+    content.append(
+      icon(report?.icon ?? 'clock', { class: 'view-icon' }),
+      el('span', { class: 'name', text: node.label }),
+    );
   };
 
   // ---- Projects ----
@@ -209,10 +225,14 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
     selection = next;
     selectedParent = next.tree === 'projects' ? (data.project(next.id)?.parentId ?? null) : null;
     setLayout(SELECTION_KEY, next);
-    if (next.tree === 'views') projectsTree.selectedId = null;
-    else viewsTree.selectedId = null;
+    for (const [name, tree] of Object.entries(trees)) {
+      if (name !== next.tree) tree.selectedId = null;
+    }
     onSelect(next);
   };
+  reportsTree.addEventListener('tt-select', (event) => {
+    select({ tree: 'reports', id: /** @type {CustomEvent} */ (event).detail.id });
+  });
   viewsTree.addEventListener('tt-select', (event) => {
     select({ tree: 'views', id: /** @type {CustomEvent} */ (event).detail.id });
   });
@@ -229,6 +249,7 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
   function render() {
     totals = viewTotals([...data.tasks.values()], (id) => data.rollup.task(id));
     viewsTree.setItems(VIEWS.map((view) => ({ id: view.id, label: t(view.label) })));
+    reportsTree.setItems(REPORTS.map((report) => ({ id: report.id, label: t(report.label) })));
 
     const { nodes, archived } = buildProjectTree(data.projects);
     inArchive = new Set();
@@ -285,7 +306,7 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
   }
 
   render();
-  const tree = selection.tree === 'views' ? viewsTree : projectsTree;
+  const tree = trees[selection.tree];
   tree.selectedId = selection.id;
   if (tree.selectedId === null) {
     viewsTree.selectedId = DEFAULT_SELECTION.id;

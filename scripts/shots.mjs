@@ -44,6 +44,18 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-away-fr-light', '/ui/tracker.html?idle=23&locale=fr', 'light', TAB],
   ['tracker-away-assign-light', '/ui/tracker.html?idle=23', 'light', TAB],
   ['tracker-away-forced-dark', '/ui/tracker.html?idle=23', 'dark', TAB],
+  // S3: the Reports mode (timesheet + summary), a month, editing, rounding, French, print.
+  ['tracker-report-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-report-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-report-compact-light', '/ui/tracker.html?density=compact', 'light', TAB],
+  ['tracker-report-relaxed-dark', '/ui/tracker.html?density=relaxed', 'dark', TAB],
+  ['tracker-report-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
+  ['tracker-report-forced-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-report-month-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-report-edit-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-report-replace-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-report-rounded-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-report-print-light', '/ui/tracker.html', 'light', TAB],
   ['popup-fr-light', '/ui/popup.html?locale=fr', 'light', { width: 360, height: 600 }],
   ['popup-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 360, height: 600 }],
@@ -94,6 +106,45 @@ try {
     } else if (path.includes('gallery')) {
       await page.locator('html[data-ready]').waitFor();
       await page.screenshot({ path: file, fullPage: true });
+    } else if (name.startsWith('tracker-report')) {
+      await page.locator('html[data-ready]').waitFor();
+      await page.bringToFront();
+      if (name.includes('rounded')) {
+        await page.evaluate(async () => {
+          const db = await import('/db/index.js');
+          const conn = await db.openDB();
+          await db.updateSettings(conn, { roundingMin: 15, roundingMode: 'entry' });
+          conn.close();
+        });
+        await page.reload();
+        await page.locator('html[data-ready]').waitFor();
+      }
+      const fr = path.includes('locale=fr');
+      await page.getByRole('treeitem', { name: fr ? 'Feuille de temps' : 'Timesheet' }).click();
+      const sheet = page.getByRole('grid');
+      await sheet.waitFor();
+      if (name.includes('month')) {
+        await page.getByRole('combobox', { name: 'Range' }).selectOption('month');
+        await page.getByRole('columnheader').nth(32).waitFor();
+      }
+      if (name.includes('edit') || name.includes('replace')) {
+        await sheet.locator('tr[data-task] [data-col="1"]').first().dblclick();
+        if (name.includes('replace')) {
+          await page.keyboard.press('Control+A');
+          await page.keyboard.type('30m');
+          await page.keyboard.press('Enter');
+          await page.getByRole('dialog').waitFor();
+        }
+      }
+      if (name.includes('print')) {
+        await page.getByRole('button', { name: 'Billable' }).click();
+        await page.emulateMedia({ media: 'print' });
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: file, fullPage: true });
+      } else {
+        await page.mouse.move(0, 0);
+        await page.screenshot({ path: file });
+      }
     } else {
       await page.locator('html[data-ready]').waitFor();
       // Like the reference: Build selected and focused.

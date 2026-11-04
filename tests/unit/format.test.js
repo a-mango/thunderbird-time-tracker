@@ -200,3 +200,21 @@ describe('formatDate', () => {
     expect(formatDate(ms, { locale: 'en-GB', time: true })).toBe('20 Oct 2026, 14:45');
   });
 });
+
+describe('report formats (S3)', () => {
+  const mon = new Date(2026, 9, 19).getTime();
+  it('formats the day columns, the range and amounts', async () => {
+    const { formatWeekdayDay, formatDateRange, formatMoney } =
+      await import('../../src/lib/format.js');
+    expect(formatWeekdayDay(mon, { locale: 'en-GB' })).toBe('Mon 19');
+    expect(
+      formatDateRange({ start: mon, end: new Date(2026, 9, 26).getTime() }, { locale: 'en-GB' }),
+    ).toMatch(/^19\s?–\s?25 Oct 2026$/u);
+    expect(
+      formatDateRange({ start: mon, end: new Date(2026, 9, 20).getTime() }, { locale: 'en-GB' }),
+    ).toBe('19 Oct 2026');
+    expect(formatMoney(1250, { locale: 'en-US' })).toBe('1,250.00');
+    expect(formatMoney(770.5, { locale: 'de-CH' })).toBe('770.50');
+    expect(formatMoney(null, { locale: 'en-US' })).toBe('–');
+  });
+});
