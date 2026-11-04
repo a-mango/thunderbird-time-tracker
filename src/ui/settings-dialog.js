@@ -142,6 +142,19 @@ export async function settingsDialog({ data, commands, onError }) {
     save({ durationFormat: /** @type {Settings['durationFormat']} */ (durationFormat.value) }),
   );
 
+  // Off and the brief's steps; a value set elsewhere (a backup, a test) stays selectable.
+  const idleSteps = [...new Set([0, 5, 10, 15, 30, settings.idleThresholdMin])].sort(
+    (a, b) => a - b,
+  );
+  const idle = select(
+    idleSteps.map((min) => [
+      String(min),
+      min === 0 ? t('settingsIdleOff') : t('settingsIdleMinutes', String(min)),
+    ]),
+    String(settings.idleThresholdMin),
+  );
+  idle.addEventListener('change', () => save({ idleThresholdMin: Number(idle.value) }));
+
   const showDone = checkbox(t('settingsShowDone'), settings.showDone);
   showDone.input.addEventListener('change', () => save({ showDone: showDone.input.checked }));
   const confirmDelete = checkbox(t('settingsConfirmDelete'), settings.confirmDelete);
@@ -184,6 +197,7 @@ export async function settingsDialog({ data, commands, onError }) {
       row(t('settingsWeekStart'), weekStart),
       row(t('settingsDailyTarget'), target),
       row(t('settingsDurationFormat'), durationFormat),
+      row(t('settingsIdle'), idle),
     ),
     section(t('settingsLists'), showDone.node, confirmDelete.node),
     section(
@@ -209,6 +223,15 @@ export async function settingsDialog({ data, commands, onError }) {
     weekStart.value = String(current.weekStart);
     if (document.activeElement !== target) target.value = String(current.dailyTargetMin / 60);
     durationFormat.value = current.durationFormat;
+    if (![...idle.options].some((option) => option.value === String(current.idleThresholdMin))) {
+      idle.append(
+        el('option', {
+          value: String(current.idleThresholdMin),
+          text: t('settingsIdleMinutes', String(current.idleThresholdMin)),
+        }),
+      );
+    }
+    idle.value = String(current.idleThresholdMin);
     showDone.input.checked = current.showDone;
     confirmDelete.input.checked = current.confirmDelete;
   };

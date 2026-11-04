@@ -36,12 +36,22 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-forced-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-forced-dark', '/ui/tracker.html', 'dark', TAB],
   ['tracker-error-light', '/ui/tracker.html?seed=42&fail=newer', 'light', TAB],
+  // S2: the idle prompt above the list, in the popup, and its Assign to… dialog.
+  ['tracker-away-light', '/ui/tracker.html?idle=23', 'light', TAB],
+  ['tracker-away-dark', '/ui/tracker.html?idle=23', 'dark', TAB],
+  ['tracker-away-compact-light', '/ui/tracker.html?idle=23&density=compact', 'light', TAB],
+  ['tracker-away-relaxed-dark', '/ui/tracker.html?idle=23&density=relaxed', 'dark', TAB],
+  ['tracker-away-fr-light', '/ui/tracker.html?idle=23&locale=fr', 'light', TAB],
+  ['tracker-away-assign-light', '/ui/tracker.html?idle=23', 'light', TAB],
+  ['tracker-away-forced-dark', '/ui/tracker.html?idle=23', 'dark', TAB],
   ['popup-fr-light', '/ui/popup.html?locale=fr', 'light', { width: 360, height: 600 }],
   ['popup-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
   ['popup-dark', '/ui/popup.html', 'dark', { width: 360, height: 600 }],
   ['popup-search-light', '/ui/popup.html', 'light', { width: 360, height: 600 }],
   ['popup-idle-dark', '/ui/popup.html?fixtures=empty', 'dark', { width: 360, height: 600 }],
   ['popup-compact-light', '/ui/popup.html?density=compact', 'light', { width: 360, height: 600 }],
+  ['popup-away-light', '/ui/popup.html?idle=23', 'light', { width: 360, height: 600 }],
+  ['popup-away-dark', '/ui/popup.html?idle=23', 'dark', { width: 360, height: 600 }],
   // Primitives gallery: light/dark × the three densities, full page.
   ...['light', 'dark'].flatMap((scheme) =>
     ['compact', 'default', 'relaxed'].map(
@@ -100,6 +110,8 @@ try {
       }
       if (name.includes('entry-dialog')) {
         await page.locator('#detail .entry-row').first().click();
+      } else if (name.includes('away-assign')) {
+        await page.getByRole('button', { name: 'Assign to…' }).click();
       } else if (name.includes('split-dialog')) {
         await page.getByRole('button', { name: 'Split…' }).click();
       } else if (name.includes('settings') || name.includes('export')) {
@@ -112,7 +124,7 @@ try {
       await page.screenshot({ path: file });
       if (
         !path.includes('fixtures=empty') &&
-        !/tracker-(list|entry|split|settings|export|error)/.test(name)
+        !/tracker-(list|entry|split|settings|export|error|away)/.test(name)
       ) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });

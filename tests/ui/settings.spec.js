@@ -153,7 +153,7 @@ test('CSV export downloads the entries of a range', async ({ page }) => {
       /^2026-10-\d\d,\d\d:\d\d,\d\d:\d\d,\d+,Client work \/ Harbor Coffee — website \/ Build,/,
     );
   }
-  await expect(page.locator('tt-notification-bar')).toContainText(
+  await expect(page.locator('tt-notification-bar[data-ref="notification"]')).toContainText(
     `Exported ${lines.length - 2} entries.`,
   );
 });

@@ -12,7 +12,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   durationFormat: 'hm',
   showDone: false,
   confirmDelete: true,
-  idleThresholdMin: 5,
+  idleThresholdMin: 10,
   roundingMin: 0,
 });
 
@@ -29,7 +29,7 @@ const CHECKS = {
   showDone: (v) => typeof v === 'boolean',
   confirmDelete: (v) => typeof v === 'boolean',
   idleThresholdMin: (v) =>
-    Number.isInteger(v) && /** @type {number} */ (v) >= 1 && /** @type {number} */ (v) <= 240,
+    Number.isInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= 240,
   roundingMin: (v) => v === 0 || v === 5 || v === 6 || v === 15,
 };
 

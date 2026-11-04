@@ -46,7 +46,8 @@ describe('settings schema', () => {
     ['durationFormat', 'hours'],
     ['showDone', 'false'],
     ['confirmDelete', 1],
-    ['idleThresholdMin', 0],
+    ['idleThresholdMin', -1],
+    ['idleThresholdMin', 7.5],
     ['idleThresholdMin', 241],
     ['roundingMin', 10],
   ])('rejects %s = %j', (key, value) => {
@@ -60,6 +61,7 @@ describe('settings schema', () => {
     ['accent', 'teal'],
     ['dailyTargetMin', 0],
     ['idleThresholdMin', 240],
+    ['idleThresholdMin', 0],
     ['roundingMin', 15],
   ])('accepts %s = %j', (key, value) => {
     expect(validateSettings({ [key]: value })).toEqual({ [key]: value });

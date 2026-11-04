@@ -2,6 +2,13 @@ import { ensureSpace } from './space.js';
 import { registerMenus } from './menus.js';
 import { handleMessage } from './messages.js';
 import { TICK_ALARM, syncTimerStatus, toggleTimer } from './timer-status.js';
+import {
+  IDLE_NOTIFICATION_ID,
+  checkIdleOnStartup,
+  checkSleep,
+  onIdleState,
+  syncIdleNotification,
+} from './idle.js';
 import { openDB, purgeDeleted } from '../db/index.js';
 
 // Event page: listeners are registered synchronously at top level, no state in memory. APIs that
@@ -52,25 +59,62 @@ messenger.runtime.onInstalled.addListener(() => {
   spaceReady.then(() => ensureSpace(messenger, { repair: true })).catch(logSpaceError);
 });
 
+/**
+ * Queues idle work behind the status syncs, so it sees the same order of writes.
+ * @param {string} what
+ * @param {(db: IDBDatabase) => Promise<unknown>} fn
+ */
+const idleWork = (what, fn) =>
+  (lastSync = lastSync
+    .then(() => withDB(fn))
+    .catch((error) => console.error(`time tracker: ${what} failed`, error)));
+
 // Thunderbird start: the space check runs at top level; this ends the undo window for deleted
-// entries ("until the next session"). Not at top level: the event page wakes up many times.
+// entries ("until the next session"), and an absence still open when Thunderbird quit ends now.
+// Not at top level: the event page wakes up many times.
 messenger.runtime.onStartup.addListener(async () => {
   try {
     await withDB((db) => purgeDeleted(db));
   } catch (error) {
     console.error('time tracker: purging deleted entries failed', error);
   }
+  idleWork('idle check on startup', (db) => checkIdleOnStartup(db));
 });
 
-messenger.runtime.onMessage.addListener((message) => handleMessage(message, { syncStatus }));
+messenger.runtime.onMessage.addListener((message) =>
+  handleMessage(message, {
+    syncStatus,
+    syncIdle: () => idleWork('idle notification update', (db) => syncIdleNotification(db)),
+  }),
+);
 
 messenger.alarms?.onAlarm.addListener((alarm) => {
-  if (alarm.name === TICK_ALARM) syncStatus();
+  if (alarm.name !== TICK_ALARM) return;
+  // A late tick means the machine slept: check that before the status sync re-arms the alarm.
+  idleWork('sleep check', (db) => checkSleep(db, alarm));
+  syncStatus();
+});
+
+messenger.idle?.onStateChanged.addListener((state) => {
+  idleWork('idle state change', (db) => onIdleState(db, state));
+});
+
+messenger.notifications?.onClicked.addListener((notificationId) => {
+  if (notificationId !== IDLE_NOTIFICATION_ID) return;
+  ensureSpace()
+    .then((space) => messenger.spaces.open(space.id))
+    .catch((error) => console.error('time tracker: opening the tracker failed', error));
 });
 
 messenger.commands.onCommand.addListener((command) => {
   if (command !== 'toggle-timer') return;
   lastSync = lastSync
-    .then(() => withDB((db) => toggleTimer(db)))
+    // The background's own write never reaches its onMessage: drop a stale idle notification.
+    .then(() =>
+      withDB(async (db) => {
+        await toggleTimer(db);
+        await syncIdleNotification(db);
+      }),
+    )
     .catch((error) => console.error('time tracker: toggling the timer failed', error));
 });

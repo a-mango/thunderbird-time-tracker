@@ -36,4 +36,6 @@ export const META = Object.freeze({
   running: 'running',
   /** Per-task entry aggregates (db/aggregates.js). A cache: rebuilt when it doesn't match. */
   aggregates: 'aggregates',
+  /** Idle time of the running entry (db/idle.js, S2): `{entryId, since, until}` or absent. */
+  idle: 'idle',
 });

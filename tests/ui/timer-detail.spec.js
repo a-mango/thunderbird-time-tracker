@@ -175,7 +175,10 @@ test('add an entry from the action row and Ctrl+E; delete it with undo', async (
     'tt-entry-delete',
   ]);
   await expect(entryRows(page)).toHaveCount(0);
-  await page.locator('tt-notification-bar').getByRole('button', { name: 'Undo' }).click();
+  await page
+    .locator('tt-notification-bar[data-ref="notification"]')
+    .getByRole('button', { name: 'Undo' })
+    .click();
   await expect(entryRows(page)).toHaveCount(1);
 });
 
