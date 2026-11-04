@@ -77,9 +77,9 @@ On a fresh machine:
 ```sh
 git clone https://github.com/a-mango/thunderbird-time-tracker.git
 cd thunderbird-time-tracker
-git checkout v1.0.0        # the release you want to rebuild
+git checkout v0.1.0-beta.1 # the release you want to rebuild
 npm ci                     # dev tools only, from package-lock.json; nothing goes into the XPI
-npm run build              # → dist/time-tracker-1.0.0.xpi
+npm run build              # → dist/time-tracker-0.1.0.xpi
 ```
 
 `npm run build` runs `web-ext build --source-dir src`, leaving out the type declarations in

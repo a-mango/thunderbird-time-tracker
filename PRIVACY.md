@@ -11,7 +11,7 @@ Time Tracker keeps everything on your computer.
 - **Files you save.** A backup (JSON) or a CSV export is written only when you ask for one,
   through Thunderbird's normal save dialog or download folder. Restoring reads only the file you
   choose.
-- **Your mail.** Version 1.0 doesn't read your messages, accounts or contacts.
+- **Your mail.** This version doesn't read your messages, accounts or contacts.
 
 ## Permissions
 

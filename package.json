@@ -1,6 +1,6 @@
 {
   "name": "thunderbird-time-tracker",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "private": true,
   "license": "MPL-2.0",
   "description": "Thunderbird extension: projects, tasks and time entries in their own space tab.",

@@ -1,6 +1,7 @@
 name: release
 # Pushing a tag vX.Y.Z checks, tests and builds the add-on, then publishes a GitHub Release with
-# the XPI and the CHANGELOG section of that version.
+# the XPI and the CHANGELOG section of that version. A suffix (vX.Y.Z-beta.1) publishes a
+# pre-release of the same build: Thunderbird's manifest version stays plain numbers.
 on:
   push:
     tags: ['v*']
@@ -23,11 +24,20 @@ jobs:
       - name: Tag matches the manifest version
         run: |
           version="$(node -p "require('./src/manifest.json').version")"
-          if [ "${GITHUB_REF_NAME}" != "v${version}" ]; then
+          tag="${GITHUB_REF_NAME#v}"
+          base="${tag%%-*}"
+          if [ "${base}" != "${version}" ]; then
             echo "::error::tag ${GITHUB_REF_NAME} but manifest.json says ${version}"
             exit 1
           fi
           echo "VERSION=${version}" >> "$GITHUB_ENV"
+          if [ "${tag}" != "${base}" ]; then
+            echo "PRERELEASE=--prerelease" >> "$GITHUB_ENV"
+            echo "TITLE=Time Tracker ${tag}" >> "$GITHUB_ENV"
+          else
+            echo "PRERELEASE=" >> "$GITHUB_ENV"
+            echo "TITLE=Time Tracker ${version}" >> "$GITHUB_ENV"
+          fi
       - run: npm ci
       - run: npm run check
       - run: npx playwright install --with-deps firefox
@@ -49,7 +59,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create "${GITHUB_REF_NAME}" "dist/time-tracker-${VERSION}.xpi" \
-            --title "Time Tracker ${VERSION}" --notes-file notes.md --verify-tag
+            --title "${TITLE}" --notes-file notes.md --verify-tag ${PRERELEASE}
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
