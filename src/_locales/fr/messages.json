@@ -1210,5 +1210,299 @@
   },
   "idleAssignInTracker": {
     "message": "Attribuer dans Time Tracker…"
+  },
+  "modeReports": {
+    "message": "Rapports"
+  },
+  "viewTimesheet": {
+    "message": "Feuille de temps"
+  },
+  "reportTitle": {
+    "message": "Feuille de temps"
+  },
+  "reportRange": {
+    "message": "Période"
+  },
+  "reportRangeWeek": {
+    "message": "Cette semaine"
+  },
+  "reportRangeLastWeek": {
+    "message": "Semaine dernière"
+  },
+  "reportRangeMonth": {
+    "message": "Ce mois-ci"
+  },
+  "reportRangeLastMonth": {
+    "message": "Mois dernier"
+  },
+  "reportRangeCustom": {
+    "message": "Personnalisée"
+  },
+  "reportPrevious": {
+    "message": "Période précédente"
+  },
+  "reportNext": {
+    "message": "Période suivante"
+  },
+  "reportFrom": {
+    "message": "Du"
+  },
+  "reportTo": {
+    "message": "Au"
+  },
+  "reportRangeTooLong": {
+    "message": "Choisissez 31 jours au plus, le dernier pas avant le premier."
+  },
+  "reportProject": {
+    "message": "Projet"
+  },
+  "reportAllProjects": {
+    "message": "Tous les projets"
+  },
+  "reportBillable": {
+    "message": "Facturable"
+  },
+  "reportTags": {
+    "message": "Étiquettes"
+  },
+  "reportTagsLabel": {
+    "message": "Étiquettes à inclure"
+  },
+  "reportExport": {
+    "message": "Exporter en CSV"
+  },
+  "reportPrint": {
+    "message": "Imprimer"
+  },
+  "reportGridLabel": {
+    "message": "Feuille de temps : temps par tâche et par jour"
+  },
+  "reportTask": {
+    "message": "Tâche"
+  },
+  "reportTotal": {
+    "message": "Total"
+  },
+  "reportEmpty": {
+    "message": "Aucun temps suivi sur cette période."
+  },
+  "reportAddTask": {
+    "message": "Ajouter une tâche…"
+  },
+  "reportAddTaskTitle": {
+    "message": "Ajouter une tâche à la feuille de temps"
+  },
+  "reportAddTaskButton": {
+    "message": "Ajouter"
+  },
+  "reportCellLabel": {
+    "message": "$TASK$, $DAY$",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportEditHint": {
+    "message": "Entrée ou F2 pour modifier, Échap pour annuler."
+  },
+  "reportRunningCell": {
+    "message": "Le chronomètre tourne ce jour-là : arrêtez-le pour modifier la journée."
+  },
+  "reportBadDuration": {
+    "message": "Saisissez une durée comme 1:30, 1,5h ou 90m, une journée au plus."
+  },
+  "reportReplaceTitle": {
+    "message": "Remplacer les saisies ?"
+  },
+  "reportReplaceText": {
+    "message": "Remplacer les $COUNT$ saisies de « $TASK$ » du $DAY$ par une saisie de $DURATION$ ?",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "task": {
+        "content": "$2",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$3",
+        "example": "Tue 20 Oct"
+      },
+      "duration": {
+        "content": "$4",
+        "example": "1h 30m"
+      }
+    }
+  },
+  "reportReplaceTextOne": {
+    "message": "Remplacer la saisie de « $TASK$ » du $DAY$ par une saisie de $DURATION$ ?",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      },
+      "duration": {
+        "content": "$3",
+        "example": "1h 30m"
+      }
+    }
+  },
+  "reportClearText": {
+    "message": "Supprimer les $COUNT$ saisies de « $TASK$ » du $DAY$ ?",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "task": {
+        "content": "$2",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$3",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportClearTextOne": {
+    "message": "Supprimer la saisie de « $TASK$ » du $DAY$ ?",
+    "placeholders": {
+      "task": {
+        "content": "$1",
+        "example": "Checkout form validation"
+      },
+      "day": {
+        "content": "$2",
+        "example": "Tue 20 Oct"
+      }
+    }
+  },
+  "reportReplaceButton": {
+    "message": "Remplacer"
+  },
+  "reportClearButton": {
+    "message": "Supprimer"
+  },
+  "reportEdited": {
+    "message": "Feuille de temps mise à jour."
+  },
+  "reportRoundingEntry": {
+    "message": "Arrondi au $MINUTES$ min supérieur par saisie.",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
+  },
+  "reportRoundingDay": {
+    "message": "Arrondi au $MINUTES$ min supérieur par tâche et par jour.",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "15"
+      }
+    }
+  },
+  "reportSummary": {
+    "message": "Récapitulatif"
+  },
+  "reportSummaryLabel": {
+    "message": "Récapitulatif par projet"
+  },
+  "summaryProject": {
+    "message": "Projet"
+  },
+  "summaryBillable": {
+    "message": "Facturable"
+  },
+  "summaryNonBillable": {
+    "message": "Non facturable"
+  },
+  "summaryRate": {
+    "message": "Taux"
+  },
+  "summaryAmount": {
+    "message": "Montant"
+  },
+  "reportPrintFilters": {
+    "message": "Filtres : $FILTERS$",
+    "placeholders": {
+      "filters": {
+        "content": "$1",
+        "example": "Billable · Frontend"
+      }
+    }
+  },
+  "reportExported": {
+    "message": "Feuille de temps exportée sous $NAME$.",
+    "placeholders": {
+      "name": {
+        "content": "$1",
+        "example": "time-tracker-report-2026-10-19.csv"
+      }
+    }
+  },
+  "csvTags": {
+    "message": "Étiquettes"
+  },
+  "csvHours": {
+    "message": "Heures"
+  },
+  "csvRate": {
+    "message": "Taux"
+  },
+  "csvAmount": {
+    "message": "Montant"
+  },
+  "settingsReports": {
+    "message": "Rapports"
+  },
+  "settingsRounding": {
+    "message": "Arrondir les durées à"
+  },
+  "settingsRoundingNone": {
+    "message": "Ne pas arrondir"
+  },
+  "settingsRounding5": {
+    "message": "5 minutes"
+  },
+  "settingsRounding6": {
+    "message": "6 minutes (0,1 h)"
+  },
+  "settingsRounding15": {
+    "message": "15 minutes"
+  },
+  "settingsRoundingMode": {
+    "message": "Arrondir"
+  },
+  "settingsRoundingEntry": {
+    "message": "Chaque saisie"
+  },
+  "settingsRoundingDay": {
+    "message": "Le total journalier de chaque tâche"
+  },
+  "settingsRoundingHint": {
+    "message": "Seuls les rapports et leurs exports sont arrondis ; le temps suivi reste exact."
+  },
+  "projectRate": {
+    "message": "Taux horaire"
+  },
+  "projectRateHint": {
+    "message": "Laissez vide pour reprendre le taux du projet parent."
+  },
+  "projectRateInvalid": {
+    "message": "Saisissez un taux comme 95 ou 120,50."
   }
 }

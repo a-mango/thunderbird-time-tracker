@@ -22,6 +22,7 @@ compact/export.svg
 compact/settings.svg
 compact/nav-left.svg
 compact/nav-right.svg
+compact/print.svg
 
 # Infobar and dialog
 compact/close.svg

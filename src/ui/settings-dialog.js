@@ -155,6 +155,31 @@ export async function settingsDialog({ data, commands, onError }) {
   );
   idle.addEventListener('change', () => save({ idleThresholdMin: Number(idle.value) }));
 
+  const rounding = select(
+    [
+      ['0', t('settingsRoundingNone')],
+      ['5', t('settingsRounding5')],
+      ['6', t('settingsRounding6')],
+      ['15', t('settingsRounding15')],
+    ],
+    String(settings.roundingMin),
+  );
+  const roundingMode = select(
+    [
+      ['entry', t('settingsRoundingEntry')],
+      ['day', t('settingsRoundingDay')],
+    ],
+    settings.roundingMode,
+  );
+  roundingMode.disabled = settings.roundingMin === 0;
+  rounding.addEventListener('change', () => {
+    roundingMode.disabled = rounding.value === '0';
+    save({ roundingMin: /** @type {Settings['roundingMin']} */ (Number(rounding.value)) });
+  });
+  roundingMode.addEventListener('change', () =>
+    save({ roundingMode: /** @type {Settings['roundingMode']} */ (roundingMode.value) }),
+  );
+
   const showDone = checkbox(t('settingsShowDone'), settings.showDone);
   showDone.input.addEventListener('change', () => save({ showDone: showDone.input.checked }));
   const confirmDelete = checkbox(t('settingsConfirmDelete'), settings.confirmDelete);
@@ -201,6 +226,12 @@ export async function settingsDialog({ data, commands, onError }) {
     ),
     section(t('settingsLists'), showDone.node, confirmDelete.node),
     section(
+      t('settingsReports'),
+      row(t('settingsRounding'), rounding),
+      row(t('settingsRoundingMode'), roundingMode),
+      el('p', { class: 'dialog-hint', text: t('settingsRoundingHint') }),
+    ),
+    section(
       t('settingsData'),
       el('p', { class: 'dialog-hint', text: t('settingsDataHint') }),
       el(
@@ -234,6 +265,9 @@ export async function settingsDialog({ data, commands, onError }) {
     idle.value = String(current.idleThresholdMin);
     showDone.input.checked = current.showDone;
     confirmDelete.input.checked = current.confirmDelete;
+    rounding.value = String(current.roundingMin);
+    roundingMode.value = current.roundingMode;
+    roundingMode.disabled = current.roundingMin === 0;
   };
   data.addEventListener('change', sync);
   try {

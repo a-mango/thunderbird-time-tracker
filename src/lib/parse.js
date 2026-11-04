@@ -69,3 +69,21 @@ function readMinutes(value, code) {
   }
   return minutes;
 }
+
+/**
+ * An hourly rate typed by the user (S3): `95`, `120.50`, `120,50`. Blank means none.
+ * @param {string} text
+ * @returns {number | null} rounded to cents
+ * @throws {ValidationError} `hourlyRate` when it can't be read or is out of range
+ */
+export function parseRate(text) {
+  const value = text.trim().replace(/[\s\u00a0\u202f']/gu, '');
+  if (value === '') return null;
+  if (!/^\d+(?:[.,]\d{1,2})?$/u.test(value)) {
+    throw new ValidationError('hourlyRate', `unreadable rate: ${text}`);
+  }
+  const rate = Math.round(Number(value.replace(',', '.')) * 100) / 100;
+  if (rate > LIMITS.hourlyRate)
+    throw new ValidationError('hourlyRate', `rate out of range: ${text}`);
+  return rate;
+}
