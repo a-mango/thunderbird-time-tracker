@@ -3,8 +3,7 @@
 // and the prompt is answered in the tracker tab or the popup. When neither is open, a system
 // notification asks the user to open the tracker. Nothing is kept in memory.
 import { getIdle, getSettings, markActive, recordIdle } from '../db/index.js';
-import { formatAwayRange, formatDuration } from '../lib/format.js';
-import { detectionInterval, idleSince, sleepGap } from '../lib/idle.js';
+import { awayMessage, detectionInterval, idleSince, sleepGap } from '../lib/idle.js';
 import { TRACKER_PATH } from './space.js';
 
 export const IDLE_NOTIFICATION_ID = 'tt-idle';
@@ -39,18 +38,6 @@ async function promptVisible(api) {
 }
 
 /**
- * "You were away 23m (14:02 – 14:25)" for the notification and the prompt bars.
- * @param {IdleRecord & {until: number}} idle
- * @param {{getMessage: (name: string, substitutions?: string[]) => string, locale: string}} i18n
- */
-export function awayMessage(idle, { getMessage, locale }) {
-  return getMessage('idleAway', [
-    formatDuration(idle.until - idle.since),
-    formatAwayRange(idle.since, idle.until, { locale }),
-  ]);
-}
-
-/**
  * A pending prompt with no page open to show it: a system notification. Clicking it opens the
  * tracker tab (main.js).
  * @param {IdleRecord} idle
@@ -59,7 +46,7 @@ export function awayMessage(idle, { getMessage, locale }) {
 export async function raiseIdlePrompt(idle, { api = messenger } = {}) {
   if (idle.until === null || !api.notifications) return;
   if (await promptVisible(api)) return;
-  const message = awayMessage(/** @type {IdleRecord & {until: number}} */ (idle), {
+  const message = awayMessage(idle.since, idle.until, {
     getMessage: (name, substitutions) => api.i18n.getMessage(name, substitutions),
     locale: api.i18n.getUILanguage(),
   });

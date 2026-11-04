@@ -6,6 +6,8 @@ import { installContextMenu } from './context-menu.js';
 import { createDataCommands } from './data-commands.js';
 import { createDetail } from './detail.js';
 import { createEntryCommands } from './entry-commands.js';
+import { assignIdleDialog } from './entry-dialogs.js';
+import { createIdlePrompt } from './idle-prompt.js';
 import { showMenu } from './menu.js';
 import { localize, t } from './i18n.js';
 import { commandsFor, createProjectCommands, projectPlace } from './project-commands.js';
@@ -220,6 +222,24 @@ async function main() {
     focusEntry: (id) => detail.focusEntry(id),
   });
 
+  const idlePrompt = createIdlePrompt({
+    db: data.db,
+    bar: /** @type {TtNotificationBar} */ (ref('idle-prompt')),
+    assign: (idle) => {
+      const running = data.running;
+      if (!running) return Promise.resolve(null);
+      return assignIdleDialog({
+        context: { projects: data.projects, tasks: data.tasks },
+        runningTaskId: running.taskId,
+        since: idle.since,
+        until: idle.until,
+        locale: messenger.i18n.getUILanguage(),
+      });
+    },
+    onError: showError,
+  });
+  idlePrompt.refresh();
+
   let showDone = data.settings.showDone;
   // Timer start and stop are announced whatever started them: this tab, the popup, the shortcut.
   let running = data.running;
@@ -235,6 +255,7 @@ async function main() {
     }
     running = data.running;
     runningName = running ? (data.tasks.get(running.taskId)?.name ?? '') : '';
+    if (types.has('idle') || types.has('entries') || types.has('reset')) idlePrompt.refresh();
     if (types.has('settings')) {
       applySettings(data.settings);
       if (data.settings.showDone !== showDone) {

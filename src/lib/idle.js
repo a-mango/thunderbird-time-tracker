@@ -1,5 +1,6 @@
 // Idle detection math (S2), DOM-free. The background feeds it `idle` events and tick alarms;
 // db/idle.js stores the result.
+import { formatAwayRange, formatDuration } from './format.js';
 
 const MINUTE = 60_000;
 /** `idle.setDetectionInterval` accepts 15 s at least. */
@@ -37,4 +38,17 @@ export function sleepGap(alarm, now, thresholdMin) {
   if (!(thresholdMin > 0)) return null;
   if (now - alarm.scheduledTime <= thresholdMin * MINUTE) return null;
   return { since: alarm.scheduledTime - (alarm.periodInMinutes ?? 1) * MINUTE, until: now };
+}
+
+/**
+ * "You were away 23m (14:02 – 14:25)." for the notification and the prompt bars.
+ * @param {number} since
+ * @param {number} until
+ * @param {{getMessage: (name: string, substitutions?: string[]) => string, locale: string}} i18n
+ */
+export function awayMessage(since, until, { getMessage, locale }) {
+  return getMessage('idleAway', [
+    formatDuration(until - since),
+    formatAwayRange(since, until, { locale }),
+  ]);
 }

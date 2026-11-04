@@ -9,6 +9,8 @@
 
 import { registerMenus } from '../src/background/menus.js';
 import { DB_NAME } from '../src/db/schema.js';
+import { openDB } from '../src/db/idb.js';
+import { recordIdle } from '../src/db/idle.js';
 import { generateFixtures } from './fixtures.js';
 import { databaseExists, deleteDatabase, seedDatabase, seedSettings } from './seed.js';
 
@@ -534,6 +536,7 @@ export function createMessenger({
  *   re-seed with 2,000 extra tasks in Support retainer (M4 performance fixture);
  *   `?fixtures=large`: re-seed with 300 tasks and 50,000 entries over 3 years (M7);
  * - `?density=` / `?accent=`: store those settings (for screenshots);
+ * - `?idle=N`: the running entry gets a pending idle prompt, away N minutes until a minute ago;
  * - `?fail=newer`: the stored database gets a newer schema version (VersionError on open);
  *   `?fail=quota`: every later IndexedDB write throws QuotaExceededError (M7 error bars).
  * @param {URLSearchParams} params
@@ -558,9 +561,25 @@ export async function prepareDatabase(params) {
     if (value) settings[name] = value;
   }
   if (Object.keys(settings).length > 0) await seedSettings(settings);
+  const idle = Number(params.get('idle'));
+  if (idle > 0) await seedIdle(idle);
   const fail = params.get('fail');
   if (fail === 'newer') await bumpVersion();
   if (fail === 'quota') failWrites();
+}
+
+/**
+ * A pending idle prompt on the running entry (nothing without one).
+ * @param {number} minutes
+ */
+async function seedIdle(minutes) {
+  const db = await openDB();
+  try {
+    const until = Date.now() - 60_000;
+    await recordIdle(db, { since: until - minutes * 60_000, until });
+  } finally {
+    db.close();
+  }
 }
 
 /** Upgrades the stored database to a version this code doesn't know. */

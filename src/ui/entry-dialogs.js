@@ -12,7 +12,7 @@ import {
   latestAt,
   timeInput,
 } from '../lib/entry-form.js';
-import { formatDuration, formatTimeRange } from '../lib/format.js';
+import { formatAwayRange, formatDuration, formatTimeRange } from '../lib/format.js';
 import { LIMITS } from '../lib/limits.js';
 import { parseEstimate } from '../lib/parse.js';
 import { ancestorPath } from '../lib/sidebar.js';
@@ -342,4 +342,35 @@ export async function splitDialog({ entry, context, now, locale }) {
   });
   const at = value === 'ok' ? point() : null;
   return at === null ? null : { at, taskId: task.value };
+}
+
+/**
+ * Assign to… from the idle prompt: picks the task that gets the time away (any open task but
+ * the running one).
+ * @param {{context: TaskContext, runningTaskId: string, since: number, until: number,
+ *   locale: string}} options
+ * @returns {Promise<string | null>} the task id, `null` when cancelled
+ */
+export async function assignIdleDialog({ context, runningTaskId, since, until, locale }) {
+  const tasks = new Map([...context.tasks].filter(([id]) => id !== runningTaskId));
+  const task = taskSelect({ projects: context.projects, tasks }, '');
+  const empty = task.options.length === 0;
+  if (empty) task.append(el('option', { value: '', text: t('idleAssignNoTask') }));
+  else task.selectedIndex = 0;
+  task.disabled = empty;
+  const body = el(
+    'div',
+    { class: 'entry-form' },
+    el('p', { text: t('idleAssignText', formatAwayRange(since, until, { locale })) }),
+    labelled(t('idleAssignTask'), task),
+  );
+  const value = await TtDialog.show({
+    heading: t('idleAssignTitle'),
+    body,
+    buttons: [
+      { label: t('dialogCancel'), value: 'cancel' },
+      { label: t('idleAssignButton'), value: 'ok', primary: true },
+    ],
+  });
+  return value === 'ok' && task.value ? task.value : null;
 }

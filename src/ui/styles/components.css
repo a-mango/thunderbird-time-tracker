@@ -579,6 +579,7 @@ tt-notification-bar {
 
   & > .container {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-base);
     min-block-size: calc(var(--space-step) * 11);
@@ -588,7 +589,8 @@ tt-notification-bar {
     color: var(--infobar-icon-info);
   }
   & .message {
-    flex: 1;
+    /* Many actions (the idle prompt) wrap below the text instead of squeezing it. */
+    flex: 1 1 16em;
     padding-block: var(--space-step);
   }
   & .button.flat:enabled:hover {
