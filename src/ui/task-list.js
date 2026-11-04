@@ -347,12 +347,14 @@ export function createTaskList({ data, commands }) {
     if (!id || !data.tasks.has(id) || !event.dataTransfer) return;
     draggingId = id;
     event.dataTransfer.setData(TASK_DRAG_TYPE, id);
-    event.dataTransfer.setData('text/plain', data.tasks.get(id)?.name ?? '');
     event.dataTransfer.effectAllowed = 'move';
   });
-  table.addEventListener('dragend', () => {
+  // On the document: a row re-rendered mid-drag ends detached, and its dragend doesn't bubble.
+  const endDrag = () => {
     draggingId = null;
-  });
+  };
+  document.addEventListener('dragend', endDrag);
+  document.addEventListener('drop', endDrag);
   table.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     const target = /** @type {Element} */ (event.target);

@@ -184,9 +184,9 @@ export function createSidebar({ data, run, drop, taskDrag, onSelect, openSetting
     );
   };
   projectsTree.addEventListener('tt-drop-external', (event) => {
-    const taskId = taskDrag.draggingId();
-    const { targetId } = /** @type {CustomEvent} */ (event).detail;
-    if (taskId) taskDrag.drop(taskId, targetId);
+    // Only the drag this page started (not one from another tab, nor a stale id).
+    const { id, targetId } = /** @type {CustomEvent} */ (event).detail;
+    if (id && id === taskDrag.draggingId()) taskDrag.drop(id, targetId);
   });
   projectsTree.addEventListener('tt-activate', (event) => {
     const { id } = /** @type {CustomEvent} */ (event).detail;

@@ -187,6 +187,10 @@ test('a task cannot be dropped on its own project or an archived one', async ({ 
   const source = taskRow(page, 'Performance pass');
   await hover(page, source, project(page, 'Build'), 0.5);
   await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+  // Dropping there anyway changes nothing.
+  await project(page, 'Build').dispatchEvent('drop');
+  await source.dispatchEvent('dragend');
+  await expect(source).toBeVisible();
   await hover(page, source, project(page, 'Content'), 0.1);
   // Task drops go inside a row only: no reorder line.
   await expect(projectTree(page).locator('li.drop-target')).toHaveCount(1);
@@ -202,4 +206,19 @@ test('a task cannot be dropped on its own project or an archived one', async ({ 
   await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
   await hover(page, source, archive, 0.5);
   await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+});
+
+test('the task being renamed is not draggable', async ({ page }) => {
+  await openTracker(page);
+  await project(page, 'Build').click();
+  await taskRow(page, 'Performance pass').click();
+  await page.keyboard.press('F2');
+  const field = page.getByRole('treegrid', { name: 'Tasks' }).getByRole('textbox');
+  await expect(field).toBeFocused();
+  await expect(page.locator('tbody tr[data-key]:has(.rename-field)')).toHaveAttribute(
+    'draggable',
+    'false',
+  );
+  await page.keyboard.press('Enter');
+  await expect(taskRow(page, 'Performance pass')).toHaveAttribute('draggable', 'true');
 });

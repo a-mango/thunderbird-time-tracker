@@ -35,10 +35,11 @@ const DRAG_TYPE = 'application/x-tt-tree-item';
  * keyboard alternative (Move To…).
  *
  * Drags from outside the tree (e.g. task rows) carry `externalType`; they drop inside a row only,
- * when `canDropExternal(targetId)` allows it, and fire `tt-drop-external` {targetId}.
+ * when `canDropExternal(targetId)` allows it, and fire `tt-drop-external` {id, targetId} (`id`: the
+ * drag's `externalType` data).
  *
  * Events (bubbling): `tt-select` {id}, `tt-toggle` {id, expanded}, `tt-activate` {id},
- * `tt-drop` {id, targetId, position}, `tt-drop-external` {targetId}.
+ * `tt-drop` {id, targetId, position}, `tt-drop-external` {id, targetId}.
  */
 export class TtTree extends HTMLElement {
   /** @type {TreeNode[]} */
@@ -107,7 +108,9 @@ export class TtTree extends HTMLElement {
     this.addEventListener('dragleave', this.#onDragLeave);
     this.addEventListener('drop', this.#onDrop);
     // On the document: an outside drag ends at its source, not here.
+    // A source row that is re-rendered mid-drag ends detached, so `drop` too.
     document.addEventListener('dragend', this.#onDragEnd);
+    document.addEventListener('drop', this.#onDragEnd);
   }
 
   disconnectedCallback() {
@@ -119,6 +122,7 @@ export class TtTree extends HTMLElement {
     this.removeEventListener('dragleave', this.#onDragLeave);
     this.removeEventListener('drop', this.#onDrop);
     document.removeEventListener('dragend', this.#onDragEnd);
+    document.removeEventListener('drop', this.#onDragEnd);
   }
 
   /**
@@ -438,8 +442,13 @@ export class TtTree extends HTMLElement {
     event.preventDefault();
     if (!id) {
       const { targetId } = drop;
+      const externalId =
+        (this.externalType && event.dataTransfer?.getData(this.externalType)) || '';
       this.dispatchEvent(
-        new CustomEvent('tt-drop-external', { bubbles: true, detail: { targetId } }),
+        new CustomEvent('tt-drop-external', {
+          bubbles: true,
+          detail: { id: externalId, targetId },
+        }),
       );
       return;
     }
