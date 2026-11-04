@@ -36,7 +36,13 @@ describe('formatAwayRange', () => {
   it('adds weekdays across midnight', () => {
     const late = Date.UTC(2026, 9, 20, 21, 50); // 23:50
     expect(formatAwayRange(late, late + 30 * MIN, { locale: 'en-GB' })).toBe(
-      'Tue 23:50 – Wed 00:20',
+      'Tue\u00a023:50 – Wed\u00a000:20',
+    );
+  });
+
+  it('keeps each time whole on a 12-hour clock', () => {
+    expect(formatAwayRange(T, T + 23 * MIN, { locale: 'en-US' })).toBe(
+      '2:02\u00a0PM – 2:25\u00a0PM',
     );
   });
 });

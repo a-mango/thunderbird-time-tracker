@@ -18,13 +18,23 @@ import { t } from './i18n.js';
  * @property {(error: unknown) => void} onError
  * @property {() => unknown} [onResolved] after this page answered (its own write isn't echoed
  *   back over the channel)
+ * @property {() => void} [onFocusLost] the bar hid while focus was in it: move focus elsewhere
+ * @property {string} [assignLabel] label of the Assign button (default "Assign to…")
  */
 
 /**
  * @param {IdlePromptOptions} options
  * @returns {{refresh: () => Promise<void>}} call `refresh` after every change from db/
  */
-export function createIdlePrompt({ db, bar, assign, onError, onResolved }) {
+export function createIdlePrompt({
+  db,
+  bar,
+  assign,
+  onError,
+  onResolved,
+  onFocusLost,
+  assignLabel = t('idleAssign'),
+}) {
   bar.setAttribute('persistent', '');
   bar.classList.add('idle-prompt');
   /** The record shown, so a refresh with the same record keeps focus on the buttons. */
@@ -49,7 +59,9 @@ export function createIdlePrompt({ db, bar, assign, onError, onResolved }) {
     const idle = await getIdle(db);
     if (!idle || idle.until === null) {
       shown = '';
+      const hadFocus = bar.contains(document.activeElement);
       bar.hidden = true;
+      if (hadFocus) onFocusLost?.();
       return;
     }
     const pending = /** @type {IdleRecord & {until: number}} */ (idle);
@@ -71,10 +83,12 @@ export function createIdlePrompt({ db, bar, assign, onError, onResolved }) {
           onClick: () => answer('stop', pending),
         },
         {
-          label: t('idleAssign'),
+          label: assignLabel,
           onClick: async () => {
             const taskId = await assign(pending);
             if (taskId) await answer('assign', pending, taskId);
+            // Nothing to assign to (the timer stopped meanwhile): show what is current.
+            else await refresh();
           },
         },
       ],

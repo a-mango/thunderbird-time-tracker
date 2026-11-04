@@ -237,6 +237,7 @@ async function main() {
       });
     },
     onError: showError,
+    onFocusLost: () => taskList.focus(),
   });
   idlePrompt.refresh();
 

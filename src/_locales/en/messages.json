@@ -1528,5 +1528,9 @@
         "example": "10"
       }
     }
+  },
+  "idleAssignInTracker": {
+    "message": "Assign in Time Tracker…",
+    "description": "Idle prompt in the popup: opens the tracker tab, where the time away can be assigned to a task."
   }
 }

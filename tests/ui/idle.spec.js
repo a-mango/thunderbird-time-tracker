@@ -47,8 +47,12 @@ test('the tracker shows the prompt and Keep leaves the entry alone', async ({ pa
   await expect(bar.getByRole('button', { name: 'Close' })).toHaveCount(0);
   await page.clock.resume();
   await expectNoAxeViolations(page);
-  await bar.getByRole('button', { name: 'Keep' }).click();
+  await bar.getByRole('button', { name: 'Keep' }).focus();
+  await page.keyboard.press('Enter');
   await expect(bar).toBeHidden();
+  // Focus moves to the task list instead of falling to <body>.
+  await expect(page.locator('body')).not.toBeFocused();
+  await expect(page.getByRole('row', { name: /Checkout form validation/ })).toBeFocused();
   expect(await entryLines(page)).toContain('Checkout form validation 13:20–now timer');
   expect(errors).toEqual([]);
 });
@@ -124,6 +128,7 @@ test('the popup shows the prompt and closes after an answer', async ({ page }) =
   });
   const bar = prompt(page);
   await expect(bar).toContainText('You were away 23m (2:21 PM – 2:44 PM).');
+  await expect(bar.getByRole('button', { name: 'Assign in Time Tracker…' })).toBeVisible();
   await page.clock.resume();
   await expectNoAxeViolations(page);
   await bar.getByRole('button', { name: 'Discard' }).click();

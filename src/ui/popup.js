@@ -235,6 +235,7 @@ async function main() {
       ref('error').textContent = storageMessage(error, 'write').message;
     },
     onResolved: () => window.close(),
+    assignLabel: t('idleAssignInTracker'),
   });
   await idlePrompt.refresh();
   // Writes from other pages (or the background) while the popup is open.

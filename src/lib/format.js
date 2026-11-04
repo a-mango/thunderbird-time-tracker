@@ -179,11 +179,14 @@ export function formatDate(ms, { locale, time = false }) {
  * @param {{locale: string, hourCycle?: HourCycle}} options
  */
 export function formatAwayRange(since, until, { locale, hourCycle }) {
-  if (startOfDay(since) === startOfDay(until)) {
-    return formatTimeRange(since, until, { locale, nowLabel: '', hourCycle });
-  }
+  const sameDay = startOfDay(since) === startOfDay(until);
   const weekday = dateTimeFormat(locale, { weekday: 'short' });
+  // No-break spaces: a wrapping line breaks after the dash, never inside `2:21 PM`.
   /** @param {number} ms */
-  const at = (ms) => `${weekday.format(ms)} ${formatTime(ms, { locale, hourCycle })}`;
+  const at = (ms) =>
+    `${sameDay ? '' : `${weekday.format(ms)} `}${formatTime(ms, { locale, hourCycle })}`.replace(
+      / /g,
+      '\u00a0',
+    );
   return `${at(since)} – ${at(until)}`;
 }

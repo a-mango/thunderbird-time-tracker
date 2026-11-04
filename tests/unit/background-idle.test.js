@@ -149,7 +149,7 @@ describe('suspend and restart', () => {
     const nextDay = T0 + 24 * 60 * MIN;
     const pending = await checkIdleOnStartup(db, { api, now: nextDay });
     expect(pending).toMatchObject({ since: T0 + 40 * MIN, until: nextDay });
-    expect((await notification())?.message).toContain('Tue 09:40 – Wed 09:00');
+    expect((await notification())?.message).toContain('Tue\u00a009:40 – Wed\u00a009:00');
   });
 
   it('a prompt left unanswered is raised again at startup', async () => {
