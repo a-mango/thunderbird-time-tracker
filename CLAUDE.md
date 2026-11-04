@@ -41,7 +41,7 @@ Read only the sections the current task needs.
 - `.ref/comm-central` is really `thunderbird/thunderbird-desktop` at tag `THUNDERBIRD_157_0_RELEASE` (sparse); the name is kept for stable paths.
 - `npm run tb` = `web-ext run` on the real binary (`/usr/lib64/thunderbird/thunderbird`, not the `/usr/bin` wrapper) with `.tb-profile/`; `-- --manual` for about:debugging steps.
 - Headless shots resolve `message-box` to fontconfig's `sans-serif` at 14px; Thunderbird uses the GTK font (11pt = 14.67px). Judge font metrics with `npm run tb:spike`.
-- Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?fixtures=large` = 50k entries; `?density=`/`?accent=` write settings; `?locale=fr`; `?fail=newer|quota` fakes storage errors.
+- Dev URL params: the default seeds only if no database exists; `?seed=N` re-seeds; `?fixtures=empty` wipes; `?fixtures=large` = 50k entries; `?density=`/`?accent=` write settings; `?locale=fr`; `?fail=newer|quota` fakes storage errors; `?idle=N` gives the running entry a pending idle prompt (away N min).
 - `page.clock.setFixedTime()` also freezes `performance.now()`: perf tests run on the real clock.
 - `scripts/serve.mjs` serves `/src/`; `<html data-dev-ready>` is set after seeding, `data-ready` once the page rendered.
 - Playwright `page.clock.pauseAt()` freezes timers too: `clock.resume()` before `expectNoAxeViolations` (axe waits on timers).
