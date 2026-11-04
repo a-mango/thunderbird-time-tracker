@@ -2,9 +2,9 @@
 
 All notable changes are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## 1.0.0 — 2026-11-03
+## 0.1.0 — 2026-11-04
 
-First release. Requires Thunderbird 157 or later.
+First release, published as a beta (`v0.1.0-beta.1`). Requires Thunderbird 157 or later.
 
 ### Added
 - Time Tracker tab in the spaces toolbar, laid out like the mail tab: project tree, task list,
