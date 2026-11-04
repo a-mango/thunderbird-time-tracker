@@ -11,13 +11,19 @@ test('the whole project pane works from the keyboard', async ({ page }) => {
   await openTracker(page);
   await expectNoAxeViolations(page);
 
-  // Tab order: More (New Task and Add entry are disabled), Views, Projects options, Projects.
+  // Tab order: More (New Task and Add entry are disabled), Views, Reports, Projects options,
+  // Projects.
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'More options' })).toBeFocused();
   await page.keyboard.press('Tab');
   await expect(view(page, 'Today')).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(view(page, 'This Week')).toBeFocused();
+  await expect(heading(page)).toHaveText('This Week');
+  await page.keyboard.press('Tab');
+  await expect(
+    page.getByRole('tree', { name: 'Reports' }).getByRole('treeitem', { name: 'Timesheet' }),
+  ).toBeFocused();
   await expect(heading(page)).toHaveText('This Week');
   await page.keyboard.press('Tab');
   await expect(page.getByRole('button', { name: 'Projects options' })).toBeFocused();
