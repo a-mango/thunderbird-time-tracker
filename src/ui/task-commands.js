@@ -123,6 +123,19 @@ export function createTaskCommands({ data, onError, offerUndo }) {
   }
 
   /**
+   * Drag and drop: moves the task to `projectId`, at the end of its tasks.
+   * @param {string} id
+   * @param {string} projectId
+   */
+  function moveTo(id, projectId) {
+    const task = data.tasks.get(id);
+    if (!task || task.projectId === projectId) return Promise.resolve();
+    return guarded(async () => {
+      await moveTask(data.db, id, projectId);
+    });
+  }
+
+  /**
    * Deletes the task with its entries at once (no confirmation), with Undo in the notification
    * bar, like deleting a message.
    * @param {string} id
@@ -172,5 +185,5 @@ export function createTaskCommands({ data, onError, offerUndo }) {
     return Promise.resolve();
   }
 
-  return { create, rename, toggleStar, toggleTimer, setDone, edit, move, remove, run };
+  return { create, rename, toggleStar, toggleTimer, setDone, edit, move, moveTo, remove, run };
 }

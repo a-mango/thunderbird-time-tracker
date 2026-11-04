@@ -2,6 +2,12 @@
 
 All notable changes are listed here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Added
+- Drag a task from the list onto a project in the tree to move it there (Move To… still works
+  from the keyboard).
+
 ## 0.1.0 — 2026-11-04
 
 First release, published as a beta (`v0.1.0-beta.1`). Requires Thunderbird 157 or later.

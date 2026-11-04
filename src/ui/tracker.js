@@ -193,6 +193,10 @@ async function main() {
     data,
     run: commands.run,
     drop: commands.drop,
+    taskDrag: {
+      draggingId: () => taskList.draggingId,
+      drop: (taskId, projectId) => taskCommands.moveTo(taskId, projectId),
+    },
     openSettings: () => settingsDialog({ data, commands: dataCommands, onError: showError }),
     exportCsv: () => dataCommands.exportCsv().then(showDataMessage, showError),
     onSelect: (selection) => {
