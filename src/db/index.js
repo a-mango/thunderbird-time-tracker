@@ -47,3 +47,4 @@ export {
 export { getIdle, markActive, recordIdle, resolveIdle } from './idle.js';
 export { getSettings, updateSettings } from './settings.js';
 export { exportBackup, restoreBackup, wipeAll } from './backup.js';
+export { setDayTotal, undoDayTotal } from './timesheet.js';
