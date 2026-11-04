@@ -12,6 +12,7 @@ Read only the sections the current task needs.
 - `npm run tb`: Thunderbird with the isolated dev profile `.tb-profile/`, extension loaded
 - `npm run build`: XPI into `dist/` (copy-only zip of `src/`)
 - `npm run tb:rc`: fresh profile `.tb-rc/<version>/` with the built XPI installed (`TB_BIN=` for another Thunderbird, `-- --keep` to reuse, `-- --headless`)
+- `npm run demo`: fictional demo data dated around today → `artifacts/demo-backup.json`; load it in Thunderbird with Settings… › Data › Restore… (Replace)
 - `npm run icon:png`: render `src/icons/time-tracker.svg` to `design/icon/*.png` (ATN listing)
 - `npm run tb:spike`: Thunderbird via Marionette on a stage copy (`.tb-stage/`): mail tab vs. gallery metrics, context menus → `artifacts/tb/`
 - Primitives gallery: `/dev/gallery.html` (`?density=compact|relaxed`, `?accent=…`); components in `src/ui/components/`, icons via `icon()` in `src/ui/render.js`
