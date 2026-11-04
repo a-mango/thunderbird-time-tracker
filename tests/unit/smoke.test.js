@@ -20,9 +20,10 @@ describe('manifest', () => {
     expect(manifest.browser_specific_settings.gecko.strict_min_version).toBe('157.0');
   });
 
-  it('requests only the permissions listed in docs/SPEC.md (M5: alarms, notifications)', () => {
+  it('requests only the permissions listed in docs/SPEC.md (M5: alarms, notifications; S2: idle)', () => {
     expect(manifest.permissions ?? []).toEqual([
       'alarms',
+      'idle',
       'menus',
       'menus.overrideContext',
       'notifications',

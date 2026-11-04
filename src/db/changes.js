@@ -4,10 +4,10 @@
 export const CHANNEL_NAME = 'tt';
 
 /**
- * @typedef {'projects'|'tasks'|'entries'|'settings'|'reset'} ChangeType
+ * @typedef {'projects'|'tasks'|'entries'|'settings'|'idle'|'reset'} ChangeType
  * @typedef {{type: ChangeType, ids: string[]}} Change
  *   `reset` (restore, wipe): anything may have changed; `ids` is `['*']`, reload everything.
- *   `ids` are record ids; for `settings` they are the changed keys.
+ *   `ids` are record ids; for `settings` they are the changed keys; for `idle` the entry id.
  * @typedef {(change: Change) => unknown} Notifier
  *   Called once per change after the transaction committed. May return a promise; a rejection
  *   is logged, never thrown at the writer.

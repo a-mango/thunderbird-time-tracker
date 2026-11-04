@@ -121,3 +121,14 @@ body {
     flex: 1;
   }
 }
+
+/* Idle prompt (S2): flush with the timer box, the four actions as a 2×2 block. */
+.popup > tt-notification-bar {
+  margin: 0;
+
+  & .actions {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: end;
+  }
+}

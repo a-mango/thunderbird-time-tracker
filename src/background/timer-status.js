@@ -4,6 +4,7 @@
 import { getRunning, getTask } from '../db/index.js';
 import { formatTimerLabel } from '../lib/format.js';
 import { toggle } from '../lib/timer.js';
+import { armIdle } from './idle.js';
 
 export const TICK_ALARM = 'tt-tick';
 export const NOTIFICATION_ID = 'tt-no-last-task';
@@ -45,6 +46,7 @@ export async function syncTimerStatus(db, { api = messenger, now = Date.now() } 
     await sideEffects('timer status', [
       () => api.alarms?.create(TICK_ALARM, { when: nextMinute, periodInMinutes: 1 }),
       () => api.action.setLabel({ label: formatTimerLabel(elapsed, task.name) }),
+      () => armIdle(db, { api }),
     ]);
     return 'running';
   }

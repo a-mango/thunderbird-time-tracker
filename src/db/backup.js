@@ -73,6 +73,7 @@ export async function restoreBackup(db, backup, { mode, now = Date.now() }) {
       for (const entry of backup.entries) s.entries.put(entry);
       if (backup.settings) s.meta.put(backup.settings, META.settings);
       else s.meta.delete(META.settings);
+      s.meta.delete(META.idle);
       await req(s.meta.put(runningId(backup.entries), META.running));
       await storeAggregates(s, backup.entries);
       return {
@@ -128,6 +129,7 @@ export async function wipeAll(db) {
     s.entries.clear();
     s.links.clear();
     s.meta.delete(META.settings);
+    s.meta.delete(META.idle);
     await req(s.meta.put(null, META.running));
     await storeAggregates(s, []);
   });

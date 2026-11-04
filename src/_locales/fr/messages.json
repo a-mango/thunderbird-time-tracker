@@ -1137,5 +1137,78 @@
   },
   "restoreReasonContents": {
     "message": "son contenu ne correspond pas au format de sauvegarde"
+  },
+  "idleAway": {
+    "message": "Absence de $DURATION$ ($RANGE$).",
+    "placeholders": {
+      "duration": {
+        "content": "$1",
+        "example": "23m"
+      },
+      "range": {
+        "content": "$2",
+        "example": "14:02 – 14:25"
+      }
+    }
+  },
+  "idleNotificationHint": {
+    "message": "Ouvrez Time Tracker pour garder ou retirer ce temps."
+  },
+  "idleKeep": {
+    "message": "Garder"
+  },
+  "idleDiscard": {
+    "message": "Retirer"
+  },
+  "idleStopAt": {
+    "message": "Arrêter à $TIME$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:02"
+      }
+    }
+  },
+  "idleAssign": {
+    "message": "Attribuer à…"
+  },
+  "idleAssignTitle": {
+    "message": "Attribuer le temps d’absence"
+  },
+  "idleAssignText": {
+    "message": "Le temps d’absence ($RANGE$) va à une autre tâche. Le minuteur continue.",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "14:02 – 14:25"
+      }
+    }
+  },
+  "idleAssignTask": {
+    "message": "Tâche"
+  },
+  "idleAssignButton": {
+    "message": "Attribuer"
+  },
+  "idleAssignNoTask": {
+    "message": "Aucune autre tâche ouverte"
+  },
+  "settingsIdle": {
+    "message": "Demander après une absence de"
+  },
+  "settingsIdleOff": {
+    "message": "Jamais"
+  },
+  "settingsIdleMinutes": {
+    "message": "$MINUTES$ min",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "idleAssignInTracker": {
+    "message": "Attribuer dans Time Tracker…"
   }
 }

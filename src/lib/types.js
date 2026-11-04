@@ -17,7 +17,7 @@
  * @typedef {{density:Density, accent:Accent, weekStart:0|1, dailyTargetMin:number,
  *            durationFormat:'hm'|'decimal', showDone:boolean, confirmDelete:boolean,
  *            idleThresholdMin:number, roundingMin:0|5|6|15}} Settings
- *   `weekStart`: 0 = Sunday, 1 = Monday (the `Date#getDay` numbering).
+ *   `weekStart`: 0 = Sunday, 1 = Monday (the `Date#getDay` numbering). `idleThresholdMin`: 0 = off.
  * @typedef {{format:'thunderbird-time-tracker', version:1, exportedAt:number,
  *            projects:Project[], tasks:Task[], entries:Entry[],
  *            settings?:Partial<Settings>}} Backup

@@ -39,7 +39,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 | `alarms` | 1-minute tick while running (action label refresh) | M5 (added) |
 | `menus`, `menus.overrideContext` | native context menus on project and task rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded); task rows in M4 |
 | `notifications` | `Alt+Shift+K` with no task tracked yet: says how to start one (the command has no other UI) | M5 (added) |
-| `idle` | idle prompt | S2 |
+| `idle` | idle prompt: while a timer runs, detect when the user leaves and comes back (no install warning) | S2 (added) |
 | `messagesRead` | read headers for linking | S1 |
 | `accountsRead` | folder → project mapping | S1+ |
 

@@ -44,5 +44,6 @@ export {
   splitEntry,
   updateEntry,
 } from './entries.js';
+export { getIdle, markActive, recordIdle, resolveIdle } from './idle.js';
 export { getSettings, updateSettings } from './settings.js';
 export { exportBackup, restoreBackup, wipeAll } from './backup.js';

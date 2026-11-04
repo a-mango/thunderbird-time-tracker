@@ -74,16 +74,27 @@ export class TtNotificationBar extends HTMLElement {
       el(
         'div',
         { class: 'container' },
-        icon(ICONS[type ?? 'info'], { class: 'type-icon' }),
-        el('span', { class: 'message', text: this.getAttribute('message') ?? '' }),
-        ...this.#actions.map((action) =>
-          el('button', {
-            class: 'button flat small',
-            type: 'button',
-            text: action.label,
-            on: { click: action.onClick },
-          }),
+        el(
+          'span',
+          { class: 'text' },
+          icon(ICONS[type ?? 'info'], { class: 'type-icon' }),
+          el('span', { class: 'message', text: this.getAttribute('message') ?? '' }),
         ),
+        // One group, so several actions wrap below the message together.
+        this.#actions.length
+          ? el(
+              'span',
+              { class: 'actions' },
+              ...this.#actions.map((action) =>
+                el('button', {
+                  class: 'button flat small',
+                  type: 'button',
+                  text: action.label,
+                  on: { click: action.onClick },
+                }),
+              ),
+            )
+          : null,
         close,
       ),
     );

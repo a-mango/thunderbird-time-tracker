@@ -114,6 +114,17 @@ declare namespace messenger {
     >;
     const onStartup: WebExtEvent<() => void>;
     const onSuspend: WebExtEvent<() => void>;
+    type ContextType = 'BACKGROUND' | 'POPUP' | 'SIDE_PANEL' | 'TAB';
+    interface ExtensionContext {
+      contextType: ContextType;
+      documentUrl?: string;
+      tabId: number;
+      windowId: number;
+    }
+    function getContexts(filter: {
+      contextTypes?: ContextType[];
+      documentUrls?: string[];
+    }): Promise<ExtensionContext[]>;
     /** Return a Promise to respond asynchronously (guides/runtimeMessaging.rst). */
     const onMessage: WebExtEvent<
       (message: any, sender: MessageSender, sendResponse: (response?: any) => void) => any
@@ -172,6 +183,15 @@ declare namespace messenger {
     function create(notificationId: string, options: CreateNotificationOptions): Promise<string>;
     function create(options: CreateNotificationOptions): Promise<string>;
     function clear(notificationId: string): Promise<boolean>;
+    const onClicked: WebExtEvent<(notificationId: string) => void>;
+  }
+
+  /** idle.rst */
+  namespace idle {
+    type IdleState = 'active' | 'idle';
+    function queryState(detectionIntervalInSeconds: number): Promise<IdleState>;
+    function setDetectionInterval(intervalInSeconds: number): void;
+    const onStateChanged: WebExtEvent<(newState: IdleState) => void>;
   }
 
   /** commands.rst */

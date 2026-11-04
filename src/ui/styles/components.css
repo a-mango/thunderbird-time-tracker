@@ -579,16 +579,44 @@ tt-notification-bar {
 
   & > .container {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     gap: var(--space-base);
     min-block-size: calc(var(--space-step) * 11);
     padding-inline: 8px 4px;
   }
+  /* Wrapped actions keep a gap to the bottom edge (compact density). */
+  & .actions {
+    padding-block: var(--space-step);
+  }
+  /* Times in the idle prompt and its Stop at label. */
+  &.idle-prompt {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Forced colours drop the shadow: keep an edge. */
+  @media (forced-colors: active) {
+    border: 1px solid CanvasText;
+  }
   & .type-icon {
     color: var(--infobar-icon-info);
   }
+  /* Actions that don't fit beside the message wrap below it as one group, at the end. */
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-base);
+    margin-inline-start: auto;
+  }
+  /* The icon stays beside the message when the message wraps. */
+  & .text {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--space-base);
+  }
   & .message {
-    flex: 1;
+    flex: 1 1 auto;
     padding-block: var(--space-step);
   }
   & .button.flat:enabled:hover {

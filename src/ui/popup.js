@@ -16,7 +16,9 @@ import { fuzzyFilter } from '../lib/fuzzy.js';
 import { colorValue } from '../lib/palette.js';
 import { isArchived, projectPathName } from '../lib/sidebar.js';
 import { split, start, stop } from '../lib/timer.js';
+import './components/tt-notification-bar.js';
 import { applySettings } from './apply-settings.js';
+import { createIdlePrompt } from './idle-prompt.js';
 import { localize, t } from './i18n.js';
 import { storageMessage } from './storage-errors.js';
 import { el, icon } from './render.js';
@@ -192,12 +194,11 @@ field.addEventListener('keydown', (event) => {
 });
 ref('stop').addEventListener('click', () => act(() => stop(db)));
 ref('split').addEventListener('click', () => act(() => split(db, Date.now())));
-ref('open').addEventListener('click', () =>
-  act(async () => {
-    const space = await ensureSpace();
-    await messenger.spaces.open(space.id);
-  }),
-);
+const openTracker = async () => {
+  const space = await ensureSpace();
+  await messenger.spaces.open(space.id);
+};
+ref('open').addEventListener('click', () => act(openTracker));
 
 async function main() {
   localize();
@@ -219,13 +220,32 @@ async function main() {
   renderTimer();
   renderList();
   field.focus();
-  // Writes from other pages (or the background command) while the popup is open.
+  // The idle prompt. Assign to… needs the task picker: the tracker tab shows the same prompt.
+  const idlePrompt = createIdlePrompt({
+    db,
+    bar: /** @type {import('./components/tt-notification-bar.js').TtNotificationBar} */ (
+      ref('idle-prompt')
+    ),
+    assign: async () => {
+      await act(openTracker);
+      return null;
+    },
+    onError: (error) => {
+      console.error('time tracker: popup action failed', error);
+      ref('error').textContent = storageMessage(error, 'write').message;
+    },
+    onResolved: () => window.close(),
+    assignLabel: t('idleAssignInTracker'),
+  });
+  await idlePrompt.refresh();
+  // Writes from other pages (or the background) while the popup is open.
   if (typeof BroadcastChannel === 'function') {
     const channel = new BroadcastChannel(CHANNEL_NAME);
     channel.onmessage = async () => {
       await load();
       renderTimer();
       renderList();
+      await idlePrompt.refresh();
     };
   }
   setInterval(tick, SECOND_MS);

@@ -1444,5 +1444,93 @@
   "restoreReasonContents": {
     "message": "its contents don’t match the backup format",
     "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "idleAway": {
+    "message": "You were away $DURATION$ ($RANGE$).",
+    "description": "Idle prompt (bar and notification). DURATION like 23m, RANGE like 14:02 – 14:25.",
+    "placeholders": {
+      "duration": {
+        "content": "$1",
+        "example": "23m"
+      },
+      "range": {
+        "content": "$2",
+        "example": "14:02 – 14:25"
+      }
+    }
+  },
+  "idleNotificationHint": {
+    "message": "Open Time Tracker to keep or remove this time.",
+    "description": "Second sentence of the idle notification when no Time Tracker tab is open."
+  },
+  "idleKeep": {
+    "message": "Keep",
+    "description": "Idle prompt: count the time away as work."
+  },
+  "idleDiscard": {
+    "message": "Discard",
+    "description": "Idle prompt: remove the time away, keep the timer running."
+  },
+  "idleStopAt": {
+    "message": "Stop at $TIME$",
+    "description": "Idle prompt: stop the timer when the user went away.",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "14:02"
+      }
+    }
+  },
+  "idleAssign": {
+    "message": "Assign to…",
+    "description": "Idle prompt: record the time away on another task."
+  },
+  "idleAssignTitle": {
+    "message": "Assign Time Away",
+    "description": "Heading of the Assign to… dialog."
+  },
+  "idleAssignText": {
+    "message": "The time away ($RANGE$) goes to another task. The timer keeps running.",
+    "description": "Assign to… dialog text.",
+    "placeholders": {
+      "range": {
+        "content": "$1",
+        "example": "14:02 – 14:25"
+      }
+    }
+  },
+  "idleAssignTask": {
+    "message": "Task",
+    "description": "Assign to… dialog: task field label."
+  },
+  "idleAssignButton": {
+    "message": "Assign",
+    "description": "Assign to… dialog: confirm button."
+  },
+  "idleAssignNoTask": {
+    "message": "No other open task",
+    "description": "Assign to… dialog when there is no other open task."
+  },
+  "settingsIdle": {
+    "message": "Ask when away for",
+    "description": "Settings dialog: label of the idle threshold."
+  },
+  "settingsIdleOff": {
+    "message": "Never",
+    "description": "Settings dialog: idle detection off."
+  },
+  "settingsIdleMinutes": {
+    "message": "$MINUTES$ min",
+    "description": "Settings dialog: idle threshold option.",
+    "placeholders": {
+      "minutes": {
+        "content": "$1",
+        "example": "10"
+      }
+    }
+  },
+  "idleAssignInTracker": {
+    "message": "Assign in Time Tracker…",
+    "description": "Idle prompt in the popup: opens the tracker tab, where the time away can be assigned to a task."
   }
 }
