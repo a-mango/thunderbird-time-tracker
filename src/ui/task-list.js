@@ -25,6 +25,8 @@ import { el, icon } from './render.js';
  */
 
 const MINUTE = 60_000;
+/** Drag data type of a task row; the project tree accepts it (move to that project). */
+export const TASK_DRAG_TYPE = 'application/x-tt-task';
 const QFB_KEY = 'tracker.qfb';
 const ICON_WIDTH = 'var(--table-header-cell-icon-width)';
 const PILLS = /** @type {const} */ ([
@@ -67,6 +69,9 @@ export function createTaskList({ data, commands }) {
   let scoped = [];
   /** @type {'project' | 'view' | null} */
   let columnsFor = null;
+  /** The task row being dragged. */
+  /** @type {string | null} */
+  let draggingId = null;
 
   // ---- Header and quick filter bar ----
   quickFilter.prepend(icon('filter'));
@@ -226,6 +231,8 @@ export function createTaskList({ data, commands }) {
   table.renderRow = (task, tr) => {
     tr.classList.toggle('running', task.id === data.running?.taskId);
     tr.classList.toggle('done', task.status === 'done');
+    // Not while renaming: dragging in the field selects text.
+    tr.draggable = task.id !== editingId;
   };
 
   table.renderCell = (task, column, cell) => {
@@ -333,6 +340,21 @@ export function createTaskList({ data, commands }) {
   table.addEventListener('tt-activate', (event) => {
     commands.edit(String(/** @type {CustomEvent} */ (event).detail.key));
   });
+  // Drag a row onto a project in the tree to move the task there (keyboard: Move To…).
+  table.addEventListener('dragstart', (event) => {
+    const tr = /** @type {Element} */ (event.target).closest?.('tbody tr[data-key]');
+    const id = /** @type {HTMLElement | null} */ (tr)?.dataset.key;
+    if (!id || !data.tasks.has(id) || !event.dataTransfer) return;
+    draggingId = id;
+    event.dataTransfer.setData(TASK_DRAG_TYPE, id);
+    event.dataTransfer.effectAllowed = 'move';
+  });
+  // On the document: a row re-rendered mid-drag ends detached, and its dragend doesn't bubble.
+  const endDrag = () => {
+    draggingId = null;
+  };
+  document.addEventListener('dragend', endDrag);
+  document.addEventListener('drop', endDrag);
   table.addEventListener('keydown', (event) => {
     if (event.altKey || event.ctrlKey || event.metaKey) return;
     const target = /** @type {Element} */ (event.target);
@@ -592,6 +614,10 @@ export function createTaskList({ data, commands }) {
     get selectedId() {
       const key = table.selectedKey;
       return key === null ? null : String(key);
+    },
+    /** The task row being dragged, if any. */
+    get draggingId() {
+      return draggingId;
     },
     get pending() {
       return renderPending;

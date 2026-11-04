@@ -153,3 +153,72 @@ test('keyboard: Move To… from the Projects menu', async ({ page }) => {
   await expect(project(page, 'Build')).toHaveAttribute('aria-level', '3');
   await expect(project(page, 'Build')).toBeFocused();
 });
+
+/** @param {import('@playwright/test').Page} page @param {string} name */
+const taskRow = (page, name) =>
+  page
+    .getByRole('treegrid', { name: 'Tasks' })
+    .locator('tbody tr[data-key]')
+    .filter({ hasText: name });
+
+test('drag a task onto another project to move it there', async ({ page }) => {
+  await openTracker(page);
+  await project(page, 'Build').click();
+  const source = taskRow(page, 'Performance pass');
+  await expect(source).toHaveAttribute('draggable', 'true');
+  const training = project(page, 'Training');
+  await source.dragTo(training, { targetPosition: await at(training, 0.5) });
+  await expect(source).toHaveCount(0);
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+  await training.click();
+  await expect(taskRow(page, 'Performance pass')).toBeVisible();
+  // Persisted: still there after a reload.
+  await page.reload();
+  await page.locator('html[data-ready]').waitFor();
+  await training.click();
+  await expect(taskRow(page, 'Performance pass')).toBeVisible();
+});
+
+test('a task cannot be dropped on its own project or an archived one', async ({ page }) => {
+  await openTracker(page);
+  const archive = projectTree(page).getByRole('treeitem', { name: 'Archive' });
+  await archive.locator('.twisty').click();
+  await project(page, 'Build').click();
+  const source = taskRow(page, 'Performance pass');
+  await hover(page, source, project(page, 'Build'), 0.5);
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+  // Dropping there anyway changes nothing.
+  await project(page, 'Build').dispatchEvent('drop');
+  await source.dispatchEvent('dragend');
+  await expect(source).toBeVisible();
+  await hover(page, source, project(page, 'Content'), 0.1);
+  // Task drops go inside a row only: no reorder line.
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(1);
+  await expect(projectTree(page).locator('.drop-indicator')).toBeHidden();
+  await source.dispatchEvent('dragend');
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+
+  const archived = projectTree(page)
+    .getByRole('treeitem', { name: /^Discovery/ })
+    .last();
+  await expect(archived).toBeVisible();
+  await hover(page, source, archived, 0.5);
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+  await hover(page, source, archive, 0.5);
+  await expect(projectTree(page).locator('li.drop-target')).toHaveCount(0);
+});
+
+test('the task being renamed is not draggable', async ({ page }) => {
+  await openTracker(page);
+  await project(page, 'Build').click();
+  await taskRow(page, 'Performance pass').click();
+  await page.keyboard.press('F2');
+  const field = page.getByRole('treegrid', { name: 'Tasks' }).getByRole('textbox');
+  await expect(field).toBeFocused();
+  await expect(page.locator('tbody tr[data-key]:has(.rename-field)')).toHaveAttribute(
+    'draggable',
+    'false',
+  );
+  await page.keyboard.press('Enter');
+  await expect(taskRow(page, 'Performance pass')).toHaveAttribute('draggable', 'true');
+});
