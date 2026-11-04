@@ -7,7 +7,8 @@
 //     and records which menu items open;
 //   - M3: right-clicks a project row in the real tracker page, activates "Rename Project…" and
 //     records whether menus.onClicked reached the page and opened the dialog;
-//   - M6: whether an <a download> blob link in the tracker page saves a file.
+//   - M6: whether an <a download> blob link in the tracker page saves a file;
+//   - S3: whether window.print() in the tracker page opens Thunderbird's print dialog.
 // Writes artifacts/tb/spike.json. Nothing in src/ or the shipped manifest changes.
 // Usage: node scripts/tb-spike.mjs [--keep-open]
 import { spawn } from 'node:child_process';
@@ -449,6 +450,37 @@ async function main() {
     }));
     await client.screenshot(join(outDir, 'tracker-download.png'));
 
+    // S3: the probe calls window.print(). Thunderbird shows printing as a tab-modal dialog over
+    // the content tab (printUtils.js TabDialogBox); record whether one opened, then close it.
+    const printResult = await waitFor(
+      () =>
+        client.run(`
+          const browser = document.getElementById('tabmail').currentTabInfo.browser;
+          const manager = browser?.tabDialogBox?._tabDialogManager;
+          const dialogs = manager?._dialogs ?? [];
+          const windows = [];
+          for (const win of Services.wm.getEnumerator(null)) {
+            windows.push(win.document.documentElement.getAttribute('windowtype') || win.location.href);
+          }
+          const printWindow = windows.find((w) => /print/i.test(w)) ?? null;
+          if (dialogs.length === 0 && !printWindow) return null;
+          return {
+            tabDialogs: dialogs.map((d) => d._frame?.contentDocument?.documentURI ?? d._openedURL ?? '?'),
+            printWindow,
+          };
+        `),
+      'the print dialog',
+      20_000,
+    ).catch(async (error) => ({
+      error: String(error),
+      probe: (await readProbe())?.print ?? null,
+    }));
+    await sleep(1500);
+    await client.screenshot(join(outDir, 'tracker-print.png'));
+    await client.run(`
+      document.getElementById('tabmail').currentTabInfo.browser?.tabDialogBox?.abortAllDialogs?.();
+    `);
+
     const result = {
       thunderbird: tb.version,
       mail,
@@ -462,6 +494,7 @@ async function main() {
         timing: probe.timing ?? null,
       },
       download: { ...downloadResult, saved: await readdir(downloadDir) },
+      print: printResult,
       shots: [
         mailShot,
         galleryShot,
@@ -469,6 +502,7 @@ async function main() {
         join(outDir, 'context-default.png'),
         join(outDir, 'tracker-context.png'),
         trackerShot,
+        join(outDir, 'tracker-print.png'),
       ],
     };
     await writeFile(join(outDir, 'spike.json'), `${JSON.stringify(result, null, 2)}\n`);

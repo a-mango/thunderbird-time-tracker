@@ -55,7 +55,7 @@ for (const [mode, media] of MODES) {
       await axe(page);
       await page.keyboard.type('5m');
       await page.keyboard.press('Enter');
-      await expect(page.getByRole('dialog', { name: 'Replace Entries?' })).toBeVisible();
+      await expect(page.getByRole('dialog', { name: /^Replace Entr/ })).toBeVisible();
       await axe(page);
     });
 

@@ -235,7 +235,7 @@ test('Delete clears a day after confirming', async ({ page }) => {
   await mon.click();
   await page.keyboard.press('Delete');
   await page.keyboard.press('Enter');
-  const dialog = page.getByRole('dialog', { name: 'Replace Entries?' });
+  const dialog = page.getByRole('dialog', { name: /^Delete Entr/ });
   await expect(dialog).toContainText(
     /^.*Delete the (\d+ entries|entry) of “Field components skeleton”/,
   );

@@ -2,11 +2,12 @@
 // document.title (readable from chrome) the first project row's box, whether menus.onClicked
 // reached this page, and the dialog it opened (M3 risk: native context menu in our tab).
 // M6: then saves a small file through an <a download> click (backup and CSV export).
+// S3: then calls window.print() (the report's Print button); the spike looks for the dialog.
 import { createProject, openDB } from '../../db/index.js';
 import { download } from '../../ui/data-commands.js';
 
 /** @type {Record<string, unknown>} */
-const state = { row: null, clicked: null, dialog: null, download: null };
+const state = { row: null, clicked: null, dialog: null, download: null, print: null };
 const publish = () => {
   document.title = `TT-PROBE ${JSON.stringify(state)}`;
 };
@@ -73,6 +74,18 @@ setInterval(() => {
         state.download = `error: ${error}`;
       }
       publish();
+      // S3: print a few seconds later, after the spike has looked at the download.
+      setTimeout(() => {
+        state.print = 'called';
+        publish();
+        try {
+          window.print();
+          state.print = 'returned';
+        } catch (error) {
+          state.print = `error: ${error}`;
+        }
+        publish();
+      }, 4000);
     }, 500);
   }
   publish();

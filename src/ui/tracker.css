@@ -148,7 +148,8 @@ body {
     display: flex;
     align-items: center;
     gap: calc(var(--space-step) * 4);
-    padding-inline: var(--space-base);
+    /* Lines up with the tables' cell text (tt-table's 6px cell padding). */
+    padding-inline: 6px;
   }
   & .report-rounding,
   & .report-print-filters {
@@ -163,7 +164,7 @@ body {
   }
   & .report-heading {
     margin: 0 0 var(--space-base);
-    padding-inline: var(--space-base);
+    padding-inline: 6px;
     font-size: 1.1rem;
     font-weight: 600;
   }
@@ -232,15 +233,12 @@ body {
   & tbody tr:not(.group):hover {
     background-color: var(--listbox-hover);
   }
-  & .today {
+  & td.today {
     background-color: color-mix(in srgb, var(--selected-item-color) 6%, transparent);
   }
   & [tabindex]:focus-visible {
     outline: 2px solid var(--selected-item-color);
     outline-offset: -2px;
-  }
-  & td.day:not(.running) {
-    cursor: text;
   }
   /* The running day ticks and can't be edited: bold like the task list's running row. */
   & td.running {
@@ -269,20 +267,26 @@ body {
     inline-size: 6.5em;
   }
   /* Task names stay in view while a month scrolls sideways. */
-  & tr:not(.group) > :first-child {
+  & :is(tbody tr:not(.group), tfoot tr) > :first-child,
+  & thead tr > th:first-child {
     position: sticky;
     inset-inline-start: 0;
     z-index: 1;
     background-color: var(--tree-view-bg);
   }
-  & thead tr > :first-child {
+  & thead tr > th:first-child {
+    z-index: 2;
     background-color: var(--layout-background-1);
+  }
+  /* The sticky name cell is opaque: it takes the row's hover too. */
+  & tbody tr:not(.group):hover > :first-child {
+    background-image: linear-gradient(var(--listbox-hover), var(--listbox-hover));
   }
 }
 
 .summary {
   & tbody th {
-    padding-inline-start: calc(6px + var(--depth, 0) * 16px);
+    padding-inline-start: calc(6px + var(--depth, 0) * var(--tt-indent-step));
   }
   & tbody tr.root th {
     font-weight: 600;
@@ -307,6 +311,20 @@ body {
     block-size: auto;
     overflow: visible;
   }
+  html,
+  body,
+  .report-pane,
+  .report-header,
+  .tt-grid thead th,
+  .tt-grid tbody tr.group > *,
+  .timesheet :is(tbody tr, tfoot tr, thead tr) > :first-child,
+  .tt-grid td.today {
+    /* Print plain: the screen's header and sticky-cell backgrounds win on specificity. */
+    background: Canvas !important;
+  }
+  .report-header {
+    padding-inline-start: 6px;
+  }
   .tracker {
     display: block;
   }
@@ -329,7 +347,7 @@ body {
     }
     & .report-print-filters:not(:empty) {
       display: block;
-      padding-inline: var(--space-base);
+      padding-inline: 6px;
     }
   }
   .tt-grid {
@@ -343,8 +361,8 @@ body {
     & tr {
       break-inside: avoid;
     }
-    & .today {
-      background: none;
+    & thead th.today {
+      font-weight: normal;
     }
   }
 }

@@ -1894,5 +1894,17 @@
   "projectRateInvalid": {
     "message": "Enter a rate such as 95 or 120.50.",
     "description": "Project dialog: validation message."
+  },
+  "reportReplaceTitleOne": {
+    "message": "Replace Entry?",
+    "description": "Timesheet: title of the confirmation before replacing a day's only entry."
+  },
+  "reportClearTitle": {
+    "message": "Delete Entries?",
+    "description": "Timesheet: title of the confirmation before deleting a day's entries."
+  },
+  "reportClearTitleOne": {
+    "message": "Delete Entry?",
+    "description": "Timesheet: title of the confirmation before deleting a day's only entry."
   }
 }

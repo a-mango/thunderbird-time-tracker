@@ -1504,5 +1504,14 @@
   },
   "projectRateInvalid": {
     "message": "Saisissez un taux comme 95 ou 120,50."
+  },
+  "reportReplaceTitleOne": {
+    "message": "Remplacer la saisie ?"
+  },
+  "reportClearTitle": {
+    "message": "Supprimer les saisies ?"
+  },
+  "reportClearTitleOne": {
+    "message": "Supprimer la saisie ?"
   }
 }

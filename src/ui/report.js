@@ -297,6 +297,7 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
   }
 
   function renderFilters() {
+    addButton.disabled = ![...data.tasks.values()].some((task) => task.status === 'open');
     presetSelect.value = state.preset;
     customFields.hidden = state.preset !== 'custom';
     const shown = range();
@@ -561,6 +562,8 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
     const numCell = (/** @type {string} */ text) =>
       el('td', { class: 'num', attrs: { 'data-align': 'end' }, text });
     const money = (/** @type {number | null} */ value) => formatMoney(value, { locale });
+    /** Zero is `–`, like the task list's empty cells. @param {number} ms */
+    const time = (ms) => (ms > 0 ? duration(ms) : '–');
     summaryHost.replaceChildren(
       el('h2', { class: 'report-heading', id: 'report-summary-heading', text: t('reportSummary') }),
       el(
@@ -595,9 +598,9 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
                   style: { '--depth': String(row.depth) },
                   text: row.name,
                 }),
-                numCell(duration(row.total)),
-                numCell(duration(row.billable)),
-                numCell(duration(row.nonBillable)),
+                numCell(time(row.total)),
+                numCell(time(row.billable)),
+                numCell(time(row.nonBillable)),
                 numCell(money(row.rate)),
                 numCell(money(row.amount)),
               ),
@@ -610,9 +613,9 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
               'tr',
               {},
               el('th', { attrs: { scope: 'row' }, text: t('reportTotal') }),
-              numCell(duration(rep.totals.total)),
-              numCell(duration(rep.totals.billable)),
-              numCell(duration(rep.totals.nonBillable)),
+              numCell(time(rep.totals.total)),
+              numCell(time(rep.totals.billable)),
+              numCell(time(rep.totals.nonBillable)),
               numCell(''),
               numCell(money(rep.totals.amount)),
             ),
@@ -840,7 +843,15 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
         ? t('reportReplaceTextOne', taskName, dayText, duration(ms))
         : t('reportReplaceText', String(count), taskName, dayText, duration(ms));
     const value = await TtDialog.show({
-      heading: t('reportReplaceTitle'),
+      heading: t(
+        clear
+          ? count === 1
+            ? 'reportClearTitleOne'
+            : 'reportClearTitle'
+          : count === 1
+            ? 'reportReplaceTitleOne'
+            : 'reportReplaceTitle',
+      ),
       body: text,
       buttons: [
         { label: t('dialogCancel'), value: 'cancel' },
