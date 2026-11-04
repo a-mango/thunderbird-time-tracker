@@ -19,6 +19,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 - S3 Timesheet and reports: week grid (tasks × days), billable totals, rounding at report time only, CSV/PDF.
 - S4 Day timeline + Cards view (design B): a calendar-style day view, drag to create/resize entries, gap filling.
 - S5 Integrations (pick later): Kimai / Clockify / Toggl / Jira worklog push, or a WebDAV JSON sync file.
+- S6 System tray (#33): the timer status as a tray icon (Linux first) through a native helper; click opens the tracker, the menu stops or starts the timer.
 
 **Out of scope**: multi-user, server, telemetry, any remote code.
 
@@ -40,6 +41,7 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 | `menus`, `menus.overrideContext` | native context menus on project and task rows in our tab (items limited to `ui/tracker.html` by `documentUrlPatterns`) | M3 (added; the M1 spike succeeded); task rows in M4 |
 | `notifications` | `Alt+Shift+K` with no task tracked yet: says how to start one (the command has no other UI) | M5 (added) |
 | `idle` | idle prompt: while a timer runs, detect when the user leaves and comes back (no install warning) | S2 (added) |
+| `nativeMessaging` (**optional**) | system tray icon: talk to the separately installed tray helper (`native/tray/`). Asked for only when the user ticks Settings › Show the timer in the system tray; removed when they untick it | S6 (added) |
 | `messagesRead` | read headers for linking | S1 |
 | `accountsRead` | folder → project mapping | S1+ |
 
