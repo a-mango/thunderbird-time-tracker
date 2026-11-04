@@ -389,6 +389,28 @@ export function createMessenger({
       onClicked: createEvent(),
       onClosed: createEvent(),
     },
+    permissions: {
+      /** Optional permissions granted so far; `_answer` is what the next request returns. */
+      _granted: new Set(),
+      _answer: true,
+      /** @param {messenger.permissions.Permissions} wanted */
+      async contains(wanted) {
+        return (wanted.permissions ?? []).every((name) => this._granted.has(name));
+      },
+      /** @param {messenger.permissions.Permissions} wanted */
+      async request(wanted) {
+        if (!this._answer) return false;
+        for (const name of wanted.permissions ?? []) this._granted.add(name);
+        return true;
+      },
+      /** @param {messenger.permissions.Permissions} wanted */
+      async remove(wanted) {
+        for (const name of wanted.permissions ?? []) this._granted.delete(name);
+        return true;
+      },
+      onAdded: createEvent(),
+      onRemoved: createEvent(),
+    },
     idle: {
       /** The interval set last (seconds) and the current state; `_setState` fires the event. */
       _interval: 60,

@@ -180,6 +180,33 @@ export async function settingsDialog({ data, commands, onError }) {
     save({ roundingMode: /** @type {Settings['roundingMode']} */ (roundingMode.value) }),
   );
 
+  // S6: the tray icon needs the optional nativeMessaging permission, asked for on this click.
+  const tray = checkbox(t('settingsTray'), settings.trayIcon);
+  const trayHint = el('p', {
+    class: 'dialog-hint',
+    id: uid('tt-hint'),
+    text: t('settingsTrayHint'),
+  });
+  tray.input.setAttribute('aria-describedby', trayHint.id);
+  tray.input.addEventListener('change', async () => {
+    const on = tray.input.checked;
+    if (on) {
+      let granted = false;
+      try {
+        granted = await messenger.permissions.request({ permissions: ['nativeMessaging'] });
+      } catch (error) {
+        console.error('time tracker: asking for the tray permission failed', error);
+      }
+      if (!granted) {
+        tray.input.checked = false;
+        return;
+      }
+    } else {
+      messenger.permissions?.remove({ permissions: ['nativeMessaging'] }).catch(() => {});
+    }
+    save({ trayIcon: on });
+  });
+
   const showDone = checkbox(t('settingsShowDone'), settings.showDone);
   showDone.input.addEventListener('change', () => save({ showDone: showDone.input.checked }));
   const confirmDelete = checkbox(t('settingsConfirmDelete'), settings.confirmDelete);
@@ -216,6 +243,8 @@ export async function settingsDialog({ data, commands, onError }) {
       t('settingsAppearance'),
       row(t('settingsDensity'), density),
       row(t('settingsAccent'), accent),
+      tray.node,
+      trayHint,
     ),
     section(
       t('settingsTime'),
@@ -265,6 +294,7 @@ export async function settingsDialog({ data, commands, onError }) {
     idle.value = String(current.idleThresholdMin);
     showDone.input.checked = current.showDone;
     confirmDelete.input.checked = current.confirmDelete;
+    tray.input.checked = current.trayIcon;
     rounding.value = String(current.roundingMin);
     roundingMode.value = current.roundingMode;
     roundingMode.disabled = current.roundingMin === 0;

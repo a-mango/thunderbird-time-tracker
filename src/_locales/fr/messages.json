@@ -1513,5 +1513,26 @@
   },
   "reportClearTitleOne": {
     "message": "Supprimer la saisie ?"
+  },
+  "trayIdle": {
+    "message": "Aucun chronomètre en cours"
+  },
+  "trayStop": {
+    "message": "Arrêter le chronomètre"
+  },
+  "trayStartLast": {
+    "message": "Reprendre la dernière tâche"
+  },
+  "trayOpen": {
+    "message": "Ouvrir Time Tracker"
+  },
+  "trayMissing": {
+    "message": "L’assistant de la zone de notification n’est pas installé : l’icône a été désactivée. Consultez le README pour l’installer."
+  },
+  "settingsTray": {
+    "message": "Afficher le chronomètre dans la zone de notification"
+  },
+  "settingsTrayHint": {
+    "message": "Nécessite l’assistant de la zone de notification (Linux), installé à part : voir le README."
   }
 }
