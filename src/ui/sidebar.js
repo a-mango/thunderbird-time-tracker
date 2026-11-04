@@ -17,6 +17,7 @@ import { getLayout, setLayout } from './layout-store.js';
 import { showMenu } from './menu.js';
 import { commandsFor, projectPlace } from './project-commands.js';
 import { el, icon } from './render.js';
+import { TASK_DRAG_TYPE } from './task-list.js';
 
 /**
  * @typedef {import('./components/tt-tree.js').TtTree} TtTree
@@ -59,12 +60,13 @@ const isSelection = (value) =>
  *   data: TrackerData,
  *   run: (command: ProjectCommand, id: string | null, value?: string) => unknown,
  *   drop: (id: string, target: {parentId: string | null, beforeId: string | null}) => unknown,
+ *   taskDrag: {draggingId: () => string | null, drop: (taskId: string, projectId: string) => unknown},
  *   onSelect: (selection: Selection) => void,
  *   openSettings: () => unknown,
  *   exportCsv: () => unknown,
  * }} options
  */
-export function createSidebar({ data, run, drop, onSelect, openSettings, exportCsv }) {
+export function createSidebar({ data, run, drop, taskDrag, onSelect, openSettings, exportCsv }) {
   /** @param {string} name */
   const ref = (name) => /** @type {HTMLElement} */ (document.querySelector(`[data-ref="${name}"]`));
   const viewsTree = /** @type {TtTree} */ (document.getElementById('views-tree'));
@@ -172,6 +174,19 @@ export function createSidebar({ data, run, drop, onSelect, openSettings, exportC
   projectsTree.addEventListener('tt-drop', (event) => {
     const { id, targetId, position } = /** @type {CustomEvent} */ (event).detail;
     drop(id, dropTarget(data.projects, id, targetId, position));
+  });
+  // A task row dropped on a project moves the task there; its own project and archived ones refuse.
+  projectsTree.externalType = TASK_DRAG_TYPE;
+  projectsTree.canDropExternal = (targetId) => {
+    const task = data.tasks.get(taskDrag.draggingId() ?? '');
+    return Boolean(
+      task && data.project(targetId) && !inArchive.has(targetId) && task.projectId !== targetId,
+    );
+  };
+  projectsTree.addEventListener('tt-drop-external', (event) => {
+    // Only the drag this page started (not one from another tab, nor a stale id).
+    const { id, targetId } = /** @type {CustomEvent} */ (event).detail;
+    if (id && id === taskDrag.draggingId()) taskDrag.drop(id, targetId);
   });
   projectsTree.addEventListener('tt-activate', (event) => {
     const { id } = /** @type {CustomEvent} */ (event).detail;

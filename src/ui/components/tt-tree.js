@@ -34,8 +34,12 @@ const DRAG_TYPE = 'application/x-tt-tree-item';
  * `drag-target`; a collapsed row expands after hovering 1s. Pointer only: the page offers a
  * keyboard alternative (Move To…).
  *
+ * Drags from outside the tree (e.g. task rows) carry `externalType`; they drop inside a row only,
+ * when `canDropExternal(targetId)` allows it, and fire `tt-drop-external` {id, targetId} (`id`: the
+ * drag's `externalType` data).
+ *
  * Events (bubbling): `tt-select` {id}, `tt-toggle` {id, expanded}, `tt-activate` {id},
- * `tt-drop` {id, targetId, position}.
+ * `tt-drop` {id, targetId, position}, `tt-drop-external` {id, targetId}.
  */
 export class TtTree extends HTMLElement {
   /** @type {TreeNode[]} */
@@ -74,6 +78,18 @@ export class TtTree extends HTMLElement {
   canDrop = () => false;
 
   /**
+   * Drag data type accepted from outside the tree (null: none).
+   * @type {string | null}
+   */
+  externalType = null;
+
+  /**
+   * Whether the outside drag may be dropped inside `targetId`.
+   * @type {(targetId: string) => boolean}
+   */
+  canDropExternal = () => false;
+
+  /**
    * Fills a row's content (after the twisty). Override to add icons and badges.
    * @type {(node: TreeNode, content: HTMLElement) => void}
    */
@@ -91,7 +107,10 @@ export class TtTree extends HTMLElement {
     this.addEventListener('dragover', this.#onDragOver);
     this.addEventListener('dragleave', this.#onDragLeave);
     this.addEventListener('drop', this.#onDrop);
-    this.addEventListener('dragend', this.#onDragEnd);
+    // On the document: an outside drag ends at its source, not here.
+    // A source row that is re-rendered mid-drag ends detached, so `drop` too.
+    document.addEventListener('dragend', this.#onDragEnd);
+    document.addEventListener('drop', this.#onDragEnd);
   }
 
   disconnectedCallback() {
@@ -102,7 +121,8 @@ export class TtTree extends HTMLElement {
     this.removeEventListener('dragover', this.#onDragOver);
     this.removeEventListener('dragleave', this.#onDragLeave);
     this.removeEventListener('drop', this.#onDrop);
-    this.removeEventListener('dragend', this.#onDragEnd);
+    document.removeEventListener('dragend', this.#onDragEnd);
+    document.removeEventListener('drop', this.#onDragEnd);
   }
 
   /**
@@ -350,7 +370,11 @@ export class TtTree extends HTMLElement {
   #onDragOver = (event) => {
     const li = this.#itemFromEvent(event);
     const targetId = li?.dataset.id;
-    if (!this.#dragId || !li || !targetId) return;
+    if (!li || !targetId) return;
+    if (!this.#dragId) {
+      this.#onExternalDragOver(event, li, targetId);
+      return;
+    }
     const row = /** @type {HTMLElement} */ (li.firstElementChild);
     const rect = row.getBoundingClientRect();
     const quarter = rect.height / 4;
@@ -380,6 +404,26 @@ export class TtTree extends HTMLElement {
     this.#indicator.hidden = false;
   };
 
+  /**
+   * @param {DragEvent} event
+   * @param {HTMLElement} li
+   * @param {string} targetId
+   */
+  #onExternalDragOver(event, li, targetId) {
+    const type = this.externalType;
+    if (!type || !event.dataTransfer?.types.includes(type)) return;
+    this.#timedExpand(targetId);
+    if (!this.canDropExternal(targetId)) {
+      this.#clearDropTarget();
+      return;
+    }
+    event.preventDefault();
+    event.dataTransfer.dropEffect = 'move';
+    this.#clearDropTarget();
+    this.#drop = { targetId, position: 'inside' };
+    li.classList.add('drop-target');
+  }
+
   /** @param {DragEvent} event */
   #onDragLeave = (event) => {
     const to = /** @type {Node | null} */ (event.relatedTarget);
@@ -393,8 +437,21 @@ export class TtTree extends HTMLElement {
     const id = this.#dragId;
     const drop = this.#drop;
     this.#clearDropTarget();
-    if (!id || !drop) return;
+    this.#timedExpand(null);
+    if (!drop) return;
     event.preventDefault();
+    if (!id) {
+      const { targetId } = drop;
+      const externalId =
+        (this.externalType && event.dataTransfer?.getData(this.externalType)) || '';
+      this.dispatchEvent(
+        new CustomEvent('tt-drop-external', {
+          bubbles: true,
+          detail: { id: externalId, targetId },
+        }),
+      );
+      return;
+    }
     this.dispatchEvent(new CustomEvent('tt-drop', { bubbles: true, detail: { id, ...drop } }));
   };
 
