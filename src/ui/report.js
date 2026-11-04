@@ -426,6 +426,7 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
         'aria-describedby': 'report-grid-hint',
         'aria-colcount': cols,
       },
+      style: { '--days': String(rep.days.length) },
     });
     const colgroup = el(
       'colgroup',

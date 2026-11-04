@@ -117,6 +117,10 @@ body {
     gap: calc(var(--space-step) * 4);
     padding-block-end: calc(var(--space-step) * 4);
   }
+  /* The grid scrolls sideways on its own; vertically the whole pane scrolls. */
+  & .report-scroll > * {
+    flex: none;
+  }
   & .report-filters {
     flex-wrap: wrap;
 
@@ -167,6 +171,8 @@ body {
 
 /* The timesheet and summary tables share tt-table's look (header cells, row height, borders). */
 .tt-grid {
+  overflow-x: auto;
+
   & table {
     inline-size: 100%;
     border-collapse: separate;
@@ -250,6 +256,9 @@ body {
 }
 
 .timesheet {
+  /* Day columns keep their width; a month (31 columns) scrolls sideways. */
+  min-inline-size: calc(16em + var(--days, 7) * 5.5em + 6.5em);
+
   & .name-col {
     inline-size: auto;
   }
@@ -259,12 +268,15 @@ body {
   & .total-col {
     inline-size: 6.5em;
   }
-  /* A month has up to 31 day columns: narrower, the pane scrolls sideways if needed. */
-  &:has(col.day-col:nth-of-type(9)) .day-col {
-    inline-size: 4.5em;
+  /* Task names stay in view while a month scrolls sideways. */
+  & tr:not(.group) > :first-child {
+    position: sticky;
+    inset-inline-start: 0;
+    z-index: 1;
+    background-color: var(--tree-view-bg);
   }
-  &:has(col.day-col:nth-of-type(9)) {
-    min-inline-size: calc(16em + 33 * 4.5em);
+  & thead tr > :first-child {
+    background-color: var(--layout-background-1);
   }
 }
 
