@@ -49,4 +49,5 @@ Read only the sections the current task needs.
 - Port 5173 may be taken by another app (Playwright then reuses it and every test times out): run `PORT=5199 npm run test:ui`.
 - Unit tests run in `TZ=Europe/Zurich` (`vitest.config.js`). db tests use `freshDB()` from `tests/unit/db-helpers.js` (own `IDBFactory`, sets the `IDBKeyRange` global Node lacks).
 - `npm test -- --coverage` fails below 90% lines in `src/lib/**` or `src/db/**`.
+- A `.tb-profile/` last opened by a newer Thunderbird makes Thunderbird create a new profile in `~/.thunderbird`: `npm run tb`/`tb:spike` refuse it (move it aside). Marionette always listens on 2828 (the pref is ignored), so quit any other Thunderbird with Marionette on before `tb:spike`.
 - Claude sandbox: Playwright (`test:ui`, `shots`), `npm run tb`, signed `git commit` and `gh` need to run outside it (`~/.cache`, user namespaces, `~/.gnupg`, gh auth).

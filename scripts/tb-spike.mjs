@@ -16,11 +16,15 @@ import { cp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { connect } from 'node:net';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { detect, profile, webExt, webExtArgs } from './tb.mjs';
+import { detect, profile, refuseNewerProfile, webExt, webExtArgs } from './tb.mjs';
 
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const stage = join(root, '.tb-stage');
 const outDir = join(root, 'artifacts', 'tb');
+/**
+ * Marionette's port. Thunderbird 157 ignores the `marionette.port` pref and always listens on
+ * 2828, so a Thunderbird already running with Marionette on (any profile) takes it first.
+ */
 const PORT = 2828;
 const sleep = (/** @type {number} */ ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -209,13 +213,13 @@ const MEASURE_MAIL_TAB = `
 async function main() {
   const tb = detect();
   console.log(`Thunderbird ${tb.version} (${tb.kind}: ${tb.bin})`);
+  refuseNewerProfile(tb);
   const id = await buildStage();
   await mkdir(outDir, { recursive: true });
   const args = [
     ...webExtArgs(tb, stage),
     '--arg=--marionette',
     '--arg=-remote-allow-system-access',
-    `--pref=marionette.port=${PORT}`,
     '--no-reload',
   ];
   console.log(`web-ext ${args.join(' ')}\n`);
@@ -258,7 +262,9 @@ async function main() {
       m = null;
       client.close();
       throw new Error(
-        `Marionette on port ${PORT} belongs to profile ${profileDir}, not .tb-profile/`,
+        `Marionette on port ${PORT} belongs to another Thunderbird (profile ${profileDir}), ` +
+          'not .tb-profile/. Nothing was changed there. Quit that Thunderbird (Thunderbird ' +
+          'always uses port 2828 for Marionette) and run the spike again.',
       );
     }
 
