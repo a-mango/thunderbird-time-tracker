@@ -41,14 +41,26 @@ export function sleepGap(alarm, now, thresholdMin) {
 }
 
 /**
+ * Total time away and the ranges: `23m` and `14:02 – 14:25`, or with several absences
+ * `1h 10m` and `10:10 – 10:20, 12:00 – 13:00`.
+ * @param {{since: number, until: number | null}[]} spans closed spans
+ * @param {{locale: string}} options
+ */
+export function awayParts(spans, { locale }) {
+  const closed = spans.map(({ since, until }) => ({ since, until: until ?? since }));
+  const total = closed.reduce((sum, { since, until }) => sum + (until - since), 0);
+  return {
+    duration: formatDuration(total),
+    ranges: closed.map(({ since, until }) => formatAwayRange(since, until, { locale })).join(', '),
+  };
+}
+
+/**
  * "You were away 23m (14:02 – 14:25)." for the notification and the prompt bars.
- * @param {number} since
- * @param {number} until
+ * @param {{since: number, until: number | null}[]} spans closed spans
  * @param {{getMessage: (name: string, substitutions?: string[]) => string, locale: string}} i18n
  */
-export function awayMessage(since, until, { getMessage, locale }) {
-  return getMessage('idleAway', [
-    formatDuration(until - since),
-    formatAwayRange(since, until, { locale }),
-  ]);
+export function awayMessage(spans, { getMessage, locale }) {
+  const { duration, ranges } = awayParts(spans, { locale });
+  return getMessage('idleAway', [duration, ranges]);
 }

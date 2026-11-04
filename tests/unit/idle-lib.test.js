@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detectionInterval, idleSince, sleepGap } from '../../src/lib/idle.js';
+import { awayParts, detectionInterval, idleSince, sleepGap } from '../../src/lib/idle.js';
 import { formatAwayRange } from '../../src/lib/format.js';
 
 const MIN = 60_000;
@@ -44,5 +44,18 @@ describe('formatAwayRange', () => {
     expect(formatAwayRange(T, T + 23 * MIN, { locale: 'en-US' })).toBe(
       '2:02\u00a0PM – 2:25\u00a0PM',
     );
+  });
+});
+
+describe('awayParts', () => {
+  it('sums several absences and lists their ranges', () => {
+    const spans = [
+      { since: T, until: T + 10 * MIN },
+      { since: T + 60 * MIN, until: T + 120 * MIN },
+    ];
+    expect(awayParts(spans, { locale: 'en-GB' })).toEqual({
+      duration: '1h 10m',
+      ranges: '14:02 – 14:12, 15:02 – 16:02',
+    });
   });
 });

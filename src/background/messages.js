@@ -1,5 +1,8 @@
-/** Change types that can change the timer status (running entry, its task's name, a restore). */
-const STATUS_TYPES = new Set(['entries', 'tasks', 'reset']);
+/**
+ * Change types that can change the timer status (running entry, its task's name, a restore) or
+ * the idle detection interval (the threshold setting).
+ */
+const STATUS_TYPES = new Set(['entries', 'tasks', 'settings', 'reset']);
 /** Change types that can answer or drop the idle prompt (and so its notification). */
 const IDLE_TYPES = new Set(['idle', 'entries', 'reset']);
 

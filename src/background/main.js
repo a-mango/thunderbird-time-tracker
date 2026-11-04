@@ -109,6 +109,12 @@ messenger.notifications?.onClicked.addListener((notificationId) => {
 messenger.commands.onCommand.addListener((command) => {
   if (command !== 'toggle-timer') return;
   lastSync = lastSync
-    .then(() => withDB((db) => toggleTimer(db)))
+    // The background's own write never reaches its onMessage: drop a stale idle notification.
+    .then(() =>
+      withDB(async (db) => {
+        await toggleTimer(db);
+        await syncIdleNotification(db);
+      }),
+    )
     .catch((error) => console.error('time tracker: toggling the timer failed', error));
 });

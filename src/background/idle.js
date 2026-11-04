@@ -46,7 +46,7 @@ async function promptVisible(api) {
 export async function raiseIdlePrompt(idle, { api = messenger } = {}) {
   if (idle.until === null || !api.notifications) return;
   if (await promptVisible(api)) return;
-  const message = awayMessage(idle.since, idle.until, {
+  const message = awayMessage(idle.spans, {
     getMessage: (name, substitutions) => api.i18n.getMessage(name, substitutions),
     locale: api.i18n.getUILanguage(),
   });

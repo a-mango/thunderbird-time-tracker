@@ -143,11 +143,13 @@ S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timel
 
 ### S2 outcomes
 - **API**: Thunderbird's `idle.IdleState` is only `active`/`idle` (no `locked`); `locked` from other platforms is handled as `idle`. `idle` is a required permission (no install warning), not optional: the brief wants detection on by default (10 min).
-- **When the user left**: the `idle` event fires once the threshold has passed, so `since = now − threshold`. The record lives in `meta.idle` (`{entryId, since, until}`) and is stale as soon as that entry stops running, so other timer actions need no cleanup.
+- **When the user left**: the `idle` event fires once the threshold has passed, so `since = now − threshold`. The record lives in `meta.idle` (`{entryId, spans, since, until}`) and is stale as soon as that entry stops running, so other timer actions need no cleanup. Leaving again before answering adds a span (spec review: one record would have counted the second absence as work); every answer applies to all spans, and Stop at ends when the user last left.
 - **Resolutions** (`db/idle.js`, one transaction each): Discard and Assign to… restart the same task at `until` (when the user came back), not at the moment of answering, so time worked before answering isn't lost. Restarted and assigned entries have source `idle`.
 - **Suspend/resume**: a tick alarm that fires more than the threshold late counts as an absence from the previous tick. **Quit while away**: the open record ends at the next Thunderbird start. **Midnight**: the prompt shows weekdays (`Tue 23:50 – Wed 00:20`).
 - **Prompt**: a bar of its own in the tracker tab and the popup (the error/undo bar is separate). With neither open, a system notification; clicking it opens the tracker. The popup's Assign to… opens the tracker, where the task picker is.
 - **Threshold**: `idleThresholdMin` 0–240 (0 = off; the old minimum was 1); Settings offer Never/5/10/15/30. Dev: `?idle=N`.
+- **Not covered**: quitting Thunderbird with a timer running while *not* idle (no event, alarms don't survive a restart). A tick heartbeat in `meta` could catch it at startup; left as a follow-up because closing Thunderbird doesn't mean the user stopped working.
+- **Manual check in Thunderbird**: pending (see the PR checklist).
 
 ## Known risks (resolved by spikes)
 

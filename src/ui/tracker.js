@@ -17,6 +17,7 @@ import { createSidebar } from './sidebar.js';
 import { createTaskCommands } from './task-commands.js';
 import { createTaskList } from './task-list.js';
 import { TrackerData } from './tracker-data.js';
+import { awayParts } from '../lib/idle.js';
 import { timerTransition } from '../lib/timer.js';
 
 /**
@@ -231,9 +232,7 @@ async function main() {
       return assignIdleDialog({
         context: { projects: data.projects, tasks: data.tasks },
         runningTaskId: running.taskId,
-        since: idle.since,
-        until: idle.until,
-        locale: messenger.i18n.getUILanguage(),
+        ranges: awayParts(idle.spans, { locale: messenger.i18n.getUILanguage() }).ranges,
       });
     },
     onError: showError,

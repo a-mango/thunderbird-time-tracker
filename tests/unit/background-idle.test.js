@@ -186,7 +186,7 @@ describe('notification follows the prompt', () => {
       handleMessage({ type: 'tt:changed', change: { type, ids: ['x'] } }, { syncStatus, syncIdle });
     }
     expect(syncIdle).toHaveBeenCalledTimes(3);
-    expect(syncStatus).toHaveBeenCalledTimes(2);
+    expect(syncStatus).toHaveBeenCalledTimes(3);
   });
 });
 
@@ -212,6 +212,11 @@ describe('background wiring', () => {
     const open = vi.spyOn(api.spaces, 'open');
     api.notifications.onClicked.dispatch(IDLE_NOTIFICATION_ID);
     await vi.waitFor(() => expect(open).toHaveBeenCalled());
+    // The shortcut stops the timer: the notification goes with the stale prompt.
+    api.commands.onCommand.dispatch('toggle-timer');
+    await vi.waitFor(async () => {
+      expect((await api.notifications.getAll())[IDLE_NOTIFICATION_ID]).toBeUndefined();
+    });
     db.close();
   });
 });

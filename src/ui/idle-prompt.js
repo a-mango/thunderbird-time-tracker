@@ -22,6 +22,9 @@ import { t } from './i18n.js';
  * @property {string} [assignLabel] label of the Assign button (default "Assign to…")
  */
 
+/** @param {IdleRecord} idle */
+export const lastLeft = (idle) => /** @type {{since: number}} */ (idle.spans.at(-1)).since;
+
 /**
  * @param {IdlePromptOptions} options
  * @returns {{refresh: () => Promise<void>}} call `refresh` after every change from db/
@@ -47,7 +50,7 @@ export function createIdlePrompt({
    */
   const answer = async (action, idle, taskId) => {
     try {
-      await resolveIdle(db, action, { entryId: idle.entryId, taskId });
+      await resolveIdle(db, action, { seen: idle, taskId });
       await refresh();
       await onResolved?.();
     } catch (error) {
@@ -71,7 +74,7 @@ export function createIdlePrompt({
     const locale = messenger.i18n.getUILanguage();
     bar.show({
       type: 'info',
-      message: awayMessage(pending.since, pending.until, {
+      message: awayMessage(pending.spans, {
         getMessage: (name, substitutions = []) => t(name, ...substitutions),
         locale,
       }),
@@ -79,7 +82,8 @@ export function createIdlePrompt({
         { label: t('idleKeep'), onClick: () => answer('keep', pending) },
         { label: t('idleDiscard'), onClick: () => answer('discard', pending) },
         {
-          label: t('idleStopAt', formatTime(pending.since, { locale })),
+          // Stopping ends the entry when the user last left (earlier absences are cut out).
+          label: t('idleStopAt', formatTime(lastLeft(pending), { locale })),
           onClick: () => answer('stop', pending),
         },
         {

@@ -33,11 +33,13 @@ describe('idle records', () => {
     const { entry } = await start(db, checkout.id, { now: T0 });
     expect(await recordIdle(db, { since: T0 + 40 * MIN })).toEqual({
       entryId: entry.id,
+      spans: [{ since: T0 + 40 * MIN, until: null }],
       since: T0 + 40 * MIN,
       until: null,
     });
     expect(await markActive(db, { now: T0 + 65 * MIN })).toEqual({
       entryId: entry.id,
+      spans: [{ since: T0 + 40 * MIN, until: T0 + 65 * MIN }],
       since: T0 + 40 * MIN,
       until: T0 + 65 * MIN,
     });
@@ -118,7 +120,7 @@ describe('resolveIdle', () => {
       source: 'idle',
     });
     expect(restarted).toMatchObject({ taskId: tasks.checkout.id, start: T0 + 65 * MIN, end: null });
-    expect(result?.assigned).toEqual(assigned);
+    expect(result?.assigned).toEqual([assigned]);
     expect(notify).toHaveBeenCalledWith({
       type: 'entries',
       ids: [entry.id, assigned.id, restarted.id],
@@ -165,9 +167,14 @@ describe('resolveIdle', () => {
     await recordIdle(db, { since: T0 + 10 * MIN });
     expect(await resolveIdle(db, 'stop', { now: T0 + 20 * MIN })).toBeNull();
     await markActive(db, { now: T0 + 20 * MIN });
-    expect(await resolveIdle(db, 'stop', { entryId: 'other', now: T0 + 21 * MIN })).toBeNull();
+    const seen = /** @type {import('../../src/db/idle.js').IdleRecord} */ (await getIdle(db));
+    // The prompt changed after it was shown (a suspend was added): nothing happens.
+    const changed = { ...seen, spans: [{ since: T0 + 5 * MIN, until: T0 + 20 * MIN }] };
+    expect(await resolveIdle(db, 'stop', { seen: changed, now: T0 + 21 * MIN })).toBeNull();
+    expect(await resolveIdle(db, 'stop', { seen: { ...seen, entryId: 'other' } })).toBeNull();
     await stop(db, { now: T0 + 22 * MIN });
-    expect(await resolveIdle(db, 'discard', { entryId: entry.id, now: T0 + 23 * MIN })).toBeNull();
+    expect(await resolveIdle(db, 'discard', { seen, now: T0 + 23 * MIN })).toBeNull();
+    expect(entry.id).toBe(seen.entryId);
     expect(await allEntries(db)).toEqual([expect.objectContaining({ end: T0 + 22 * MIN })]);
   });
 
@@ -190,6 +197,81 @@ describe('resolveIdle', () => {
     await resolveIdle(db, 'assign', { taskId: pipeline.id, now: evening + 81 * MIN });
     const [, assigned] = byStart(await allEntries(db));
     expect(assigned).toMatchObject({ start: evening + 50 * MIN, end: evening + 80 * MIN });
+  });
+});
+
+describe('several absences before an answer', () => {
+  /** Timer since 09:00; away 09:40–10:05; back, not answered; away again 11:00–12:00. */
+  async function twiceAway() {
+    const ctx = await awayScenario();
+    await recordIdle(ctx.db, { since: T0 + 120 * MIN });
+    const away = await getIdle(ctx.db);
+    await markActive(ctx.db, { now: T0 + 180 * MIN });
+    return { ...ctx, away, now: T0 + 181 * MIN };
+  }
+
+  it('keeps both absences: leaving again reopens the record', async () => {
+    const { db, away, entry } = await twiceAway();
+    expect(away?.until).toBeNull();
+    expect(await getIdle(db)).toEqual({
+      entryId: entry.id,
+      spans: [
+        { since: T0 + 40 * MIN, until: T0 + 65 * MIN },
+        { since: T0 + 120 * MIN, until: T0 + 180 * MIN },
+      ],
+      since: T0 + 40 * MIN,
+      until: T0 + 180 * MIN,
+    });
+  });
+
+  it('discard cuts out both absences', async () => {
+    const { db, now, entry } = await twiceAway();
+    const result = await resolveIdle(db, 'discard', { now });
+    const lines = byStart(await allEntries(db)).map((e) => [e.start, e.end, e.source]);
+    expect(lines).toEqual([
+      [T0, T0 + 40 * MIN, 'timer'],
+      [T0 + 65 * MIN, T0 + 120 * MIN, 'idle'],
+      [T0 + 180 * MIN, null, 'idle'],
+    ]);
+    expect(result?.worked[0].id).toBe(entry.id);
+    expect(await runningPointer(db)).toBe(result?.running?.id);
+  });
+
+  it('stop ends when the user last left, without the first absence', async () => {
+    const { db, now } = await twiceAway();
+    await resolveIdle(db, 'stop', { now });
+    const lines = byStart(await allEntries(db)).map((e) => [e.start, e.end]);
+    expect(lines).toEqual([
+      [T0, T0 + 40 * MIN],
+      [T0 + 65 * MIN, T0 + 120 * MIN],
+    ]);
+    expect(await runningPointer(db)).toBeNull();
+  });
+
+  it('assign moves both absences', async () => {
+    const { db, now, tasks } = await twiceAway();
+    const result = await resolveIdle(db, 'assign', { taskId: tasks.pipeline.id, now });
+    expect(result?.assigned.map((e) => [e.start, e.end, e.taskId])).toEqual([
+      [T0 + 40 * MIN, T0 + 65 * MIN, tasks.pipeline.id],
+      [T0 + 120 * MIN, T0 + 180 * MIN, tasks.pipeline.id],
+    ]);
+    expect(await allEntries(db)).toHaveLength(5);
+  });
+
+  it('a suspend while away merges into the open absence', async () => {
+    const { db } = await awayScenario();
+    await recordIdle(db, { since: T0 + 120 * MIN });
+    await recordIdle(db, { since: T0 + 125 * MIN, until: T0 + 300 * MIN });
+    expect((await getIdle(db))?.spans).toEqual([
+      { since: T0 + 40 * MIN, until: T0 + 65 * MIN },
+      { since: T0 + 120 * MIN, until: T0 + 300 * MIN },
+    ]);
+  });
+
+  it('an absence overlapping the last return extends it', async () => {
+    const { db } = await awayScenario();
+    await recordIdle(db, { since: T0 + 60 * MIN, until: T0 + 90 * MIN });
+    expect((await getIdle(db))?.spans).toEqual([{ since: T0 + 40 * MIN, until: T0 + 90 * MIN }]);
   });
 });
 
