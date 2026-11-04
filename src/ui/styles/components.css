@@ -588,9 +588,23 @@ tt-notification-bar {
   & .type-icon {
     color: var(--infobar-icon-info);
   }
+  /* Actions that don't fit beside the message wrap below it as one group, at the end. */
+  & .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: var(--space-base);
+    margin-inline-start: auto;
+  }
+  /* The icon stays beside the message when the message wraps. */
+  & .text {
+    display: flex;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: var(--space-base);
+  }
   & .message {
-    /* Many actions (the idle prompt) wrap below the text instead of squeezing it. */
-    flex: 1 1 16em;
+    flex: 1 1 auto;
     padding-block: var(--space-step);
   }
   & .button.flat:enabled:hover {
