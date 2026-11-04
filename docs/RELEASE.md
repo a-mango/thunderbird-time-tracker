@@ -22,7 +22,7 @@ Submit at <https://addons.thunderbird.net/developers/>, "Submit a New Add-on", "
 
 - [ ] **Add-on id** `time-tracker@a-mango.github.io` (in the manifest; it can never change once
       listed).
-- [ ] **File**: `dist/time-tracker-1.0.0.xpi` from the release (the one GitHub published).
+- [ ] **File**: `dist/time-tracker-<version>.xpi` from the release (the one GitHub published).
 - [ ] **Compatibility**: Thunderbird 157.0 and later (`strict_min_version`). No maximum.
 - [ ] **Source code**: answer *No*. The build is copy-only: `npm run build` zips `src/` as written
       (no bundler, minifier or transpiler), which is the case
@@ -91,7 +91,7 @@ Thunderbird 157 and once on the current Release. Use fictional data.
 
 ### Install (both versions)
 
-1. The add-on appears in Add-ons and Themes as "Time Tracker 1.0.0", enabled, with the stopwatch
+1. The add-on appears in Add-ons and Themes as "Time Tracker <version>", enabled, with the stopwatch
    icon.
 2. A stopwatch button is in the spaces toolbar, readable in the light and the dark theme
    (Settings → General → Appearance).
@@ -130,7 +130,7 @@ Thunderbird 157 and once on the current Release. Use fictional data.
 
 ### Screen reader (Orca)
 
-Not done yet (Orca isn't installed on the maintainer's machine). Before or after 1.0, with Orca on
+Not done yet (Orca isn't installed on the maintainer's machine). Before the first stable release, with Orca on
 (`sudo dnf install orca`, toggle with `Super+Alt+S`):
 
 1. Tab into the project tree: Orca reads "Projects, tree", then each row as name, time and
