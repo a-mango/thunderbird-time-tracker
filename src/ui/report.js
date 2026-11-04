@@ -350,6 +350,8 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
     if (!visible) return;
     const shown = range();
     const mine = ++generation;
+    // Load timing (tests/ui/perf-large.spec.js): tt-report-start → tt-report-ready.
+    performance.mark('tt-report-start');
     try {
       const entries = await listEntriesInRange(data.db, shown.start, shown.end);
       if (mine !== generation) return;
@@ -364,6 +366,7 @@ export function createReport({ data, root, notify, offerUndo, onError }) {
         },
       );
       render();
+      performance.mark('tt-report-ready');
     } catch (error) {
       onError(error);
     }
