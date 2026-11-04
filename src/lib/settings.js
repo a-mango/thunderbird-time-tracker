@@ -15,6 +15,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
   idleThresholdMin: 10,
   roundingMin: 0,
   roundingMode: 'entry',
+  trayIcon: false,
 });
 
 /** @type {Record<keyof Settings, (value: unknown) => boolean>} */
@@ -33,6 +34,7 @@ const CHECKS = {
     Number.isInteger(v) && /** @type {number} */ (v) >= 0 && /** @type {number} */ (v) <= 240,
   roundingMin: (v) => v === 0 || v === 5 || v === 6 || v === 15,
   roundingMode: (v) => v === 'entry' || v === 'day',
+  trayIcon: (v) => typeof v === 'boolean',
 };
 
 /**
