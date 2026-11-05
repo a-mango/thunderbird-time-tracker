@@ -1,6 +1,6 @@
 node_modules/
 .ref/
-.tb-profile/
+.tb-profile*/
 artifacts/
 dist/
 coverage/
