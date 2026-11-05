@@ -188,3 +188,45 @@ test('wipe needs the typed word, then empties everything', async ({ page }) => {
   const keys = await page.evaluate(() => Object.keys(localStorage));
   expect(keys.filter((key) => key.startsWith('tt.layout.'))).toEqual([]);
 });
+
+test('the system tray checkbox asks for the permission and saves only when granted', async ({
+  page,
+}) => {
+  await openTracker(page);
+  const settings = () =>
+    page.evaluate(async () => {
+      const db = await import('/db/index.js');
+      const conn = await db.openDB();
+      const value = (await db.getSettings(conn)).trayIcon;
+      conn.close();
+      return value;
+    });
+  const dialog = await openSettings(page);
+  const tray = dialog.getByLabel('Show the timer in the system tray');
+  await expect(tray).not.toBeChecked();
+  await expect(tray).toHaveAccessibleDescription(/Needs the tray helper/);
+
+  // Refused: the box unticks and nothing is saved.
+  await page.evaluate(() => {
+    /** @type {any} */ (globalThis).messenger.permissions._answer = false;
+  });
+  await tray.click();
+  await expect(tray).not.toBeChecked();
+  expect(await settings()).toBe(false);
+
+  // Granted: saved, and unticking removes the permission again.
+  await page.evaluate(() => {
+    /** @type {any} */ (globalThis).messenger.permissions._answer = true;
+  });
+  await tray.check();
+  await expect.poll(settings).toBe(true);
+  expect(
+    await page.evaluate(() =>
+      /** @type {any} */ (globalThis).messenger.permissions.contains({
+        permissions: ['nativeMessaging'],
+      }),
+    ),
+  ).toBe(true);
+  await tray.uncheck();
+  await expect.poll(settings).toBe(false);
+});

@@ -88,6 +88,25 @@ declare namespace messenger {
     >;
   }
 
+  /** permissions.rst */
+  namespace permissions {
+    interface Permissions {
+      permissions?: string[];
+      origins?: string[];
+    }
+    function contains(permissions: Permissions): Promise<boolean>;
+    /** Needs a user action (a click handler). */
+    function request(permissions: Permissions): Promise<boolean>;
+    function remove(permissions: Permissions): Promise<boolean>;
+    const onAdded: WebExtEvent<(permissions: Permissions) => void>;
+    const onRemoved: WebExtEvent<(permissions: Permissions) => void>;
+  }
+
+  /** windows.rst */
+  namespace windows {
+    function update(windowId: number, updateInfo: { focused?: boolean }): Promise<unknown>;
+  }
+
   /** runtime.rst */
   namespace runtime {
     type OnInstalledReason = 'install' | 'update' | 'browser_update';
@@ -98,6 +117,17 @@ declare namespace messenger {
       url?: string;
       origin?: string;
     }
+    /** A connection to an extension page or a native application (runtime.rst, Port). */
+    interface Port {
+      name: string;
+      error?: { message: string };
+      postMessage(message: any): void;
+      disconnect(): void;
+      onMessage: WebExtEvent<(message: any, port: Port) => void>;
+      onDisconnect: WebExtEvent<(port: Port) => void>;
+    }
+    /** Needs `nativeMessaging`. Firefox/Thunderbird return the port synchronously. */
+    function connectNative(application: string): Port;
     function getURL(path: string): string;
     function getManifest(): Record<string, any>;
     function sendMessage(message: any, options?: object): Promise<any>;

@@ -19,6 +19,7 @@
     }
   },
   "permissions": ["alarms", "idle", "menus", "menus.overrideContext", "notifications"],
+  "optional_permissions": ["nativeMessaging"],
   "background": {
     "scripts": ["background/main.js"],
     "type": "module"

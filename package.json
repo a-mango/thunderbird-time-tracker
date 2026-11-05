@@ -24,6 +24,9 @@
     "icons": "node scripts/import-icons.mjs",
     "icon:png": "node scripts/icon-png.mjs",
     "demo": "node scripts/demo-backup.mjs",
+    "tray:install": "node scripts/tray-install.mjs",
+    "tray:uninstall": "node scripts/tray-install.mjs --uninstall",
+    "test:tray": "python3 -m unittest discover -s native/tray",
     "ref": "sh scripts/ref.sh"
   },
   "devDependencies": {

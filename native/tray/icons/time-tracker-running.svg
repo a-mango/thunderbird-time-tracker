@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Tray icon while a timer runs: the extension icon in green. Original artwork for this add-on. -->
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5ad48f"/>
+      <stop offset="1" stop-color="#1e9a57"/>
+    </linearGradient>
+  </defs>
+  <rect x="25" y="3" width="14" height="7" rx="2.5" fill="#0f6b3b"/>
+  <rect x="29" y="8" width="6" height="7" fill="#0f6b3b"/>
+  <rect x="45.5" y="12" width="9" height="6" rx="2" fill="#0f6b3b" transform="rotate(45 50 15)"/>
+  <circle cx="32" cy="37" r="24" fill="url(#body)"/>
+  <circle cx="32" cy="37" r="18.5" fill="#ffffff"/>
+  <path d="M32 37V18.5A18.5 18.5 0 0 1 49.6 31.3Z" fill="#bdf0d2"/>
+  <path d="M32 37 44.4 33" stroke="#0f6b3b" stroke-width="3.5" stroke-linecap="round"/>
+  <circle cx="32" cy="37" r="3.5" fill="#0f6b3b"/>
+</svg>

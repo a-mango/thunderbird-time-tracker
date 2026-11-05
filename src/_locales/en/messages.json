@@ -1906,5 +1906,37 @@
   "reportClearTitleOne": {
     "message": "Delete Entry?",
     "description": "Timesheet: title of the confirmation before deleting a day's only entry."
+  },
+  "trayIdle": {
+    "message": "No timer running",
+    "description": "System tray tooltip when no timer runs."
+  },
+  "trayStop": {
+    "message": "Stop Timer",
+    "description": "System tray menu item: stops the running timer."
+  },
+  "trayStartLast": {
+    "message": "Start Last Task",
+    "description": "System tray menu item: starts the task tracked last."
+  },
+  "trayOpen": {
+    "message": "Open Time Tracker",
+    "description": "System tray menu item (and icon click): opens the tracker tab."
+  },
+  "trayMissing": {
+    "message": "The tray helper isn’t installed, so the system tray icon was turned off. See the README to install it.",
+    "description": "Notification when the native tray helper can't be found."
+  },
+  "settingsTray": {
+    "message": "Show the timer in the system tray",
+    "description": "Settings: checkbox for the system tray icon."
+  },
+  "settingsTrayHint": {
+    "message": "Needs the tray helper (Linux), installed separately: see the README.",
+    "description": "Settings: hint under the system tray checkbox."
+  },
+  "trayBroken": {
+    "message": "The tray helper keeps failing to start, so the system tray icon was turned off. Reinstall it (npm run tray:install) and check that Python 3 with PyGObject is installed.",
+    "description": "Notification when the native tray helper exits before it is ready, several times in a row."
   }
 }
