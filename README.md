@@ -28,6 +28,21 @@ Requires **Thunderbird 157** or later.
    choose the file.
 3. Click the stopwatch in the spaces toolbar (left edge) to open Time Tracker.
 
+### System tray icon (Linux, optional)
+
+Time Tracker can show the running timer in your desktop's system tray (waybar, swaybar, KDE;
+GNOME with the AppIndicator extension). A small helper program draws the icon; it isn't part of
+the add-on and needs Python 3 with PyGObject (Fedora: `sudo dnf install python3-gobject`).
+
+1. From a checkout of this repository: `npm run tray:install`. It copies the helper to
+   `~/.local/share/thunderbird-time-tracker/tray/` and registers it for Thunderbird in
+   `~/.mozilla/native-messaging-hosts/` (`npm run tray:uninstall` removes both).
+2. In Time Tracker: **More options → Settings… → Show the timer in the system tray**, and allow
+   the permission Thunderbird asks for.
+
+The icon is blue with no timer and green while one runs; hover it for the task and time. Click it
+to open Time Tracker; its menu stops the timer or starts the task tracked last.
+
 ## Keyboard
 
 Shortcuts follow Thunderbird where it has an equivalent. In the tab:
@@ -87,14 +102,17 @@ npm run build              # → dist/time-tracker-0.1.0.xpi
 
 ## Development
 
-| Command           | What it does                                                                       |
-| ----------------- | ---------------------------------------------------------------------------------- |
-| `npm run dev`     | Serve `src/` at http://localhost:5173/ with a mock `messenger` and fictional data  |
-| `npm run check`   | Lint, type check, unit tests, `web-ext lint`                                       |
-| `npm run test:ui` | Playwright UI tests (Firefox)                                                      |
-| `npm run shots`   | Screenshots of the dev harness into `artifacts/shots/`                             |
-| `npm run tb`      | Thunderbird with an isolated dev profile (`.tb-profile/`) and the extension loaded |
-| `npm run tb:rc`   | Fresh profile (`.tb-rc/<version>/`) with the built XPI installed                   |
+| Command                | What it does                                                                       |
+| ---------------------- | ---------------------------------------------------------------------------------- |
+| `npm run dev`          | Serve `src/` at http://localhost:5173/ with a mock `messenger` and fictional data  |
+| `npm run check`        | Lint, type check, unit tests, `web-ext lint`                                       |
+| `npm run test:ui`      | Playwright UI tests (Firefox)                                                      |
+| `npm run shots`        | Screenshots of the dev harness into `artifacts/shots/`                             |
+| `npm run tb`           | Thunderbird with an isolated dev profile (`.tb-profile/`) and the extension loaded |
+| `npm run tb:rc`        | Fresh profile (`.tb-rc/<version>/`) with the built XPI installed                   |
+| `npm run demo`         | Write fictional demo data dated around today to `artifacts/demo-backup.json`       |
+| `npm run tray:install` | Install the tray helper for this user (`tray:uninstall` removes it)                |
+| `npm run test:tray`    | Unit tests of the tray helper (Python)                                             |
 
 Dev harness options: `?seed=N` re-seeds, `?fixtures=empty` starts empty, `?fixtures=large` loads
 50,000 entries, `?locale=fr` shows French, `?density=compact|relaxed`.

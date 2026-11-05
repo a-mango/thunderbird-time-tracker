@@ -139,7 +139,7 @@
 
 ## Stretch (after M7)
 
-S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timeline + Cards view (design B) · S5 Integrations/sync. Each has a brief in `docs/prompts/`.
+S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timeline + Cards view (design B) · S5 Integrations/sync · S6 System tray (#33, no brief: planned in the session). Each of S1–S5 has a brief in `docs/prompts/`.
 
 ### S2 outcomes
 - **API**: Thunderbird's `idle.IdleState` is only `active`/`idle` (no `locked`); `locked` from other platforms is handled as `idle`. `idle` is a required permission (no install warning), not optional: the brief wants detection on by default (10 min).
@@ -160,6 +160,15 @@ S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timel
 - **Performance** (`?fixtures=large`, 50k entries): a month report loads and renders in 48–124 ms (`tt-report-start` → `tt-report-ready`).
 - **Print**: `window.print()` from the tab. `npm run tb:spike` now calls it in the tracker tab and records Thunderbird's tab-modal print dialog (`print` in `spike.json`); not run yet, because the real Thunderbird held Marionette's port. Manual check in the PR checklist.
 - **Not covered**: a currency setting; ranges over 31 days; New Task from Reports mode (it stays disabled: no project is selected).
+
+### S6 outcomes
+- **No tray API** for add-ons in Thunderbird 157 (`.ref/webext-docs`). Chosen with the maintainer: a native helper over native messaging, Linux first. An Experiment was rejected (privileged code, review cost, small-surface rule).
+- **Spike 1: manifest folder.** Thunderbird 157 (Fedora RPM) reads user manifests from `~/.mozilla/native-messaging-hosts/` (its `XREUserNativeManifests`, read from a running Thunderbird), system ones from `/usr/lib64/mozilla/native-messaging-hosts/`. Not `~/.thunderbird/native-messaging-hosts/` (a test there gave "No such native application").
+- **Spike 2: event page lifetime.** An open native port kept the MV3 event page alive for the whole 145 s test with no activity (idle timeout 30 s). So the background holds the port (its only in-memory state, a connection) and reconnects on every start from the setting.
+- **Spike 3: the tray.** `native/tray/time_tracker_tray.py` implements StatusNotifierItem + `com.canonical.dbusmenu` with Gio only (no libayatana). Tested on sway + waybar: it registers with the watcher, the icon switches blue (idle) / green (running), the tooltip shows `h:mm · task`, a menu click and an icon click come back as commands, and it exits on stdin EOF.
+- **Permission**: `nativeMessaging` is optional and only asked for when the user ticks the setting. A missing helper ("No such native application") turns the setting off with one notification. A helper that quits is restarted at most once a minute.
+- **Install**: `npm run tray:install` (helper → `~/.local/share/thunderbird-time-tracker/tray/`, manifest → `~/.mozilla/native-messaging-hosts/time_tracker_tray.json`). Not in the XPI. Release packaging of the helper is a follow-up.
+- **Not covered**: Windows and macOS; GNOME needs the AppIndicator extension to show any tray icon.
 
 ## Known risks (resolved by spikes)
 

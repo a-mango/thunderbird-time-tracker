@@ -19,9 +19,10 @@
  * @typedef {{density:Density, accent:Accent, weekStart:0|1, dailyTargetMin:number,
  *            durationFormat:'hm'|'decimal', showDone:boolean, confirmDelete:boolean,
  *            idleThresholdMin:number, roundingMin:0|5|6|15,
- *            roundingMode:'entry'|'day'}} Settings
+ *            roundingMode:'entry'|'day', trayIcon:boolean}} Settings
  *   `weekStart`: 0 = Sunday, 1 = Monday (the `Date#getDay` numbering). `idleThresholdMin`: 0 = off.
  *   `roundingMin`/`roundingMode` (S3): report-time rounding up, per entry or per task and day.
+ *   `trayIcon` (S6): show the timer in the system tray through the native helper.
  * @typedef {{format:'thunderbird-time-tracker', version:1, exportedAt:number,
  *            projects:Project[], tasks:Task[], entries:Entry[],
  *            settings?:Partial<Settings>}} Backup
