@@ -57,6 +57,9 @@ class Status(unittest.TestCase):
             ],
         )
 
+    def test_a_tooltip_that_is_not_an_object(self):
+        self.assertEqual(clean_status({"tooltip": "text"})["tooltip_text"], "")
+
     def test_defaults_for_an_empty_message(self):
         self.assertEqual(
             clean_status({}),

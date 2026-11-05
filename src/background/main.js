@@ -9,8 +9,8 @@ import {
   onIdleState,
   syncIdleNotification,
 } from './idle.js';
-import { syncTray } from './tray.js';
-import { openDB, purgeDeleted, updateSettings } from '../db/index.js';
+import { TRAY_RETRY_ALARM, syncTray } from './tray.js';
+import { getRunning, openDB, purgeDeleted, updateSettings } from '../db/index.js';
 
 // Event page: listeners are registered synchronously at top level, no state in memory. APIs that
 // need a permission (`alarms`, `menus`, `notifications`) may be missing; everything else still
@@ -48,23 +48,33 @@ const openTracker = () =>
     )
     .catch((error) => console.error('time tracker: opening the tracker failed', error));
 
-/** The tray helper isn't installed: turn the setting off and say why, once. */
-const trayMissing = () =>
-  withDB((db) => updateSettings(db, { trayIcon: false }))
+/** The tray is off: the setting and its optional permission go together. */
+const trayOff = () =>
+  withDB((db) => updateSettings(db, { trayIcon: false })).then(() =>
+    messenger.permissions?.remove({ permissions: ['nativeMessaging'] }),
+  );
+
+/**
+ * The tray helper isn't installed, or keeps failing: turn the tray off and say why, once.
+ * @param {'missing' | 'broken'} reason
+ */
+const trayMissing = (reason) =>
+  trayOff()
     .then(() =>
       messenger.notifications?.create('tt-tray-missing', {
         type: 'basic',
         title: messenger.i18n.getMessage('extensionName'),
-        message: messenger.i18n.getMessage('trayMissing'),
+        message: messenger.i18n.getMessage(reason === 'missing' ? 'trayMissing' : 'trayBroken'),
       }),
     )
     .catch((error) => console.error('time tracker: tray setup failed', error));
 
-/** @type {() => unknown} */
+/** @type {(wantRunning: boolean) => unknown} */
 let toggleFromTray = () => {};
 const trayHandlers = {
   /** @param {string} command */
-  onCommand: (command) => (command === 'toggle' ? toggleFromTray() : openTracker()),
+  onCommand: (command) =>
+    command === 'stop' || command === 'start' ? toggleFromTray(command === 'stop') : openTracker(),
   onMissing: trayMissing,
 };
 
@@ -141,14 +151,30 @@ messenger.notifications?.onClicked.addListener((notificationId) => {
 
 // Granting or removing the tray's optional permission (Settings) connects or closes the helper.
 messenger.permissions?.onAdded.addListener(() => syncStatus());
-messenger.permissions?.onRemoved.addListener(() => syncStatus());
+messenger.permissions?.onRemoved.addListener((removed) => {
+  // Revoked in the Add-ons Manager: untick the setting too, so they never disagree.
+  if (removed.permissions?.includes('nativeMessaging')) {
+    lastSync = lastSync
+      .then(() => withDB((db) => updateSettings(db, { trayIcon: false })))
+      .catch((error) => console.error('time tracker: tray setting update failed', error));
+  }
+  syncStatus();
+});
 
-/** Stop the running timer, else start the task tracked last (shortcut and tray menu). */
-const toggleCommand = () => {
+/**
+ * Stop the running timer, else start the task tracked last (shortcut and tray menu).
+ * @param {boolean} [wantRunning] tray menu: act only if a timer runs (Stop) or none does (Start),
+ *   so a menu shown before the timer changed never does the opposite of its label
+ */
+const toggleCommand = (wantRunning) => {
   lastSync = lastSync
     // The background's own write never reaches its onMessage: drop a stale idle notification.
     .then(() =>
       withDB(async (db) => {
+        if (wantRunning !== undefined) {
+          const isRunning = (await getRunning(db)) !== null;
+          if (isRunning !== wantRunning) return;
+        }
         await toggleTimer(db);
         await syncIdleNotification(db);
       }),
@@ -163,4 +189,8 @@ toggleFromTray = toggleCommand;
 
 messenger.commands.onCommand.addListener((command) => {
   if (command === 'toggle-timer') toggleCommand();
+});
+
+messenger.alarms?.onAlarm.addListener((alarm) => {
+  if (alarm.name === TRAY_RETRY_ALARM) syncStatus();
 });

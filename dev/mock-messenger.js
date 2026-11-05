@@ -210,6 +210,25 @@ export function createMessenger({
     }),
     openOptionsPage: async () => {},
     /**
+     * No native helpers in the dev harness: the port disconnects at once, like Thunderbird
+     * without the host's manifest.
+     * @param {string} application
+     */
+    connectNative(application) {
+      const onDisconnect = createEvent();
+      /** @type {any} */
+      const port = {
+        name: application,
+        error: { message: `No such native application ${application}` },
+        postMessage() {},
+        disconnect() {},
+        onMessage: createEvent(),
+        onDisconnect,
+      };
+      setTimeout(() => onDisconnect.dispatch(port), 0);
+      return port;
+    },
+    /**
      * Delivers to this mock's own onMessage listeners (the mock plays the background).
      * Like the real API: rejects without listeners, resolves with the first response.
      * @param {any} message
@@ -388,6 +407,10 @@ export function createMessenger({
       getAll: async () => Object.fromEntries(notifications),
       onClicked: createEvent(),
       onClosed: createEvent(),
+    },
+    windows: {
+      /** @param {number} _windowId @param {{focused?: boolean}} _info */
+      update: async (_windowId, _info) => ({}),
     },
     permissions: {
       /** Optional permissions granted so far; `_answer` is what the next request returns. */

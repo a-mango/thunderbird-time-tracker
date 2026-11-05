@@ -136,7 +136,9 @@ def encode_message(message):
 
 def clean_status(message):
     """Validates a status message from the add-on; returns the fields the tray uses."""
-    tooltip = message.get("tooltip") or {}
+    tooltip = message.get("tooltip")
+    if not isinstance(tooltip, dict):
+        tooltip = {}
     menu = []
     for item in message.get("menu") or []:
         if not isinstance(item, dict):
@@ -218,9 +220,10 @@ class Tray:
         return values.get(name)
 
     def _item_call(self, _conn, _sender, _path, _iface, method, _params, invocation):
+        # Answer the bar first: sending to Thunderbird may fail if it has gone away.
+        invocation.return_value(None)
         if method == "Activate":
             self.send({"type": "command", "command": "activate"})
-        invocation.return_value(None)
 
     def _emit(self, path, iface, signal, params=None):
         self.bus.emit_signal(None, path, iface, signal, params)
@@ -269,12 +272,13 @@ class Tray:
             invocation.return_value(GLib.Variant("(v)", (props.get(name, GLib.Variant("s", "")),)))
         elif method == "Event":
             item_id, event_id, _data, _time = params.unpack()
-            self._clicked(item_id, event_id)
             invocation.return_value(None)
+            self._clicked(item_id, event_id)
         elif method == "EventGroup":
-            for item_id, event_id, _data, _time in params.unpack()[0]:
-                self._clicked(item_id, event_id)
+            events = params.unpack()[0]
             invocation.return_value(GLib.Variant("(ai)", ([],)))
+            for item_id, event_id, _data, _time in events:
+                self._clicked(item_id, event_id)
         elif method == "AboutToShow":
             invocation.return_value(GLib.Variant("(b)", (False,)))
         elif method == "AboutToShowGroup":
@@ -316,8 +320,12 @@ def main():
     stdout = sys.stdout.buffer
 
     def send(message):
-        stdout.write(encode_message(message))
-        stdout.flush()
+        try:
+            stdout.write(encode_message(message))
+            stdout.flush()
+        except OSError:
+            # Thunderbird closed the connection: the icon goes away with the helper.
+            loop.quit()
 
     bus = Gio.bus_get_sync(Gio.BusType.SESSION, None)
     tray = Tray(bus, send)
@@ -328,16 +336,18 @@ def main():
         ):
             loop.quit()
             return False
+        # Any bad input ends the helper: a dropped watch would leave a stale icon forever.
         try:
             message = read_message(stdin)
-        except (ValueError, json.JSONDecodeError):
+            if message is None:
+                loop.quit()
+                return False
+            if isinstance(message, dict) and message.get("type") == "status":
+                tray.update(message)
+        except Exception as error:  # noqa: BLE001
+            print(f"time tracker tray: {error!r}", file=sys.stderr)
             loop.quit()
             return False
-        if message is None:
-            loop.quit()
-            return False
-        if isinstance(message, dict) and message.get("type") == "status":
-            tray.update(message)
         return True
 
     channel = GLib.IOChannel.unix_new(stdin.fileno())

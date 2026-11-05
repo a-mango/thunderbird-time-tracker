@@ -127,4 +127,5 @@ Mirror Thunderbird where an equivalent exists. Before claiming a global shortcut
 
 - Data stays in the profile. There's no network access at all in the MVP.
 - Linking (S1) stores `headerMessageId` and a subject snapshot only. It never stores bodies or addresses.
+- System tray (S6, opt-in): the running task's name and time leave Thunderbird for the tray helper and are readable on the user's D-Bus session bus (the tray icon's tooltip). Any process of the same user can also click the icon or its menu (open the tracker, stop or start the timer); the helper accepts nothing else, and the add-on only acts on `stop`, `start`, `tracker` and `activate`.
 - **Sample data, fixtures, screenshots, and docs use fictional names only.** Never use real people, organisations, or anything from the maintainer's own life or past conversations.

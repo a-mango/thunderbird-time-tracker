@@ -1934,5 +1934,9 @@
   "settingsTrayHint": {
     "message": "Needs the tray helper (Linux), installed separately: see the README.",
     "description": "Settings: hint under the system tray checkbox."
+  },
+  "trayBroken": {
+    "message": "The tray helper keeps failing to start, so the system tray icon was turned off. Reinstall it (npm run tray:install) and check that Python 3 with PyGObject is installed.",
+    "description": "Notification when the native tray helper exits before it is ready, several times in a row."
   }
 }

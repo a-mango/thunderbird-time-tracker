@@ -9,13 +9,17 @@
 import { spawnSync } from 'node:child_process';
 import { chmod, copyFile, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { homedir, platform } from 'node:os';
-import { join, resolve } from 'node:path';
+import { isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const HOST = 'time_tracker_tray';
 const root = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const source = join(root, 'native', 'tray');
-const dataHome = process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share');
+// The XDG spec says to ignore a relative XDG_DATA_HOME (Thunderbird rejects a relative path too).
+const xdgData = process.env.XDG_DATA_HOME;
+const dataHome = xdgData && isAbsolute(xdgData) ? xdgData : join(homedir(), '.local', 'share');
+/** The interpreter the helper's shebang names: check that one, not whatever python3 is first. */
+const PYTHON = '/usr/bin/python3';
 const target = join(dataHome, 'thunderbird-time-tracker', 'tray');
 const manifestDir = join(homedir(), '.mozilla', 'native-messaging-hosts');
 const manifestFile = join(manifestDir, `${HOST}.json`);
@@ -33,13 +37,13 @@ if (process.argv.includes('--uninstall')) {
 }
 
 const check = spawnSync(
-  'python3',
+  PYTHON,
   ['-c', "import gi; gi.require_version('Gio', '2.0'); from gi.repository import Gio"],
   { encoding: 'utf8' },
 );
 if (check.status !== 0) {
   console.error(
-    'The helper needs Python 3 with PyGObject (Fedora: sudo dnf install python3-gobject).\n' +
+    `The helper needs ${PYTHON} with PyGObject (Fedora: sudo dnf install python3-gobject).\n` +
       (check.stderr || check.error?.message || ''),
   );
   process.exit(1);

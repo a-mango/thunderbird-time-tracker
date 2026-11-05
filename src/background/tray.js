@@ -12,18 +12,24 @@ import { TRAY_HOST, trayCommand, trayStatus } from '../lib/tray.js';
 /**
  * @typedef {{
  *   onCommand: (command: (typeof import('../lib/tray.js').TRAY_COMMANDS)[number]) => unknown,
- *   onMissing: () => unknown,
- * }} TrayHandlers `onMissing`: the helper isn't installed
+ *   onMissing: (reason: 'missing' | 'broken') => unknown,
+ * }} TrayHandlers `onMissing`: the helper isn't installed (`missing`), or keeps failing before
+ *   it is ready (`broken`: wrong manifest path, no PyGObject, no session bus)
  */
 
 /** A helper that quit or failed is started again at most once a minute. */
 const RETRY_MS = 60_000;
+/** Alarm that retries after a failure, also while no timer runs (no tick alarm then). */
+export const TRAY_RETRY_ALARM = 'tt-tray-retry';
+/** Failures in a row before the helper sent `ready`, after which the user is told. */
+const MAX_EARLY_FAILURES = 3;
 /** Thunderbird's error when no manifest names the host (NativeMessaging.sys.mjs). */
 const MISSING = /no such native application/iu;
 
 /** @type {messenger.runtime.Port | null} */
 let port = null;
 let failedAt = Number.NEGATIVE_INFINITY;
+let earlyFailures = 0;
 
 /**
  * Whether the optional permission is granted (false where the API is missing).
@@ -45,16 +51,35 @@ async function hasPermission(api) {
  */
 function connect(api, handlers) {
   const next = api.runtime.connectNative(TRAY_HOST);
+  let ready = false;
   next.onMessage.addListener((message) => {
+    if (message?.type === 'ready') {
+      ready = true;
+      earlyFailures = 0;
+      return;
+    }
     const command = trayCommand(message);
     if (command) handlers.onCommand(command);
   });
   next.onDisconnect.addListener((closed) => {
-    if (port === next) port = null;
+    // Closed on purpose (setting or permission off): nothing to report or retry.
+    if (port !== next) return;
+    port = null;
     failedAt = Date.now();
     const error = closed.error?.message ?? '';
-    if (MISSING.test(error)) handlers.onMissing();
-    else if (error) console.error('time tracker: the tray helper stopped', error);
+    if (MISSING.test(error)) {
+      handlers.onMissing('missing');
+      return;
+    }
+    console.error('time tracker: the tray helper stopped', error);
+    if (!ready && ++earlyFailures >= MAX_EARLY_FAILURES) {
+      earlyFailures = 0;
+      handlers.onMissing('broken');
+      return;
+    }
+    Promise.resolve(api.alarms?.create(TRAY_RETRY_ALARM, { when: failedAt + RETRY_MS })).catch(
+      (alarmError) => console.error('time tracker: tray retry alarm failed', alarmError),
+    );
   });
   return next;
 }
@@ -98,4 +123,5 @@ export async function syncTray(db, { api = messenger, now = Date.now(), ...handl
 export function resetTray() {
   port = null;
   failedAt = Number.NEGATIVE_INFINITY;
+  earlyFailures = 0;
 }

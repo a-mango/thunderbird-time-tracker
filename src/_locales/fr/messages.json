@@ -1534,5 +1534,8 @@
   },
   "settingsTrayHint": {
     "message": "Nécessite l’assistant de la zone de notification (Linux), installé à part : voir le README."
+  },
+  "trayBroken": {
+    "message": "L’assistant de la zone de notification n’arrive pas à démarrer : l’icône a été désactivée. Réinstallez-le (npm run tray:install) et vérifiez que Python 3 avec PyGObject est installé."
   }
 }

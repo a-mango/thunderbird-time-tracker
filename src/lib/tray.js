@@ -5,8 +5,11 @@ import { formatClock } from './format.js';
 /** Name of the native messaging host (native/tray/, `npm run tray:install`). */
 export const TRAY_HOST = 'time_tracker_tray';
 
-/** Menu item ids the helper sends back as commands; `activate` is a click on the icon. */
-export const TRAY_COMMANDS = /** @type {const} */ (['toggle', 'tracker', 'activate']);
+/**
+ * Menu item ids the helper sends back as commands; `activate` is a click on the icon. Stop and
+ * start are separate ids: a menu shown before the timer changed must not do the opposite.
+ */
+export const TRAY_COMMANDS = /** @type {const} */ (['stop', 'start', 'tracker', 'activate']);
 
 /**
  * @typedef {{type: 'status', running: boolean, title: string,
@@ -34,7 +37,9 @@ export function trayStatus(running, taskName, { now, t }) {
     title,
     tooltip: { title, text },
     menu: [
-      { id: 'toggle', label: t(running ? 'trayStop' : 'trayStartLast'), enabled: true },
+      running
+        ? { id: 'stop', label: t('trayStop'), enabled: true }
+        : { id: 'start', label: t('trayStartLast'), enabled: true },
       { type: 'separator' },
       { id: 'tracker', label: t('trayOpen'), enabled: true },
     ],

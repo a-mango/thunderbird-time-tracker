@@ -182,6 +182,15 @@ export async function settingsDialog({ data, commands, onError }) {
 
   // S6: the tray icon needs the optional nativeMessaging permission, asked for on this click.
   const tray = checkbox(t('settingsTray'), settings.trayIcon);
+  /** Ticked only when the setting is on and the permission is granted (a restored backup or the
+   *  Add-ons Manager can change one without the other). */
+  const syncTrayBox = async () => {
+    const granted = await messenger.permissions
+      ?.contains({ permissions: ['nativeMessaging'] })
+      .catch(() => false);
+    tray.input.checked = data.settings.trayIcon && granted === true;
+  };
+  syncTrayBox();
   const trayHint = el('p', {
     class: 'dialog-hint',
     id: uid('tt-hint'),
@@ -294,7 +303,7 @@ export async function settingsDialog({ data, commands, onError }) {
     idle.value = String(current.idleThresholdMin);
     showDone.input.checked = current.showDone;
     confirmDelete.input.checked = current.confirmDelete;
-    tray.input.checked = current.trayIcon;
+    syncTrayBox();
     rounding.value = String(current.roundingMin);
     roundingMode.value = current.roundingMode;
     roundingMode.disabled = current.roundingMin === 0;

@@ -23,7 +23,7 @@ describe('trayStatus', () => {
       title: 'Time Tracker',
       tooltip: { title: 'Time Tracker', text: '1:05 · Checkout form validation' },
       menu: [
-        { id: 'toggle', label: 'Stop Timer', enabled: true },
+        { id: 'stop', label: 'Stop Timer', enabled: true },
         { type: 'separator' },
         { id: 'tracker', label: 'Open Time Tracker', enabled: true },
       ],
@@ -34,13 +34,15 @@ describe('trayStatus', () => {
     const status = trayStatus(null, null, { now: 0, t });
     expect(status.running).toBe(false);
     expect(status.tooltip.text).toBe('No timer running');
-    expect(status.menu[0]).toEqual({ id: 'toggle', label: 'Start Last Task', enabled: true });
+    expect(status.menu[0]).toEqual({ id: 'start', label: 'Start Last Task', enabled: true });
   });
 });
 
 describe('trayCommand', () => {
   it.each([
-    [{ type: 'command', command: 'toggle' }, 'toggle'],
+    [{ type: 'command', command: 'stop' }, 'stop'],
+    [{ type: 'command', command: 'start' }, 'start'],
+    [{ type: 'command', command: 'toggle' }, null],
     [{ type: 'command', command: 'tracker' }, 'tracker'],
     [{ type: 'command', command: 'activate' }, 'activate'],
     [{ type: 'command', command: 'rm -rf' }, null],

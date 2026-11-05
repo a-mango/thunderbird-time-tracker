@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { closeTray, resetTray, syncTray } from '../../src/background/tray.js';
+import { TRAY_RETRY_ALARM, closeTray, resetTray, syncTray } from '../../src/background/tray.js';
 import { updateSettings } from '../../src/db/settings.js';
 import { start } from '../../src/lib/timer.js';
 import { MIN, T0, freshDB, seed } from './db-helpers.js';
@@ -48,6 +48,7 @@ function fakeApi({ granted = true } = {}) {
       }),
     },
     i18n: { getMessage: (/** @type {string} */ name) => `<${name}>` },
+    alarms: { create: vi.fn(async () => {}) },
   };
   return api;
 }
@@ -103,28 +104,32 @@ describe('syncTray', () => {
     expect(port.sent.at(-1)).toMatchObject({
       running: true,
       tooltip: { title: '<extensionName>', text: '1:05 · Checkout form validation' },
-      menu: [{ id: 'toggle', label: '<trayStop>' }, { type: 'separator' }, { id: 'tracker' }],
+      menu: [{ id: 'stop', label: '<trayStop>' }, { type: 'separator' }, { id: 'tracker' }],
     });
   });
 
-  it('turning the setting off closes the helper', async () => {
-    const { db, api, sync } = await setup();
+  it('turning the setting off closes the helper without reporting or retrying', async () => {
+    const { db, api, onMissing, sync } = await setup();
     await updateSettings(db, { trayIcon: true });
     await sync();
     await updateSettings(db, { trayIcon: false });
     expect(await sync()).toBe('off');
     expect(api.ports[0].disconnected).toBe(true);
+    api.ports[0].close();
+    expect(onMissing).not.toHaveBeenCalled();
+    expect(api.alarms.create).not.toHaveBeenCalled();
   });
 
   it('passes known commands from the helper on and ignores the rest', async () => {
     const { db, api, onCommand, sync } = await setup();
     await updateSettings(db, { trayIcon: true });
     await sync();
-    api.ports[0].receive({ type: 'command', command: 'toggle' });
+    api.ports[0].receive({ type: 'command', command: 'stop' });
     api.ports[0].receive({ type: 'command', command: 'activate' });
+    api.ports[0].receive({ type: 'command', command: 'toggle' });
     api.ports[0].receive({ type: 'command', command: 'format-disk' });
     api.ports[0].receive({ type: 'ready', version: 1 });
-    expect(onCommand.mock.calls).toEqual([['toggle'], ['activate']]);
+    expect(onCommand.mock.calls).toEqual([['stop'], ['activate']]);
   });
 
   it('a missing helper calls onMissing', async () => {
@@ -132,21 +137,38 @@ describe('syncTray', () => {
     await updateSettings(db, { trayIcon: true });
     await sync();
     api.ports[0].close('No such native application time_tracker_tray');
-    expect(onMissing).toHaveBeenCalledTimes(1);
+    expect(onMissing).toHaveBeenCalledWith('missing');
   });
 
-  it('a helper that quit is started again after a minute, not on every sync', async () => {
+  it('a helper that quit is started again after a minute, by alarm too', async () => {
     const { db, api, onMissing, sync } = await setup();
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     await updateSettings(db, { trayIcon: true });
     await sync();
+    api.ports[0].receive({ type: 'ready', version: 1 });
     api.ports[0].close('An unexpected error occurred');
     expect(onMissing).not.toHaveBeenCalled();
     expect(error).toHaveBeenCalled();
+    // While no timer runs there is no tick: the retry alarm brings the next sync.
+    expect(api.alarms.create).toHaveBeenCalledWith(TRAY_RETRY_ALARM, { when: T0 + MIN });
     expect(await sync()).toBe('waiting');
     vi.setSystemTime(T0 + MIN + 1);
     expect(await sync()).toBe('on');
     expect(api.runtime.connectNative).toHaveBeenCalledTimes(2);
+    error.mockRestore();
+  });
+
+  it('a helper that fails three times before it is ready is reported as broken', async () => {
+    const { db, api, onMissing, sync } = await setup();
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    await updateSettings(db, { trayIcon: true });
+    for (let n = 0; n < 3; n += 1) {
+      vi.setSystemTime(T0 + n * 2 * MIN);
+      expect(await sync()).toBe('on');
+      api.ports[n].close('An unexpected error occurred');
+    }
+    expect(onMissing).toHaveBeenCalledExactlyOnceWith('broken');
+    expect(api.alarms.create).toHaveBeenCalledTimes(2);
     error.mockRestore();
   });
 
