@@ -41,6 +41,9 @@
   "dialogCancel": {
     "message": "Annuler"
   },
+  "dialogClose": {
+    "message": "Fermer"
+  },
   "notificationClose": {
     "message": "Fermer"
   },
@@ -1137,6 +1140,116 @@
   },
   "restoreReasonContents": {
     "message": "son contenu ne correspond pas au format de sauvegarde"
+  },
+  "settingsImportSp": {
+    "message": "Importer depuis Super Productivity…"
+  },
+  "spImportTitle": {
+    "message": "Importer depuis Super Productivity"
+  },
+  "spImportSummary": {
+    "message": "Sauvegarde Super Productivity du $DATE$",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "20 Oct 2026, 14:45"
+      }
+    }
+  },
+  "spImportNoDate": {
+    "message": "Sauvegarde Super Productivity"
+  },
+  "spImportColNew": {
+    "message": "À ajouter"
+  },
+  "spImportColExisting": {
+    "message": "Déjà présents"
+  },
+  "spImportRowProjects": {
+    "message": "Projets"
+  },
+  "spImportRowTasks": {
+    "message": "Tâches"
+  },
+  "spImportRowEntries": {
+    "message": "Saisies de temps"
+  },
+  "spImportSkipped": {
+    "message": "Valeurs illisibles laissées de côté : $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "spImportChanged": {
+    "message": "Jours modifiés dans Super Productivity depuis leur import (gardés tels qu’importés) : $COUNT$",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "spImportNothing": {
+    "message": "Tout le contenu de cette sauvegarde est déjà présent."
+  },
+  "spImportNothingNew": {
+    "message": "Rien de nouveau à importer."
+  },
+  "spImportEmpty": {
+    "message": "Cette sauvegarde ne contient ni projets, ni tâches, ni saisies de temps."
+  },
+  "spImportHint": {
+    "message": "Super Productivity enregistre le temps par tâche et par jour : chaque jour devient une saisie, qui commence à l’heure où vous avez commencé à travailler ce jour-là. Les projets, tâches et saisies existants ne sont pas modifiés."
+  },
+  "spImportButton": {
+    "message": "Importer"
+  },
+  "spImportDone": {
+    "message": "Import terminé. Nouveaux projets : $PROJECTS$, nouvelles tâches : $TASKS$, nouvelles saisies de temps : $ENTRIES$.",
+    "placeholders": {
+      "projects": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tasks": {
+        "content": "$2",
+        "example": "12"
+      },
+      "entries": {
+        "content": "$3",
+        "example": "340"
+      }
+    }
+  },
+  "spImportFailed": {
+    "message": "L’import a échoué. Rien n’a été modifié."
+  },
+  "spImportInvalid": {
+    "message": "Ce fichier ne peut pas être importé : $REASON$.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "it isn’t a Super Productivity backup"
+      }
+    }
+  },
+  "spImportReasonFormat": {
+    "message": "ce n’est pas une sauvegarde Super Productivity"
+  },
+  "spImportReasonOwn": {
+    "message": "c’est une sauvegarde Time Tracker : utilisez plutôt Restaurer…"
+  },
+  "spImportReasonTooLarge": {
+    "message": "il dépasse 50 Mo"
+  },
+  "spImportUntitled": {
+    "message": "(Sans titre)"
+  },
+  "spImportInbox": {
+    "message": "Boîte de réception"
   },
   "idleAway": {
     "message": "Absence de $DURATION$ ($RANGE$).",

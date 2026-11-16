@@ -70,10 +70,11 @@ A modal dialog from the project pane's More menu (More › Settings…), not a m
 - Thunderbird's own settings apply each change as you make it (no OK button), and its smaller option groups open as in-content subdialogs over the page they affect. Our settings are short, so one subdialog fits.
 - The panes stay visible behind the dialog, so a density, accent or duration-format change can be seen at once. Every other open page follows through the `settings` change on `BroadcastChannel('tt')`.
 
-Sections: Appearance (density, accent), Time (week start, daily target, duration format), Lists (show done tasks, confirm deletes), Data (Back Up…, Restore…, Export CSV…, Delete All Data…; the result shows in a status line). Export CSV… is also in the More menu.
+Sections: Appearance (density, accent), Time (week start, daily target, duration format), Lists (show done tasks, confirm deletes), Data (Back Up…, Restore…, Import from Super Productivity…, Export CSV…, Delete All Data…; the result shows in a status line). Export CSV… is also in the More menu.
 - **Backup**: `<a download>` of a blob (`time-tracker-YYYY-MM-DD.json`). The M6 spike showed that this saves the file in Thunderbird 158 (`artifacts/tb/spike.json` → `download`), so the `downloads` permission isn't needed.
 - **Restore**: `parseBackup` validates the file, then a preview shows the export date, counts and entry date range, with **Merge** (primary; same id = the backup wins, nothing removed, settings kept) or **Replace All** (destructive; settings included).
 - **Delete All Data**: typing the localised word (`DELETE`) is required; the primary button refuses until it matches.
+- **Import from Super Productivity** (S7): the file is read and matched first. A preview like Restore's then shows a small table (rows Projects, Tasks, Time entries; columns To add, Already here, so no message needs plural forms), the entries' date range, changed days and unreadable values, with **Import** (primary). When nothing is new, the preview says so and only has **Close**; an empty backup says that instead of showing the table.
 
 ## Components
 
@@ -82,7 +83,7 @@ Sections: Appearance (density, accent), Time (week start, daily target, duration
 - **Fields**: 28px high, 1px `--search-bar-border-color`, background `--layout-background-0`, radius 3px.
 - **Splitter**: 1px visible, 5px hit area (`--splitter-*`).
 - **Context menus**: native menus via `menus.overrideContext()` with `documentUrlPatterns` scoped to our page (works, see the M1 spike outcomes). The panel fallback (radius `--panel-border-radius`, `--panel-background-color`, `--panel-border-color`) is `.tt-menu`, used for the column picker.
-- **Dialogs**: native `<dialog>`, styled like Thunderbird's in-content dialogs (panel tokens, buttons right-aligned, primary last).
+- **Dialogs**: native `<dialog>`, styled like Thunderbird's in-content dialogs (panel tokens, buttons right-aligned, primary last). At the dialog's maximum height (the UA's `100% - 2em`), the body scrolls and the title and buttons stay in view, like Thunderbird's subdialogs (S7: the French Settings dialog had pushed Close out of view).
 - **Notification bar** (idle prompt, errors): Thunderbird infobar style. Radius 4px, background `light-dark(--layout-background-0, --layout-background-2)`, 16px icon, ghost buttons. Place it at the top of the list pane.
 
 ## Typography, icons, formatting

@@ -1,7 +1,8 @@
 // Settings dialog (More › Settings…). A modal in-content dialog like Thunderbird's preference
 // subdialogs; every control saves on change (no OK button, like Thunderbird's settings), so the
 // page behind it, and every other open page, updates at once. The Data section runs the backup,
-// restore, CSV export and wipe commands and shows their result in a status line.
+// restore, Super Productivity import, CSV export and wipe commands and shows their result in a
+// status line.
 import { updateSettings } from '../db/index.js';
 import { TtDialog } from './components/tt-dialog.js';
 import { t } from './i18n.js';
@@ -277,6 +278,7 @@ export async function settingsDialog({ data, commands, onError }) {
         { class: 'settings-buttons' },
         dataButton(t('settingsBackup'), commands.backup),
         dataButton(t('settingsRestore'), commands.restore),
+        dataButton(t('settingsImportSp'), commands.importSuperProductivity),
         dataButton(t('settingsExportCsv'), commands.exportCsv),
         dataButton(t('settingsWipe'), commands.wipe, true),
       ),

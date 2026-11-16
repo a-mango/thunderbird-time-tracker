@@ -462,6 +462,35 @@ tt-table {
   &::backdrop {
     background-color: var(--dialog-backdrop-color);
   }
+  /* Like Thunderbird's subdialogs: when the dialog reaches its maximum height (the UA's
+     100% - 2em), the body scrolls and the title and buttons stay in view. */
+  &[open] {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  & > form {
+    display: flex;
+    flex-direction: column;
+    min-block-size: 0;
+  }
+  & .dialog-body {
+    min-block-size: 0;
+    overflow-y: auto;
+    /* Room for focus outlines (offset 2px) that the scroller would clip. */
+    margin: -4px;
+    padding: 4px;
+  }
+  /* A scroller keeps its children's margins inside; drop the outer ones so the spacing stays
+     what the collapsed margins gave before. */
+  & .dialog-body > :first-child,
+  & .dialog-body > :first-child > :first-child {
+    margin-block-start: 0;
+  }
+  & .dialog-body > :last-child,
+  & .dialog-body > :last-child > :last-child {
+    margin-block-end: 0;
+  }
   & .dialog-title {
     margin: 0 0 15px;
     font-size: 1.4em;
@@ -559,6 +588,25 @@ tt-table {
   }
   & .restore-from {
     font-weight: 600;
+  }
+  /* Import preview (S7): To add / Already here per record type. */
+  & .import-counts {
+    margin: 0 0 var(--space-base);
+    border-collapse: collapse;
+
+    & th,
+    & td {
+      padding-block: var(--space-step);
+      padding-inline: 0 calc(var(--space-step) * 6);
+      text-align: end;
+    }
+    & thead th {
+      font-weight: 600;
+    }
+    & tbody th {
+      font-weight: normal;
+      text-align: start;
+    }
   }
   & .dialog-buttons {
     display: flex;

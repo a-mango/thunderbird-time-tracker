@@ -40,6 +40,20 @@ export function dayKey(ms) {
 }
 
 /**
+ * Start of the local day named by a `YYYY-MM-DD` key (the inverse of `dayKey`), or null when the
+ * key is malformed, isn't a calendar date (`2026-02-30`) or starts before the epoch.
+ * @param {string} key
+ * @returns {number | null}
+ */
+export function dayStartOf(key) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(key);
+  if (!match || Number(match[1]) < 1970) return null;
+  const ms = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3])).getTime();
+  // East of UTC, 1970-01-01 starts before the epoch.
+  return ms >= 0 && dayKey(ms) === key ? ms : null;
+}
+
+/**
  * The local day containing `ms`.
  * @param {number} ms
  * @returns {Range}

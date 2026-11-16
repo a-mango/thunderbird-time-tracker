@@ -2,6 +2,7 @@
 // Starts its own dev server on a free port. Usage: node scripts/shots.mjs
 import { mkdir } from 'node:fs/promises';
 import { firefox } from '@playwright/test';
+import { spBackup } from '../tests/unit/sp-fixture.js';
 import { listen } from './serve.mjs';
 
 const outDir = new URL('../artifacts/shots/', import.meta.url).pathname;
@@ -30,6 +31,11 @@ const SHOTS = /** @type {const} */ ([
   ['tracker-settings-light', '/ui/tracker.html', 'light', TAB],
   ['tracker-settings-dark', '/ui/tracker.html', 'dark', TAB],
   ['tracker-export-light', '/ui/tracker.html', 'light', TAB],
+  // S7: the Super Productivity import preview (fictional backup) over Settings.
+  ['tracker-sp-import-light', '/ui/tracker.html', 'light', TAB],
+  ['tracker-sp-import-dark', '/ui/tracker.html', 'dark', TAB],
+  ['tracker-sp-import-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
+  ['tracker-sp-import-again-light', '/ui/tracker.html', 'light', TAB],
   // M7: French (string lengths) and forced colours (system palette).
   ['tracker-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
   ['tracker-settings-fr-light', '/ui/tracker.html?locale=fr', 'light', TAB],
@@ -165,17 +171,44 @@ try {
         await page.getByRole('button', { name: 'Assign to…' }).click();
       } else if (name.includes('split-dialog')) {
         await page.getByRole('button', { name: 'Split…' }).click();
-      } else if (name.includes('settings') || name.includes('export')) {
+      } else if (/settings|export|sp-import/.test(name)) {
         const fr = path.includes('locale=fr');
         await page.getByRole('button', { name: fr ? 'Plus d’options' : 'More options' }).click();
-        const item = name.includes('settings') ? 'Settings…' : 'Export CSV…';
+        const item = name.includes('export') ? 'Export CSV…' : 'Settings…';
         await page.getByRole('menuitem', { name: fr ? 'Paramètres…' : item }).click();
+        if (name.includes('sp-import')) {
+          const chooseBackup = async () => {
+            const choosing = page.waitForEvent('filechooser');
+            await page
+              .getByRole('button', {
+                name: fr
+                  ? 'Importer depuis Super Productivity…'
+                  : 'Import from Super Productivity…',
+              })
+              .click();
+            await (
+              await choosing
+            ).setFiles({
+              name: 'super-productivity-backup.json',
+              mimeType: 'application/json',
+              buffer: Buffer.from(JSON.stringify(spBackup())),
+            });
+            await page.locator('.restore-preview').waitFor();
+          };
+          await chooseBackup();
+          // The same file a second time: nothing new.
+          if (name.includes('again')) {
+            await page.getByRole('button', { name: 'Import', exact: true }).click();
+            await page.locator('.settings-status:not(:empty)').waitFor();
+            await chooseBackup();
+          }
+        }
       }
       await page.mouse.move(0, 0);
       await page.screenshot({ path: file });
       if (
         !path.includes('fixtures=empty') &&
-        !/tracker-(list|entry|split|settings|export|error|away)/.test(name)
+        !/tracker-(list|entry|split|settings|export|error|away|sp-import)/.test(name)
       ) {
         const clip = `${outDir}${name.replace('tracker', 'sidebar')}.png`;
         await page.locator('#sidebar').screenshot({ path: clip });

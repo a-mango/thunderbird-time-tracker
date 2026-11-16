@@ -248,17 +248,23 @@ function settings(value) {
 }
 
 /**
- * Size check in UTF-8 bytes without encoding when the length alone decides.
+ * Whether `text` takes more than `maxBytes` in UTF-8, without encoding when the length alone
+ * decides (every UTF-16 code unit takes 1 to 3 UTF-8 bytes).
+ * @param {string} text
+ * @param {number} maxBytes
+ */
+export function exceedsBytes(text, maxBytes) {
+  if (text.length > maxBytes) return true;
+  if (text.length * 3 <= maxBytes) return false;
+  return new TextEncoder().encode(text).byteLength > maxBytes;
+}
+
+/**
  * @param {string} text
  * @param {number} maxBytes
  */
 function checkSize(text, maxBytes) {
-  // Every UTF-16 code unit takes 1 to 3 UTF-8 bytes.
-  if (text.length > maxBytes) fail('too-large', '', 'backup too large');
-  if (text.length * 3 <= maxBytes) return;
-  if (new TextEncoder().encode(text).byteLength > maxBytes) {
-    fail('too-large', '', 'backup too large');
-  }
+  if (exceedsBytes(text, maxBytes)) fail('too-large', '', 'backup too large');
 }
 
 /**

@@ -7,6 +7,9 @@ All notable changes are listed here. Versions follow [Semantic Versioning](https
 ### Added
 - Drag a task from the list onto a project in the tree to move it there (Move To… still works
   from the keyboard).
+- Settings › Data › Import from Super Productivity…: reads its JSON backup into folders,
+  projects and tasks, with one entry per task and day, after a preview. Importing a newer backup
+  later adds only what's new.
 
 ## 0.1.0 — 2026-11-04
 

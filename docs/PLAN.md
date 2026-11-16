@@ -40,6 +40,8 @@
 | Storage errors (M7) | `storageErrorKind` (`blocked`, `version`, `quota`, `unknown`) → `ui/storage-errors.js` message + Reload where it helps; a tab that can't open shows only the bar | One mapping for tab and popup; dev harness fakes them with `?fail=newer` / `?fail=quota` |
 | Timer announcements (M7) | The tab announces start/stop from changes of `data.running` (`timerTransition`), not from its own commands | Timers started in the popup or with the shortcut are announced too; a split on the same task says nothing |
 | Icons (M7) | Coloured stopwatch (`src/icons/time-tracker*.svg`) for the add-on; one 1px-outline glyph (`src/icons/toolbar.svg`) for the action and the space button that picks its own colour with `prefers-color-scheme`; colour swatch icons on the native Color menu items | Thunderbird's own toolbar icons are monochrome. A `themeIcons` light/dark pair didn't work: TB 157's spaces toolbar only draws the default image (found in the RC check: dark glyph on the dark theme). PNGs for ATN come from `npm run icon:png` |
+| Imports (S7) | Every import builds a source-neutral batch; `resolveBatch` (`lib/import-batch.js`) matches it by id, then by name, and `importBatch` (`db/import.js`) runs the same matching again in the write transaction. `previewBatch` shows the result first | One set of rules for the preview and the write and for every source (Super Productivity now, CSV in S8). Matching inside the transaction means a change made between preview and write can't break the import |
+| Re-imports (S7) | Ids derived from the source's ids (`sp-t-<id>`, `sp-e-<task>-<day>`); a stored id, soft-deleted included, is skipped | Importing a newer backup adds only what's new without a mapping table. Checking deleted ids too avoids a ConstraintError on `add` before the next restart purges them |
 | Entry rows (M5) | `<button class="entry-row">` per entry, name from its content (visually hidden source label) | Enter/click opens the dialog, Delete deletes, native context menu like task rows; the name always matches the ticking time (axe `label-content-name-mismatch`) |
 
 ## How each milestone runs
@@ -136,7 +138,7 @@
 
 ## Stretch (after M7)
 
-S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timeline + Cards view (design B) · S5 Integrations/sync · S6 System tray (#33, no brief: planned in the session).
+S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timeline + Cards view (design B) · S5 Integrations/sync · S7 Import from Super Productivity · S8 CSV import (next).
 
 ### S2 outcomes
 - **API**: Thunderbird's `idle.IdleState` is only `active`/`idle` (no `locked`); `locked` from other platforms is handled as `idle`. `idle` is a required permission (no install warning), not optional: detection is on by default (10 min).
@@ -158,6 +160,19 @@ S1 Mail linking · S2 Idle detection · S3 Timesheet and reports · S4 Day timel
 - **Print**: `window.print()` from the tab. `npm run tb:spike` now calls it in the tracker tab and records Thunderbird's tab-modal print dialog (`print` in `spike.json`); not run yet, because the real Thunderbird held Marionette's port. Manual check in the PR checklist.
 - **Not covered**: a currency setting; ranges over 31 days; New Task from Reports mode (it stays disabled: no project is selected).
 
+### S7 outcomes
+- **Super Productivity has no time entries**: only time per task and day (`timeSpentOnDay`, ms), plus each day's work start and end per project and for the Today tag (`timeTracking`, `{s, e}`). Its worklog CSV is lossy (grouped by date by default, where a day's tasks share one row and one total), so the maintainer chose its JSON backup (checked on crossModelVersion 4.5: `{timestamp, lastUpdate, crossModelVersion, data}`, ngrx `{ids, entities}` states, `menuTree.projectTree` folders `{k: 'f', name, children}` around project nodes `{k: 'p', id}`, archived tasks in `archiveYoung`/`archiveOld`).
+- **Placement**: a day's entries are laid end to end from that day's work start (Today tag, else the earliest project, else 09:00), after the latest end of everything already on that day, so a newer backup's extra task-days don't overlap earlier imports or tracked time. That includes entries crossing midnight and the running entry, which counts up to now. If the block would run past midnight, or today past now, it moves earlier and may then overlap. A day longer than the day itself (spring forward) starts at midnight.
+- **Subtasks**: `Parent › Subtask` tasks. Super Productivity adds subtask time to the parent, so the parent becomes a task of its own only with time beyond its subtasks' (≥ 1 min per day).
+- **Matching**: by derived id, then by name under the same parent (case, spacing and Unicode composition ignored). The plan named project-path matching with longest prefixes; that only matters for CSV paths (`A / B` strings) and moves to S8. Same-name tasks of one backup (recurring tasks) merge into one task.
+- **Not imported**: Super Productivity notes (`data.note`), counters, repeat configs, issue links, planner. A day whose time changed in Super Productivity after an import keeps its first import; the preview counts such days (updating them is a follow-up).
+- **Real-data check** (the maintainer's backup, kept outside the repo): every task's imported total equals Super Productivity's, with no overlaps within a day and nothing across midnight; a second import adds nothing.
+- **Review fixes**: a day key before the epoch (east of UTC) is unreadable instead of failing the write; a refused write shows its own message; the parser groups tasks in linear time (a generated 100,000-task, 11 MB backup parses in 1.8 s in Node; the reviewer measured 95 s before); a subtask whose parent has a dangling parent id stays a subtask; a long parent title is cut before ` › Subtask`.
+
+### S8 scope (next, decided with the maintainer)
+- **CSV import** on the S7 core: our own export (en/fr headers, or the 8 columns; also after a LibreOffice re-save with `;`) and other trackers' (Toggl, Clockify, Kimai) through a column-mapping dialog (Date, Start, End date, End time, Duration, Client, Project, Task, Note, Billable, Tags), with a date-format and duration-unit choice and a live preview.
+- A re-import skips duplicates: same task, same start and end minute as a live entry (`TimedEntry` without an id in `resolveBatch`, already in place). Project paths match by their longest existing prefix (`projectPathName`), so names containing ` / ` still match.
+- Traps to test: localised headers; the `'` formula guard on every text cell; sub-minute entries exported as `10:00–10:00, 0` (use the minutes column when the times disagree by more than 1 min, which also covers the fall-back night); `;`/TAB/LF/no final newline; the strict `tests/unit/csv-parse.js` stays the writer's oracle.
 ### S6 outcomes
 - **No tray API** for add-ons in Thunderbird 157 (`.ref/webext-docs`). Chosen with the maintainer: a native helper over native messaging, Linux first. An Experiment was rejected (privileged code, review cost, small-surface rule).
 - **Spike 1: manifest folder.** Thunderbird 157 (Fedora RPM) reads user manifests from `~/.mozilla/native-messaging-hosts/` (its `XREUserNativeManifests`, read from a running Thunderbird), system ones from `/usr/lib64/mozilla/native-messaging-hosts/`. Not `~/.thunderbird/native-messaging-hosts/` (a test there gave "No such native application").

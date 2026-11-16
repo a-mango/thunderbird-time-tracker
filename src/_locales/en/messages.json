@@ -53,6 +53,10 @@
     "message": "Cancel",
     "description": "Default cancel button in dialogs."
   },
+  "dialogClose": {
+    "message": "Close",
+    "description": "Button that closes a dialog that offers no other action."
+  },
   "notificationClose": {
     "message": "Close",
     "description": "Accessible name of the close button on a notification bar."
@@ -1444,6 +1448,140 @@
   "restoreReasonContents": {
     "message": "its contents don’t match the backup format",
     "description": "Restore error reason, inserted into restoreInvalid or restoreConflict."
+  },
+  "settingsImportSp": {
+    "message": "Import from Super Productivity…",
+    "description": "Settings dialog: button: import a Super Productivity backup file (JSON)."
+  },
+  "spImportTitle": {
+    "message": "Import from Super Productivity",
+    "description": "Super Productivity import: heading of the preview dialog."
+  },
+  "spImportSummary": {
+    "message": "Super Productivity backup from $DATE$",
+    "description": "Super Productivity import: first line of the preview.",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "20 Oct 2026, 14:45"
+      }
+    }
+  },
+  "spImportNoDate": {
+    "message": "Super Productivity backup",
+    "description": "Super Productivity import: first line of the preview when the file has no export date."
+  },
+  "spImportColNew": {
+    "message": "To add",
+    "description": "Super Productivity import: preview table column: records the import adds."
+  },
+  "spImportColExisting": {
+    "message": "Already here",
+    "description": "Super Productivity import: preview table column: records already in the tracker (an earlier import, or the same name)."
+  },
+  "spImportRowProjects": {
+    "message": "Projects",
+    "description": "Super Productivity import: preview table row (folders count as projects)."
+  },
+  "spImportRowTasks": {
+    "message": "Tasks",
+    "description": "Super Productivity import: preview table row."
+  },
+  "spImportRowEntries": {
+    "message": "Time entries",
+    "description": "Super Productivity import: preview table row."
+  },
+  "spImportSkipped": {
+    "message": "Unreadable values left out: $COUNT$",
+    "description": "Super Productivity import: preview line when some values of the file couldn't be read.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "spImportChanged": {
+    "message": "Days changed in Super Productivity since they were imported (kept as imported): $COUNT$",
+    "description": "Super Productivity import: preview line: task-days whose time differs from the entry imported earlier; the earlier entry is kept.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "spImportNothing": {
+    "message": "Everything in this backup is already here.",
+    "description": "Super Productivity import: preview when there is nothing new to import."
+  },
+  "spImportNothingNew": {
+    "message": "Nothing new to import.",
+    "description": "Super Productivity import: preview when nothing is new but some days changed (see spImportChanged)."
+  },
+  "spImportEmpty": {
+    "message": "This backup has no projects, tasks or time entries.",
+    "description": "Super Productivity import: preview of a backup without any records."
+  },
+  "spImportHint": {
+    "message": "Super Productivity keeps time per task and day, so each day becomes one entry, starting when you started work that day. Projects, tasks and entries you already have aren’t changed.",
+    "description": "Super Productivity import: hint in the preview."
+  },
+  "spImportButton": {
+    "message": "Import",
+    "description": "Super Productivity import: primary button of the preview."
+  },
+  "spImportDone": {
+    "message": "Import done. New projects: $PROJECTS$, new tasks: $TASKS$, new time entries: $ENTRIES$.",
+    "description": "Super Productivity import: notification after the import.",
+    "placeholders": {
+      "projects": {
+        "content": "$1",
+        "example": "5"
+      },
+      "tasks": {
+        "content": "$2",
+        "example": "12"
+      },
+      "entries": {
+        "content": "$3",
+        "example": "340"
+      }
+    }
+  },
+  "spImportFailed": {
+    "message": "The import failed. Nothing was changed.",
+    "description": "Super Productivity import: error when the write was refused (no data changed)."
+  },
+  "spImportInvalid": {
+    "message": "This file can’t be imported: $REASON$.",
+    "description": "Super Productivity import: error for a rejected file; the reason is one of the spImportReason* or restoreReason* messages.",
+    "placeholders": {
+      "reason": {
+        "content": "$1",
+        "example": "it isn’t a Super Productivity backup"
+      }
+    }
+  },
+  "spImportReasonFormat": {
+    "message": "it isn’t a Super Productivity backup",
+    "description": "Super Productivity import error reason, inserted into spImportInvalid."
+  },
+  "spImportReasonOwn": {
+    "message": "it’s a Time Tracker backup: use Restore… instead",
+    "description": "Super Productivity import error reason, inserted into spImportInvalid; 'Restore…' is the settingsRestore button."
+  },
+  "spImportReasonTooLarge": {
+    "message": "it’s larger than 50 MB",
+    "description": "Super Productivity import error reason, inserted into spImportInvalid."
+  },
+  "spImportUntitled": {
+    "message": "(Untitled)",
+    "description": "Super Productivity import: name given to a project, folder or task whose title is blank."
+  },
+  "spImportInbox": {
+    "message": "Inbox",
+    "description": "Super Productivity import: name of the Inbox project when the backup has none (its own name is used otherwise)."
   },
   "idleAway": {
     "message": "You were away $DURATION$ ($RANGE$).",

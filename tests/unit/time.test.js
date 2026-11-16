@@ -3,6 +3,7 @@ import {
   addDays,
   dayKey,
   dayRange,
+  dayStartOf,
   overlapMs,
   splitByDay,
   startOfDay,
@@ -18,6 +19,30 @@ describe('test environment', () => {
   it('runs in Europe/Berlin', () => {
     expect(new Date(2026, 2, 29, 12).getTimezoneOffset()).toBe(-120);
     expect(new Date(2026, 0, 15, 12).getTimezoneOffset()).toBe(-60);
+  });
+});
+
+describe('dayStartOf', () => {
+  it('reads a day key back as local midnight', () => {
+    expect(dayStartOf('2026-10-20')).toBe(at(2026, 10, 20));
+    expect(dayStartOf('2026-03-29')).toBe(at(2026, 3, 29));
+    expect(dayStartOf('2026-10-25')).toBe(at(2026, 10, 25));
+  });
+
+  it('refuses malformed keys and impossible dates', () => {
+    for (const key of [
+      '2026-2-01',
+      '2026-02-30',
+      '2026-13-01',
+      '0099-01-01',
+      '1969-12-31',
+      // Berlin is east of UTC: its 1970-01-01 starts before the epoch.
+      '1970-01-01',
+      '',
+      'x',
+    ]) {
+      expect(dayStartOf(key)).toBeNull();
+    }
   });
 });
 

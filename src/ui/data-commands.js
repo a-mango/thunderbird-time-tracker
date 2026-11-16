@@ -1,13 +1,21 @@
 // Data management (M6): JSON backup, restore with a preview (merge or replace), CSV export of
-// entries and wiping everything. Each command resolves with a message for the caller to show
+// entries, import from Super Productivity (S7) and wiping everything. Each command resolves with a message for the caller to show
 // (the settings dialog's status line or the notification bar), or null when cancelled.
-import { exportBackup, listEntries, restoreBackup, wipeAll } from '../db/index.js';
+import {
+  exportBackup,
+  importBatch,
+  listEntries,
+  previewBatch,
+  restoreBackup,
+  wipeAll,
+} from '../db/index.js';
 import { dateInput } from '../lib/entry-form.js';
-import { ImportError } from '../lib/errors.js';
+import { ImportError, InvariantError, ValidationError } from '../lib/errors.js';
 import { backupSummary, entriesCsv, exportedEntries, exportFileName } from '../lib/export.js';
 import { formatDate } from '../lib/format.js';
 import { MAX_IMPORT_BYTES, parseBackup } from '../lib/importer.js';
 import { projectPathName } from '../lib/sidebar.js';
+import { MAX_SP_BYTES, parseSuperProductivity } from '../lib/sp-import.js';
 import { startOfDay } from '../lib/time.js';
 import { TtDialog } from './components/tt-dialog.js';
 import { t } from './i18n.js';
@@ -39,6 +47,14 @@ function importReason(error) {
   console.warn('time tracker: backup rejected', error.code, error.details.path);
   return t(IMPORT_REASONS[error.code] ?? 'restoreReasonContents');
 }
+
+/** Localised reason per ImportError code of a Super Productivity file. */
+/** @type {Record<string, string>} */
+const SP_REASONS = {
+  'too-large': 'spImportReasonTooLarge',
+  json: 'restoreReasonJson',
+  'time-tracker-backup': 'spImportReasonOwn',
+};
 
 /** Blob URLs live a minute: long enough for the download to start. */
 const REVOKE_MS = 60_000;
@@ -141,7 +157,7 @@ export function createDataCommands({ data, now = Date.now }) {
       'div',
       { class: 'restore-preview' },
       el('p', {
-        class: 'restore-from',
+        class: 'restore-from num',
         text: t('restoreSummary', formatDate(summary.exportedAt, { locale, time: true })),
       }),
       el(
@@ -294,5 +310,150 @@ export function createDataCommands({ data, now = Date.now }) {
     return { type: 'success', text: t('wipeDone') };
   }
 
-  return { backup, restore, exportCsv, wipe };
+  /**
+   * Picks a Super Productivity backup, shows what it adds and imports it (S7).
+   * @returns {Promise<DataMessage | null>}
+   */
+  async function importSuperProductivity() {
+    const file = await pickFile('.json,application/json');
+    if (!file) return null;
+    /** @param {string} reason */
+    const invalid = (reason) => ({
+      type: /** @type {const} */ ('error'),
+      text: t('spImportInvalid', t(reason)),
+    });
+    if (file.size > MAX_SP_BYTES) return invalid('spImportReasonTooLarge');
+    /** @type {string} */
+    let text;
+    try {
+      text = await file.text();
+    } catch {
+      return { type: 'error', text: t('restoreReadError') };
+    }
+    /** @type {ReturnType<typeof parseSuperProductivity>} */
+    let parsed;
+    try {
+      parsed = parseSuperProductivity(text, {
+        untitled: t('spImportUntitled'),
+        inbox: t('spImportInbox'),
+      });
+    } catch (error) {
+      if (!(error instanceof ImportError)) throw error;
+      console.warn('time tracker: Super Productivity file rejected', error.code);
+      return invalid(SP_REASONS[error.code] ?? 'spImportReasonFormat');
+    }
+    const plan = await previewBatch(data.db, parsed.batch, { now: now() });
+    if (!(await importPreview(parsed, plan))) return null;
+    /** @type {import('../lib/import-batch.js').ImportPlan} */
+    let added;
+    try {
+      added = await importBatch(data.db, parsed.batch, { now: now() });
+    } catch (error) {
+      // A record the repositories would refuse: the transaction wrote nothing.
+      if (!(error instanceof ValidationError || error instanceof InvariantError)) throw error;
+      console.warn('time tracker: Super Productivity import refused', error.code, error.message);
+      return { type: 'error', text: t('spImportFailed') };
+    }
+    await data.settled();
+    return {
+      type: 'success',
+      text: t(
+        'spImportDone',
+        String(added.projects.length),
+        String(added.tasks.length),
+        String(added.entries.length),
+      ),
+    };
+  }
+
+  /**
+   * What the import adds, what is already here and what can't be read; resolves true to import.
+   * Counts sit in a table (To add / Already here), so no message needs a plural form.
+   * @param {ReturnType<typeof parseSuperProductivity>} parsed
+   * @param {import('../lib/import-batch.js').ImportPlan} plan
+   */
+  async function importPreview({ summary, skipped }, plan) {
+    const date = (/** @type {number} */ ms) => formatDate(ms, { locale });
+    const fresh = plan.projects.length + plan.tasks.length + plan.entries.length > 0;
+    const empty = summary.folders + summary.projects + summary.tasks + summary.entries === 0;
+    let from = Number.POSITIVE_INFINITY;
+    let to = Number.NEGATIVE_INFINITY;
+    // By start: a block ending at midnight belongs to its own day.
+    for (const entry of plan.entries) {
+      from = Math.min(from, entry.start);
+      to = Math.max(to, entry.start);
+    }
+    const unread = skipped + plan.dropped;
+    /** @param {string} label @param {number} added @param {number} here */
+    const row = (label, added, here) =>
+      el(
+        'tr',
+        {},
+        el('th', { attrs: { scope: 'row' }, text: t(label) }),
+        el('td', { text: String(added) }),
+        el('td', { text: String(here) }),
+      );
+    const table = el(
+      'table',
+      { class: 'import-counts num' },
+      el(
+        'thead',
+        {},
+        el(
+          'tr',
+          {},
+          el('td', {}),
+          el('th', { attrs: { scope: 'col' }, text: t('spImportColNew') }),
+          el('th', { attrs: { scope: 'col' }, text: t('spImportColExisting') }),
+        ),
+      ),
+      el(
+        'tbody',
+        {},
+        row('spImportRowProjects', plan.projects.length, plan.reused.projects),
+        row('spImportRowTasks', plan.tasks.length, plan.reused.tasks),
+        row('spImportRowEntries', plan.entries.length, plan.skipped),
+      ),
+    );
+    const notes = [
+      plan.entries.length > 0 ? t('restoreRange', date(from), date(to)) : null,
+      plan.changed > 0 ? t('spImportChanged', String(plan.changed)) : null,
+      unread > 0 ? t('spImportSkipped', String(unread)) : null,
+    ].filter((text) => text !== null);
+    const body = el(
+      'div',
+      { class: 'restore-preview' },
+      el('p', {
+        class: 'restore-from num',
+        text:
+          summary.exportedAt === null
+            ? t('spImportNoDate')
+            : t('spImportSummary', formatDate(summary.exportedAt, { locale, time: true })),
+      }),
+      empty ? null : table,
+      notes.length > 0
+        ? el('ul', { class: 'delete-counts num' }, ...notes.map((text) => el('li', { text })))
+        : null,
+      fresh
+        ? el('p', { class: 'dialog-hint', text: t('spImportHint') })
+        : el('p', {
+            text: t(
+              empty ? 'spImportEmpty' : plan.changed > 0 ? 'spImportNothingNew' : 'spImportNothing',
+            ),
+          }),
+    );
+    const answer = await TtDialog.show({
+      heading: t('spImportTitle'),
+      body,
+      buttons: fresh
+        ? [
+            { label: t('dialogCancel'), value: 'cancel' },
+            { label: t('spImportButton'), value: 'import', primary: true },
+          ]
+        : [{ label: t('dialogClose'), value: 'cancel', primary: true }],
+    });
+    return answer === 'import';
+  }
+
+  return { backup, restore, importSuperProductivity, exportCsv, wipe };
 }

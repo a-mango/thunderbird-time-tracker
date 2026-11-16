@@ -17,7 +17,7 @@ export default [
       'coverage/',
       'playwright-report/',
       'test-results/',
-      '.tb-profile/',
+      '.tb-profile*/',
       '.tb-stage/',
     ],
   },

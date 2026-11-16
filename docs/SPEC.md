@@ -10,16 +10,18 @@ A Thunderbird extension that tracks time against tasks grouped in nested project
 3. One running timer. Start/stop/switch from a row, the detail pane, the action popup, or a keyboard command. Split the running entry. Survives restarts.
 4. Time entries: created by the timer, or added manually; edit, split, delete with undo, optional note.
 5. Totals: per task, per project (rolled up), today, and this week. Configurable week start.
-6. Data: local only (IndexedDB). JSON backup/restore and CSV export of entries.
+6. Data: local only (IndexedDB). JSON backup/restore, CSV export of entries, import from Super Productivity (S7).
 7. Native feel: light/dark, accent, density, keyboard, a11y, EN strings via `_locales` (FR in M7).
 
-**Stretch (S1–S5), in order**
+**Stretch, in order**
 - S1 Mail linking: message-list context menu items "New task from message" and "Track time to…"; linked messages in the detail pane; open a message from there.
 - S2 Idle detection: `idle` API with the prompt "You were away 23 min: keep / discard / split to another task".
 - S3 Timesheet and reports: week grid (tasks × days), billable totals, rounding at report time only, CSV/PDF.
 - S4 Day timeline + Cards view (design B): a calendar-style day view, drag to create/resize entries, gap filling.
 - S5 Integrations (pick later): Kimai / Clockify / Toggl / Jira worklog push, or a WebDAV JSON sync file.
 - S6 System tray (#33): the timer status as a tray icon (Linux first) through a native helper; click opens the tracker, the menu stops or starts the timer.
+- S7 Import from Super Productivity: its JSON backup becomes folders, projects, tasks and one entry per task and day; importing a newer backup adds only what's new.
+- S8 CSV import (next): our own CSV export and other trackers' (Toggl, Clockify, Kimai) through a column mapping, on the S7 import core.
 
 **Out of scope**: multi-user, server, telemetry, any remote code.
 
@@ -54,7 +56,8 @@ src/
   manifest.json
   background/      event page: space + action setup, timer side-effects (alarm, action label),
                    commands, menus, runtime message router
-  lib/             pure, DOM-free: time math, rollups, formatting, CSV, import validation
+  lib/             pure, DOM-free: time math, rollups, formatting, CSV, import validation,
+                   imports from other apps (import-batch.js core, sp-import.js)
   db/              IndexedDB wrapper, repositories, migrations, change notifications
   ui/              tracker.html (space tab), popup.html, components/ (tt-* custom elements),
                    styles/ (tokens.css, base.css), icons/
@@ -103,7 +106,13 @@ tests/ui           Playwright (Firefox engine) against the dev harness
 
 Density, accent, week start (default Monday), daily target (8h), duration format, show done tasks, confirm before deleting, idle threshold (S2), rounding for reports (S3: `roundingMin` 0/5/6/15, `roundingMode` per entry or per task and day; durations round up, only in the Reports pane and its CSV, never stored).
 
-They're edited in the Settings dialog (M6) and apply live in every open page. Backup, restore (merge by id or replace) and CSV export are in its Data section; backups and CSV files are saved through `<a download>`, so no `downloads` permission is needed. **Delete All Data** removes every record and the settings.
+They're edited in the Settings dialog (M6) and apply live in every open page. Backup, restore (merge by id or replace), Import from Super Productivity (S7) and CSV export are in its Data section; backups and CSV files are saved through `<a download>`, so no `downloads` permission is needed. **Delete All Data** removes every record and the settings.
+
+## Imports from other apps (S7)
+
+- **Core** (`lib/import-batch.js`, `db/import.js`): a source-neutral batch of projects, tasks and entries. `resolveBatch` matches it against the stored data: by the batch record's id first (wherever that record is now), then by name (a child of the same parent, a task in the same project, open before done, ignoring case and spacing), else it creates the record at the end of its siblings. Entries whose id is stored, soft-deleted ones included, are skipped. Day totals (time per task and day without times of their own) are laid end to end from when work started that day, after the latest end of everything on that day (the running entry counts up to now), and moved earlier rather than past midnight or, today, past now. A stored day total whose time differs from the batch is kept and counted (`changed`). `previewBatch` runs this on a read snapshot; `importBatch` runs it again in one readwrite transaction, re-checks every record like the repositories, updates the aggregates and emits `reset`. Existing records are never changed, and no running entry is written.
+- **Super Productivity** (`lib/sp-import.js`): reads its JSON backup (`{timestamp, crossModelVersion, data}` or bare `data`, up to 50 MB). Menu folders become parent projects. Projects keep their archive state and the nearest palette colour. Tasks without a known project go to the Inbox (created when the backup has none). Subtasks become `Parent › Subtask` tasks, and a parent is a task of its own only with time beyond its subtasks'. Archived tasks come in as done, and tag titles become task tags. Each task-day (`timeSpentOnDay`) becomes one day total starting at that day's work start (`timeTracking`, else 09:00). Ids derive from Super Productivity's (`sp-f-`, `sp-p-`, `sp-t-`, `sp-e-<task>-<day>`), so a later import adds only new task-days. Bad values are counted and left out. The file is refused only when it isn't such a backup.
+- The preview (Settings › Data) shows a table of what is added and what is already here (projects, tasks, time entries), the entries' date range, the days that changed since they were imported and the unreadable values. A write the repositories refuse changes nothing and says so.
 
 ## Keyboard
 
